@@ -3,157 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crown Molding Cut Calculator</title>
+    <title>Crown Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            text-align: center;
-            color: #222;
+            line-height: 1.6;
+            color: #333;
             background-color: white;
         }
         h1 {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
+            color: #333;
+            background-color: white;
+            padding: 15px 0;
+            margin-top: 0;
+            text-align: center;
         }
         .calculator {
             background-color: white;
-            padding: 20px;
-            border: 2px solid #4CAF50;
             border-radius: 8px;
-            margin-top: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid #f0f0f0;
         }
         .input-group {
-            margin-bottom: 15px;
-            text-align: left;
+            margin-bottom: 20px;
+        }
+        .output-group {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        .output-box {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .output-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            font-size: 18px;
+        }
+        .output-box .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
         }
         label {
             display: block;
+            margin-bottom: 5px;
             font-weight: bold;
+            font-size: 18px;
         }
         input {
             width: 100%;
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ddd;
+            padding: 12px;
+            border: 2px solid #4CAF50;
             border-radius: 4px;
+            font-size: 18px;
+            box-sizing: border-box;
+        }
+        .spring-angle-group {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .spring-angle-group label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+        .spring-angle-group select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            font-size: 18px;
         }
         button {
-            width: 100%;
             background-color: #4CAF50;
             color: white;
-            padding: 10px;
             border: none;
+            padding: 15px;
             font-size: 18px;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 10px;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 20px;
         }
         button:hover {
             background-color: #45a049;
         }
-        .result {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
+        .info-box {
             background-color: #f9f9f9;
             border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        @media (max-width: 600px) {
+            .output-group {
+                flex-direction: column;
+            }
+            .output-box {
+                min-width: auto;
+            }
+            .spring-angle-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .spring-angle-group select {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Crown Molding Cut Calculator</h1>
-
+    <h1>Crown Calculator</h1>
+    
     <div class="calculator">
-        <label>Wall Angle (degrees, usually 90):</label>
-        <input type="number" id="wall-angle" min="1" max="180" value="90">
-
-        <label>Ceiling Slope (degrees, 0 for flat ceiling):</label>
-        <input type="number" id="ceiling-slope" min="0" max="45" value="0">
-
-        <label>Spring Angle (38° or 45°, only for FLAT cut):</label>
-        <input type="number" id="spring-angle" min="1" max="90" value="38">
-
-        <label>Select Installation Type:</label>
-        <select id="install-method">
-            <option value="nested">Nested (molding held at install angle)</option>
-            <option value="flat">Flat (molding lays flat in saw)</option>
-        </select>
-
-        <button onclick="calculateCrownMolding()">Calculate</button>
-
-        <div class="result" id="result">
-            Enter values and select an installation type.
+        <div class="input-group">
+            <label for="wall-angle">Wall Angle (degrees):</label>
+            <input type="number" id="wall-angle" min="1" max="180" value="90" step="1">
+        </div>
+        
+        <div class="spring-angle-group">
+            <label for="spring-angle">Spring Angle:</label>
+            <select id="spring-angle">
+                <option value="38">38° (Standard)</option>
+                <option value="45">45° (Crown and Cove)</option>
+                <option value="52">52° (Large Crown)</option>
+            </select>
+        </div>
+        
+        <button onclick="calculateCrown()">CALCULATE CUTS</button>
+        
+        <div class="output-group">
+            <div class="output-box">
+                <h3>NESTED CUT</h3>
+                <div class="value" id="nested-value">45°</div>
+            </div>
+            
+            <div class="output-box">
+                <h3>FLAT MITER</h3>
+                <div class="value" id="flat-miter-value">31.6°</div>
+            </div>
+            
+            <div class="output-box">
+                <h3>FLAT BEVEL</h3>
+                <div class="value" id="flat-bevel-value">33.9°</div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>How to Use This Calculator</h3>
+            <p><strong>NESTED CUT:</strong> Put the crown upside down against the fence, just like it sits against the wall and ceiling. Set your miter to the NESTED CUT number and bevel to ZERO. Most crews do it this way.</p>
+            <p><strong>FLAT CUT:</strong> Lay the crown flat on the saw table. Set your miter to the FLAT MITER number and bevel to the FLAT BEVEL number. Good for wider crown that won't fit nested against the fence.</p>
+            <p><strong>SPRING ANGLE:</strong> That's just the angle between the back of the crown and the wall. Standard is 38°. If you don't know, it's probably 38°.</p>
+            <p><strong>PRO TIP:</strong> For regular 90° corners (like most rooms), just set your saw to 45° miter and 0° bevel with the crown nested against the fence. Done.</p>
         </div>
     </div>
-
+    
     <script>
         function toRadians(degrees) {
             return degrees * Math.PI / 180;
         }
-
+        
         function toDegrees(radians) {
             return radians * 180 / Math.PI;
         }
-
-        function calculateCrownMolding() {
+        
+        function calculateCrown() {
+            // Get input values
             const wallAngle = parseFloat(document.getElementById('wall-angle').value);
-            const ceilingSlope = parseFloat(document.getElementById('ceiling-slope').value);
             const springAngle = parseFloat(document.getElementById('spring-angle').value);
-            const installMethod = document.getElementById('install-method').value;
-
+            
+            // Validate wall angle
             if (isNaN(wallAngle) || wallAngle <= 0 || wallAngle > 180) {
-                document.getElementById('result').innerHTML = "Wall angle must be 1-180°.";
+                alert('Wall angle must be between 1 and 180 degrees.');
                 return;
             }
-            if (isNaN(ceilingSlope) || ceilingSlope < 0 || ceilingSlope > 45) {
-                document.getElementById('result').innerHTML = "Ceiling slope must be 0-45°.";
-                return;
-            }
-            if (installMethod === "flat" && (isNaN(springAngle) || springAngle <= 0 || springAngle >= 90)) {
-                document.getElementById('result').innerHTML = "Spring angle must be 1-89°.";
-                return;
-            }
-
-            let miter, bevel;
-
-            if (installMethod === "nested") {
-                // Nested method: molding is placed in saw as installed on the wall
-                miter = (180 - wallAngle) / 2;
-                bevel = 0;
+            
+            // Calculate nested cut (simple)
+            const nestedMiter = (180 - wallAngle) / 2;
+            
+            // Calculate flat cut (more complex)
+            let flatMiter, flatBevel;
+            
+            if (wallAngle === 90) {
+                // Standard 90° corner - common formulas
+                flatMiter = toDegrees(Math.atan(1 / Math.tan(toRadians(springAngle))));
+                flatBevel = toDegrees(Math.atan(Math.cos(toRadians(flatMiter)) * Math.tan(toRadians(springAngle))));
             } else {
-                // Flat method: molding is laid flat on the saw table
+                // Non-90° corner
                 const cornerAngle = 180 - wallAngle;
-                const springRad = toRadians(springAngle);
-                const slopeRad = toRadians(ceilingSlope);
-
+                const springRadians = toRadians(springAngle);
+                
                 const tanCorner = Math.tan(toRadians(cornerAngle / 2));
-                const cosCrown = Math.cos(springRad);
-                const tanCrown = Math.tan(springRad);
-                const tanSlope = Math.tan(slopeRad);
-
-                miter = toDegrees(Math.atan(tanCorner * cosCrown / 
-                       Math.sqrt(1 + Math.pow(tanCorner, 2) * Math.pow(tanCrown - tanSlope, 2))));
-
-                bevel = toDegrees(Math.atan(Math.sqrt(1 + Math.pow(tanCorner, 2) * Math.pow(tanCrown - tanSlope, 2)) * 
-                         Math.sin(springRad) / (1 + tanCrown * tanSlope)));
+                const tanSpring = Math.tan(springRadians);
+                const cosSpring = Math.cos(springRadians);
+                
+                flatMiter = toDegrees(Math.atan(tanCorner / tanSpring));
+                flatBevel = toDegrees(Math.atan(cosSpring * tanCorner));
             }
-
-            miter = Math.round(miter * 100) / 100;
-            bevel = Math.round(bevel * 100) / 100;
-
-            document.getElementById('result').innerHTML = `
-                <strong>Miter:</strong> ${miter}° <br>
-                <strong>Bevel:</strong> ${bevel}° <br>
-                <strong>Install Method:</strong> ${installMethod === "nested" ? "Nested (held at install angle)" : "Flat (laid on saw table)"} 
-            `;
+            
+            // Round to 1 decimal place
+            const nestedMiterRounded = Math.round(nestedMiter * 10) / 10;
+            const flatMiterRounded = Math.round(flatMiter * 10) / 10;
+            const flatBevelRounded = Math.round(flatBevel * 10) / 10;
+            
+            // Update output values
+            document.getElementById('nested-value').textContent = nestedMiterRounded + '°';
+            document.getElementById('flat-miter-value').textContent = flatMiterRounded + '°';
+            document.getElementById('flat-bevel-value').textContent = flatBevelRounded + '°';
         }
+        
+        // Calculate initial values
+        calculateCrown();
     </script>
 </body>
 </html>
