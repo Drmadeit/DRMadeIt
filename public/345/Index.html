@@ -14,6 +14,13 @@
             color: #333;
             background-color: white;
         }
+        h1 {
+            color: #333;
+            background-color: white;
+            padding: 15px 0;
+            margin-top: 0;
+            text-align: center;
+        }
         .calculator {
             background-color: white;
             border-radius: 8px;
@@ -51,16 +58,17 @@
             background-color: #45a049;
         }
         .result {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             margin-top: 15px;
             padding: 10px;
             border-radius: 4px;
             background-color: #f9f9f9;
+            color: #4CAF50;
         }
         #triangle-diagram {
             display: block;
-            margin: 20px auto;
+            margin: 10px auto;
             max-width: 100%;
             background-color: white;
             border-radius: 8px;
@@ -85,13 +93,13 @@
     
     <div class="calculator">
         <div class="input-group">
-            <label for="side-a">Side a:</label>
-            <input type="number" id="side-a" min="0" step="any" placeholder="Enter length of side a">
+            <label for="side-a">Side a in inches:</label>
+            <input type="number" id="side-a" min="0" step="any" placeholder="Enter length of side a in inches">
         </div>
         
         <div class="input-group">
-            <label for="side-b">Side b:</label>
-            <input type="number" id="side-b" min="0" step="any" placeholder="Enter length of side b">
+            <label for="side-b">Side b in inches:</label>
+            <input type="number" id="side-b" min="0" step="any" placeholder="Enter length of side b in inches">
         </div>
         
         <button onclick="calculateHypotenuse()">Calculate Hypotenuse</button>
@@ -99,97 +107,21 @@
         <div class="result" id="result">
             Enter values for sides a and b to calculate the hypotenuse.
         </div>
-        
+    </div>
+    
+    <div id="diagram-container" style="text-align: center; margin: 20px 0;">
+        <!-- We'll create the SVG dynamically with JavaScript -->
+    </div>
+    
+    <div class="formula">
+        <h3>About the Square Corner Calculator</h3>
+        <p>If you need a perfect 90-degree corner, just use the 3-4-5 rule. Measure 3 feet on one side, 4 feet on the other, and if the diagonal's 5 feet, you're square. That's just some old math called the Pythagorean theorem: a² + b² = c². Basically, the two short sides squared add up to the long side squared. Don't overthink it—just remember 3-4-5, and you won't mess it up. But when you can't do a simple 3-4-5, this calculator will do the math for you.</p>
+        <div class="construction-note">
+            <p>All measurements are in inches.</p>
         </div>
     </div>
     
-    <svg id="triangle-diagram" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
-        <!-- White background for the triangle section -->
-        <rect x="0" y="0" width="300" height="200" fill="white"/>
-        <rect x="75" y="50" width="0" height="0" fill="none" stroke="black" stroke-width="2" id="right-angle-marker" />
-        <line x1="75" y1="150" x2="75" y2="50" stroke="black" stroke-width="2" id="side-a-line" />
-        <line x1="75" y1="150" x2="225" y2="150" stroke="black" stroke-width="2" id="side-b-line" />
-        <line x1="75" y1="50" x2="225" y2="150" stroke="green" stroke-width="3" id="hypotenuse-line" />
-        <text x="65" y="100" text-anchor="end" fill="black" id="side-a-text">a</text>
-        <text x="150" y="170" text-anchor="middle" fill="black" id="side-b-text">b</text>
-        <text x="160" y="90" text-anchor="start" fill="green" id="hypotenuse-text">c</text>
-    </svg>
-    
     <script>
-        function calculateHypotenuse() {
-            // Get input values
-            const sideA = parseFloat(document.getElementById('side-a').value);
-            const sideB = parseFloat(document.getElementById('side-b').value);
-            
-            // Validate input
-            if (isNaN(sideA) || isNaN(sideB)) {
-                document.getElementById('result').textContent = 'Please enter valid numbers for both sides.';
-                return;
-            }
-            
-            if (sideA <= 0 || sideB <= 0) {
-                document.getElementById('result').textContent = 'Side lengths must be positive numbers.';
-                return;
-            }
-            
-            // Calculate hypotenuse using Pythagorean theorem
-            const hypotenuse = Math.sqrt(Math.pow(sideA, 2) + Math.pow(sideB, 2));
-            
-            // Display result
-            document.getElementById('result').textContent = `Hypotenuse (c) = ${hypotenuse.toFixed(3)}`;
-            
-            // Update the SVG diagram
-            updateTriangleDiagram(sideA, sideB, hypotenuse);
-        }
-        
-        function updateTriangleDiagram(a, b, c) {
-            // Normalize sides to fit in the SVG viewBox
-            const maxSide = Math.max(a, b);
-            const scale = 150 / maxSide;
-            
-            // Calculate scaled dimensions
-            const scaledA = a * scale;
-            const scaledB = b * scale;
-            
-            // Update the SVG elements
-            const svgElement = document.getElementById('triangle-diagram');
-            
-            // Update the triangle sides
-            document.getElementById('side-a-line').setAttribute('x1', 50);
-            document.getElementById('side-a-line').setAttribute('y1', 150);
-            document.getElementById('side-a-line').setAttribute('x2', 50);
-            document.getElementById('side-a-line').setAttribute('y2', 150 - scaledA);
-            
-            document.getElementById('side-b-line').setAttribute('x1', 50);
-            document.getElementById('side-b-line').setAttribute('y1', 150);
-            document.getElementById('side-b-line').setAttribute('x2', 50 + scaledB);
-            document.getElementById('side-b-line').setAttribute('y2', 150);
-            
-            document.getElementById('hypotenuse-line').setAttribute('x1', 50);
-            document.getElementById('hypotenuse-line').setAttribute('y1', 150 - scaledA);
-            document.getElementById('hypotenuse-line').setAttribute('x2', 50 + scaledB);
-            document.getElementById('hypotenuse-line').setAttribute('y2', 150);
-            
-            // Update right angle marker
-            document.getElementById('right-angle-marker').setAttribute('x', 50);
-            document.getElementById('right-angle-marker').setAttribute('y', 150 - 20);
-            document.getElementById('right-angle-marker').setAttribute('width', 20);
-            document.getElementById('right-angle-marker').setAttribute('height', 20);
-            
-            // Update text labels
-            document.getElementById('side-a-text').textContent = `a = ${a}`;
-            document.getElementById('side-a-text').setAttribute('x', 35);
-            document.getElementById('side-a-text').setAttribute('y', 150 - scaledA/2);
-            
-            document.getElementById('side-b-text').textContent = `b = ${b}`;
-            document.getElementById('side-b-text').setAttribute('x', 50 + scaledB/2);
-            document.getElementById('side-b-text').setAttribute('y', 165);
-            
-            document.getElementById('hypotenuse-text').textContent = `c = ${c.toFixed(3)}`;
-            document.getElementById('hypotenuse-text').setAttribute('x', 50 + scaledB/2 - 10);
-            document.getElementById('hypotenuse-text').setAttribute('y', 150 - scaledA/2 - 10);
-        }
-    
         // Function to convert decimal to fraction (nearest 1/16")
         function decimalToFraction(decimal) {
             // Multiply by 16 and round to nearest integer to get 16ths
@@ -221,6 +153,109 @@
             }
         }
         
+        // Create the SVG diagram entirely with JavaScript
+        function createTriangleDiagram(a, b, hypotenuseValue) {
+            const container = document.getElementById('diagram-container');
+            container.innerHTML = ''; // Clear previous diagram
+            
+            // Create SVG element
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "300px");
+            svg.setAttribute("viewBox", "0 0 300 200");
+            svg.style.backgroundColor = "white";
+            
+            // Background rectangle
+            const bg = document.createElementNS(svgNS, "rect");
+            bg.setAttribute("x", "0");
+            bg.setAttribute("y", "0");
+            bg.setAttribute("width", "300");
+            bg.setAttribute("height", "200");
+            bg.setAttribute("fill", "white");
+            svg.appendChild(bg);
+            
+            // Normalize sides to fit in the SVG viewBox
+            const maxSide = Math.max(a, b);
+            const scale = 150 / maxSide;
+            
+            // Calculate scaled dimensions
+            const scaledA = a * scale;
+            const scaledB = b * scale;
+            
+            // Right angle marker
+            const rightAngle = document.createElementNS(svgNS, "rect");
+            rightAngle.setAttribute("x", "75");
+            rightAngle.setAttribute("y", "130");
+            rightAngle.setAttribute("width", "20");
+            rightAngle.setAttribute("height", "20");
+            rightAngle.setAttribute("fill", "none");
+            rightAngle.setAttribute("stroke", "black");
+            rightAngle.setAttribute("stroke-width", "2");
+            svg.appendChild(rightAngle);
+            
+            // Side A
+            const sideA = document.createElementNS(svgNS, "line");
+            sideA.setAttribute("x1", "75");
+            sideA.setAttribute("y1", "150");
+            sideA.setAttribute("x2", "75");
+            sideA.setAttribute("y2", 150 - scaledA);
+            sideA.setAttribute("stroke", "black");
+            sideA.setAttribute("stroke-width", "2");
+            svg.appendChild(sideA);
+            
+            // Side B
+            const sideB = document.createElementNS(svgNS, "line");
+            sideB.setAttribute("x1", "75");
+            sideB.setAttribute("y1", "150");
+            sideB.setAttribute("x2", 75 + scaledB);
+            sideB.setAttribute("y2", "150");
+            sideB.setAttribute("stroke", "black");
+            sideB.setAttribute("stroke-width", "2");
+            svg.appendChild(sideB);
+            
+            // Hypotenuse
+            const hypotenuse = document.createElementNS(svgNS, "line");
+            hypotenuse.setAttribute("x1", "75");
+            hypotenuse.setAttribute("y1", 150 - scaledA);
+            hypotenuse.setAttribute("x2", 75 + scaledB);
+            hypotenuse.setAttribute("y2", "150");
+            hypotenuse.setAttribute("stroke", "green");
+            hypotenuse.setAttribute("stroke-width", "3");
+            svg.appendChild(hypotenuse);
+            
+            // Text for side A
+            const textA = document.createElementNS(svgNS, "text");
+            textA.setAttribute("x", "65");
+            textA.setAttribute("y", 150 - scaledA/2);
+            textA.setAttribute("text-anchor", "end");
+            textA.setAttribute("fill", "black");
+            textA.textContent = `a = ${a}"`;
+            svg.appendChild(textA);
+            
+            // Text for side B
+            const textB = document.createElementNS(svgNS, "text");
+            textB.setAttribute("x", 75 + scaledB/2);
+            textB.setAttribute("y", "165");
+            textB.setAttribute("text-anchor", "middle");
+            textB.setAttribute("fill", "black");
+            textB.textContent = `b = ${b}"`;
+            svg.appendChild(textB);
+            
+            // Text for hypotenuse - RIGHT JUSTIFIED
+            const textC = document.createElementNS(svgNS, "text");
+            textC.setAttribute("x", "230");
+            textC.setAttribute("y", "80");
+            textC.setAttribute("text-anchor", "end");
+            textC.setAttribute("fill", "green");
+            textC.setAttribute("font-weight", "bold");
+            textC.textContent = `c = ${hypotenuseValue}"`;
+            svg.appendChild(textC);
+            
+            // Add the SVG to the container
+            container.appendChild(svg);
+        }
+        
         // Update the calculate function to use fractions
         function calculateHypotenuse() {
             // Get input values
@@ -245,22 +280,14 @@
             const hypotenuseAsFraction = decimalToFraction(hypotenuse);
             
             // Display result
-            document.getElementById('result').textContent = `Hypotenuse (c) = ${hypotenuse.toFixed(3)} (${hypotenuseAsFraction}")`;
+            document.getElementById('result').textContent = `Hypotenuse (c) = ${hypotenuse.toFixed(3)}" (${hypotenuseAsFraction}")`;
             
-            // Update the SVG diagram
-            updateTriangleDiagram(sideA, sideB, hypotenuse);
+            // Create the triangle diagram
+            createTriangleDiagram(sideA, sideB, hypotenuseAsFraction);
         }
+        
+        // Create initial empty triangle diagram
+        createTriangleDiagram(3, 4, "5");
     </script>
-    
-    <div class="formula">
-        <h3>About the Square Corner Calculator</h3>
-        <p>The Pythagorean theorem states that in a right triangle, the square of the length of the hypotenuse (c) is equal to the sum of squares of the other two sides (a and b):</p>
-        <p><strong>c² = a² + b²</strong></p>
-        <p>Therefore: <strong>c = √(a² + b²)</strong></p>
-        <div class="construction-note">
-            <p>Often called the "3-4-5 rule" by construction workers, as a triangle with sides 3, 4, and 5 forms a perfect right angle.</p>
-            <p>This calculator helps you find the diagonal measure when squaring a corner or laying out a rectangular space like a foundation or deck.</p>
-        </div>
-    </div>
 </body>
 </html>
