@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown Molding Cut Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            color: #222;
+            background-color: white;
+        }
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .calculator {
+            background-color: white;
+            padding: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crown Molding Cut Calculator</h1>
+
+    <div class="calculator">
+        <label>Wall Angle (degrees, usually 90):</label>
+        <input type="number" id="wall-angle" min="1" max="180" value="90">
+
+        <label>Ceiling Slope (degrees, 0 for flat ceiling):</label>
+        <input type="number" id="ceiling-slope" min="0" max="45" value="0">
+
+        <label>Spring Angle (38° or 45°, only for FLAT cut):</label>
+        <input type="number" id="spring-angle" min="1" max="90" value="38">
+
+        <label>Select Installation Type:</label>
+        <select id="install-method">
+            <option value="nested">Nested (molding held at install angle)</option>
+            <option value="flat">Flat (molding lays flat in saw)</option>
+        </select>
+
+        <button onclick="calculateCrownMolding()">Calculate</button>
+
+        <div class="result" id="result">
+            Enter values and select an installation type.
+        </div>
+    </div>
+
+    <script>
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function toDegrees(radians) {
+            return radians * 180 / Math.PI;
+        }
+
+        function calculateCrownMolding() {
+            const wallAngle = parseFloat(document.getElementById('wall-angle').value);
+            const ceilingSlope = parseFloat(document.getElementById('ceiling-slope').value);
+            const springAngle = parseFloat(document.getElementById('spring-angle').value);
+            const installMethod = document.getElementById('install-method').value;
+
+            if (isNaN(wallAngle) || wallAngle <= 0 || wallAngle > 180) {
+                document.getElementById('result').innerHTML = "Wall angle must be 1-180°.";
+                return;
+            }
+            if (isNaN(ceilingSlope) || ceilingSlope < 0 || ceilingSlope > 45) {
+                document.getElementById('result').innerHTML = "Ceiling slope must be 0-45°.";
+                return;
+            }
+            if (installMethod === "flat" && (isNaN(springAngle) || springAngle <= 0 || springAngle >= 90)) {
+                document.getElementById('result').innerHTML = "Spring angle must be 1-89°.";
+                return;
+            }
+
+            let miter, bevel;
+
+            if (installMethod === "nested") {
+                // Nested method: molding is placed in saw as installed on the wall
+                miter = (180 - wallAngle) / 2;
+                bevel = 0;
+            } else {
+                // Flat method: molding is laid flat on the saw table
+                const cornerAngle = 180 - wallAngle;
+                const springRad = toRadians(springAngle);
+                const slopeRad = toRadians(ceilingSlope);
+
+                const tanCorner = Math.tan(toRadians(cornerAngle / 2));
+                const cosCrown = Math.cos(springRad);
+                const tanCrown = Math.tan(springRad);
+                const tanSlope = Math.tan(slopeRad);
+
+                miter = toDegrees(Math.atan(tanCorner * cosCrown / 
+                       Math.sqrt(1 + Math.pow(tanCorner, 2) * Math.pow(tanCrown - tanSlope, 2))));
+
+                bevel = toDegrees(Math.atan(Math.sqrt(1 + Math.pow(tanCorner, 2) * Math.pow(tanCrown - tanSlope, 2)) * 
+                         Math.sin(springRad) / (1 + tanCrown * tanSlope)));
+            }
+
+            miter = Math.round(miter * 100) / 100;
+            bevel = Math.round(bevel * 100) / 100;
+
+            document.getElementById('result').innerHTML = `
+                <strong>Miter:</strong> ${miter}° <br>
+                <strong>Bevel:</strong> ${bevel}° <br>
+                <strong>Install Method:</strong> ${installMethod === "nested" ? "Nested (held at install angle)" : "Flat (laid on saw table)"} 
+            `;
+        }
+    </script>
+</body>
+</html>
