@@ -139,6 +139,7 @@
         <div class="input-group">
             <label for="wall-angle">Wall Angle (degrees):</label>
             <input type="number" id="wall-angle" min="1" max="180" value="90" step="1">
+            <small style="display: block; margin-top: 5px; color: #666;">For standard corners enter 90°. For 45° corners (octagon) enter 135°.</small>
         </div>
         
         <div class="spring-angle-group">
@@ -173,8 +174,8 @@
             <h3>How to Use This Calculator</h3>
             <p><strong>NESTED CUT:</strong> Put the crown upside down against the fence, just like it sits against the wall and ceiling. Set your miter to the NESTED CUT number and bevel to ZERO. Most crews do it this way.</p>
             <p><strong>FLAT CUT:</strong> Lay the crown flat on the saw table. Set your miter to the FLAT MITER number and bevel to the FLAT BEVEL number. Good for wider crown that won't fit nested against the fence.</p>
+            <p><strong>WALL ANGLE:</strong> Enter 90° for standard square corners, 135° for 45° corners, and 120° for 60° corners. The wall angle is how many degrees the walls form (measured on the outside of the corner).</p>
             <p><strong>SPRING ANGLE:</strong> That's just the angle between the back of the crown and the wall. Standard is 38°. If you don't know, it's probably 38°.</p>
-            <p><strong>PRO TIP:</strong> For regular 90° corners (like most rooms), just set your saw to 45° miter and 0° bevel with the crown nested against the fence. Done.</p>
         </div>
     </div>
     
@@ -198,28 +199,27 @@
                 return;
             }
             
-            // Calculate nested cut (simple)
-            const nestedMiter = (180 - wallAngle) / 2;
+            // Calculate nested cut
+            const nestedMiter = wallAngle / 2;
             
-            // Calculate flat cut (more complex)
+            // Calculate flat cut values
             let flatMiter, flatBevel;
             
-            if (wallAngle === 90) {
-                // Standard 90° corner - common formulas
-                flatMiter = toDegrees(Math.atan(1 / Math.tan(toRadians(springAngle))));
-                flatBevel = toDegrees(Math.atan(Math.cos(toRadians(flatMiter)) * Math.tan(toRadians(springAngle))));
-            } else {
-                // Non-90° corner
-                const cornerAngle = 180 - wallAngle;
-                const springRadians = toRadians(springAngle);
-                
-                const tanCorner = Math.tan(toRadians(cornerAngle / 2));
-                const tanSpring = Math.tan(springRadians);
-                const cosSpring = Math.cos(springRadians);
-                
-                flatMiter = toDegrees(Math.atan(tanCorner / tanSpring));
-                flatBevel = toDegrees(Math.atan(cosSpring * tanCorner));
-            }
+            // Calculate using standard formulas for the specified wall angle
+            const cornerAngle = wallAngle; // Using the wall angle directly
+            const cornerHalf = cornerAngle / 2;
+            const springRad = toRadians(springAngle);
+            
+            // For flat crown molding
+            const sinCornerHalf = Math.sin(toRadians(cornerHalf));
+            const cosCornerHalf = Math.cos(toRadians(cornerHalf));
+            const tanCornerHalf = Math.tan(toRadians(cornerHalf));
+            
+            // Calculate the compound miter (flat crown)
+            flatMiter = toDegrees(Math.atan(sinCornerHalf / (cosCornerHalf * Math.sin(springRad))));
+            
+            // Calculate the compound bevel (flat crown)
+            flatBevel = toDegrees(Math.atan(sinCornerHalf / (Math.cos(springRad) * tanCornerHalf)));
             
             // Round to 1 decimal place
             const nestedMiterRounded = Math.round(nestedMiter * 10) / 10;
