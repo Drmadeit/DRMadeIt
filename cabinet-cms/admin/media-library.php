@@ -31,7 +31,7 @@ include 'includes/sidebar.php';
     <div class="page-header">
         <h1>Media Library</h1>
         <div class="header-actions">
-            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">+ Upload Images</button>
+            <a href="../index.php" target="_blank" class="btn btn-secondary">View Site ↗</a>
         </div>
     </div>
 
@@ -49,6 +49,12 @@ include 'includes/sidebar.php';
     </div>
 
     <div class="card-grid images-grid" id="imagesGrid">
+        <!-- Upload Card (Always First) -->
+        <div class="image-card add-card" onclick="document.getElementById('fileInput').click()" style="cursor: pointer;">
+            <div class="add-icon">📤</div>
+            <div class="add-label">Upload Images</div>
+        </div>
+
         <?php foreach ($images as $img): ?>
             <div class="image-card" data-id="<?= $img['id'] ?>">
                 <img src="../uploads/<?= esc_html($img['thumbnail']) ?>" alt="Image">

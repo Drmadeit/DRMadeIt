@@ -509,22 +509,33 @@ body {
     font-weight: 500;
 }
 
-.card-overlay {
+/* Clickable card cursor */
+.clickable-card {
+    cursor: pointer;
+}
+
+.clickable-card:hover {
+    cursor: pointer;
+}
+
+/* Card overlay (only for image cards in media library) */
+.image-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.85);
+    bottom: 40px;
+    background: rgba(0,0,0,0.8);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     opacity: 0;
     transition: opacity 0.2s;
 }
 
-.grid-card:hover .card-overlay {
+.image-card:hover .image-overlay {
     opacity: 1;
 }
 
@@ -538,6 +549,7 @@ body {
     font-weight: 500;
     border: none;
     cursor: pointer;
+    width: 80%;
 }
 
 .overlay-btn:hover {
@@ -564,7 +576,8 @@ body {
     line-height: 1;
 }
 
-.grid-card:hover .delete-btn {
+.grid-card:hover .delete-btn,
+.image-card:hover .delete-btn {
     opacity: 1;
 }
 

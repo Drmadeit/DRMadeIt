@@ -55,7 +55,7 @@ include 'includes/sidebar.php';
     <div class="page-header">
         <h1>Jobs</h1>
         <div class="header-actions">
-            <a href="job-editor.php" class="btn btn-primary">+ Add New Job</a>
+            <a href="../index.php" target="_blank" class="btn btn-secondary">View Site ↗</a>
         </div>
     </div>
 
@@ -76,7 +76,7 @@ include 'includes/sidebar.php';
 
         <!-- Existing Jobs -->
         <?php foreach ($jobs as $job): ?>
-            <div class="grid-card" data-id="<?= $job['id'] ?>">
+            <a href="job-editor.php?id=<?= $job['id'] ?>" class="grid-card clickable-card" data-id="<?= $job['id'] ?>">
                 <div class="card-image">
                     <?php if ($job['first_image']): ?>
                         <img src="../uploads/<?= esc_html($job['first_image']) ?>" alt="<?= esc_html($job['name']) ?>">
@@ -92,11 +92,8 @@ include 'includes/sidebar.php';
                     </div>
                 </div>
 
-                <div class="card-overlay">
-                    <a href="job-editor.php?id=<?= $job['id'] ?>" class="overlay-btn">Edit</a>
-                    <button class="delete-btn" onclick="deleteJob(<?= $job['id'] ?>, '<?= esc_html($job['name']) ?>', <?= $job['image_count'] ?>)">×</button>
-                </div>
-            </div>
+                <button class="delete-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteJob(<?= $job['id'] ?>, '<?= esc_html($job['name']) ?>', <?= $job['image_count'] ?>)">×</button>
+            </a>
         <?php endforeach; ?>
 
         <?php if (empty($jobs)): ?>

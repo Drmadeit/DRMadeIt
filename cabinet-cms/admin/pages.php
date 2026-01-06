@@ -44,7 +44,7 @@ include 'includes/sidebar.php';
     <div class="page-header">
         <h1>Pages</h1>
         <div class="header-actions">
-            <a href="page-editor.php" class="btn btn-primary">+ Add New Page</a>
+            <a href="../index.php" target="_blank" class="btn btn-secondary">View Site ↗</a>
         </div>
     </div>
 
@@ -65,7 +65,7 @@ include 'includes/sidebar.php';
 
         <!-- Existing Pages -->
         <?php foreach ($pages as $page): ?>
-            <div class="grid-card" data-id="<?= $page['id'] ?>">
+            <a href="page-editor.php?id=<?= $page['id'] ?>" class="grid-card clickable-card" data-id="<?= $page['id'] ?>">
                 <div class="card-image">
                     <?php if ($page['hero_image']): ?>
                         <img src="../uploads/<?= esc_html($page['hero_image']) ?>" alt="<?= esc_html($page['title']) ?>">
@@ -89,13 +89,10 @@ include 'includes/sidebar.php';
                     </div>
                 </div>
 
-                <div class="card-overlay">
-                    <a href="page-editor.php?id=<?= $page['id'] ?>" class="overlay-btn">Edit</a>
-                    <?php if (!$page['is_homepage']): ?>
-                        <button class="delete-btn" onclick="deletePage(<?= $page['id'] ?>, '<?= esc_html($page['title']) ?>')">×</button>
-                    <?php endif; ?>
-                </div>
-            </div>
+                <?php if (!$page['is_homepage']): ?>
+                    <button class="delete-btn" onclick="event.preventDefault(); event.stopPropagation(); deletePage(<?= $page['id'] ?>, '<?= esc_html($page['title']) ?>')">×</button>
+                <?php endif; ?>
+            </a>
         <?php endforeach; ?>
 
         <?php if (empty($pages)): ?>
