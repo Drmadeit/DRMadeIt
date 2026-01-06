@@ -98,6 +98,12 @@ if (empty($path) || $path === 'index.php') {
     $page = $stmt->fetch();
 
     if ($page) {
+        // If this page is the homepage, redirect to root to avoid duplicate content
+        if ($page['is_homepage']) {
+            header('Location: ' . get_base_url() . '/', 301);
+            exit;
+        }
+
         $page_type = 'page';
         include __DIR__ . '/views/page.php';
     } else {
