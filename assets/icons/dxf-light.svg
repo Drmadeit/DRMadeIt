@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><style>:root{--bg:#f6f4ef;--fg:#111113;--mu:#a3a3a8;--ac:#d7141e}.bg{fill:var(--bg)}.fg{stroke:var(--fg)}.mu{stroke:var(--mu)}.ac{stroke:var(--ac)}.acf{fill:var(--ac)}.dot{fill:var(--fg)}.acd{fill:var(--ac)}.t{fill:var(--fg);stroke:none;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;font-weight:800}</style><rect class="bg" width="512" height="512"/>
+<path d="M256 92 L402 176 V336 L256 420 L110 336 V176 L210 118" class="fg" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+<path d="M210 118 L256 92" class="ac" stroke-width="24" stroke-linecap="round" stroke-dasharray="2 22"/>
+<g class="dot"><circle cx="402" cy="176" r="20"/><circle cx="402" cy="336" r="20"/><circle cx="256" cy="420" r="20"/><circle cx="110" cy="336" r="20"/><circle cx="110" cy="176" r="20"/></g>
+<g class="acd"><circle cx="256" cy="92" r="22"/><circle cx="210" cy="118" r="22"/></g>
+<text x="256" y="292" class="fg t" font-size="96" text-anchor="middle">DXF</text></svg>

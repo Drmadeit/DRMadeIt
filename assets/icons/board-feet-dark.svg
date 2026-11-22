@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><style>:root{--bg:#0b0b0c;--fg:#f4f4f5;--mu:#6b6b72;--ac:#e3262e}.bg{fill:var(--bg)}.fg{stroke:var(--fg)}.mu{stroke:var(--mu)}.ac{stroke:var(--ac)}.acf{fill:var(--ac)}.dot{fill:var(--fg)}.acd{fill:var(--ac)}.t{fill:var(--fg);stroke:none;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;font-weight:800}</style><rect class="bg" width="512" height="512"/>
+<path d="M84 220 L300 132 L428 178 L212 266 Z" class="fg" stroke-width="20" stroke-linejoin="round" fill="none"/>
+<path d="M84 220 V330 L212 376 V266" class="fg" stroke-width="20" stroke-linejoin="round" fill="none"/>
+<path d="M212 376 L428 288 V178" class="fg" stroke-width="20" stroke-linejoin="round" fill="none"/>
+<ellipse cx="148" cy="298" rx="20" ry="26" class="ac" stroke-width="10" fill="none"/>
+<ellipse cx="148" cy="298" rx="40" ry="52" class="ac" stroke-width="10" fill="none" clip-path="url(#endc)"/>
+<clipPath id="endc"><path d="M84 220 L212 266 V376 L84 330 Z"/></clipPath></svg>

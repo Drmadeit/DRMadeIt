@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><style>:root{--bg:#f6f4ef;--fg:#111113;--mu:#a3a3a8;--ac:#d7141e}@media (prefers-color-scheme: dark){:root{--bg:#0b0b0c;--fg:#f4f4f5;--mu:#6b6b72;--ac:#e3262e}}.bg{fill:var(--bg)}.fg{stroke:var(--fg)}.mu{stroke:var(--mu)}.ac{stroke:var(--ac)}.acf{fill:var(--ac)}.dot{fill:var(--fg)}.acd{fill:var(--ac)}.t{fill:var(--fg);stroke:none;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;font-weight:800}</style><rect class="bg" width="512" height="512" rx="112"/>
+<rect x="112" y="84" width="288" height="344" rx="10" class="fg" stroke-width="24" fill="none"/>
+<path d="M112 198 H400 M112 314 H400" class="fg" stroke-width="22"/>
+<path d="M452 104 V180 M452 218 V296 M452 334 V410" class="ac" stroke-width="12" stroke-linecap="round"/>
+<path d="M436 120 l16 -18 l16 18 M436 164 l16 18 l16 -18 M436 234 l16 -18 l16 18 M436 280 l16 18 l16 -18 M436 350 l16 -18 l16 18 M436 394 l16 18 l16 -18" class="ac" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>

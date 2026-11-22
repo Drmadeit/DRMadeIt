@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><style>:root{--bg:#0b0b0c;--fg:#f4f4f5;--mu:#6b6b72;--ac:#e3262e}.bg{fill:var(--bg)}.fg{stroke:var(--fg)}.mu{stroke:var(--mu)}.ac{stroke:var(--ac)}.acf{fill:var(--ac)}.dot{fill:var(--fg)}.acd{fill:var(--ac)}.t{fill:var(--fg);stroke:none;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;font-weight:800}</style><rect class="bg" width="512" height="512"/>
+<path d="M128 96 V400 H420" class="fg" stroke-width="30" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+<path d="M128 344 H184 V400" class="fg" stroke-width="14" fill="none"/>
+<path d="M128 96 L420 400" class="ac" stroke-width="26" stroke-linecap="round" stroke-dasharray="34 26" fill="none"/></svg>
