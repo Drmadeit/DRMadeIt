@@ -10,15 +10,9 @@ body { font: 16px/1.3 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; 
 }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .brand { color: var(--text); text-decoration: none; font-weight: 700; letter-spacing: .5px; }
-.simp {
-  min-height: 40px; padding: 0 16px; border: 1.5px solid #3b3b3f; border-radius: 10px; background: none;
-  color: var(--muted); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
-}
-.simp[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
-.simp[aria-pressed="true"]::before { content: "✓ "; }
-.prec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #1b1b1d; border-radius: 10px; padding: 3px; gap: 2px; margin-top: 8px; }
-.prec button { min-height: 40px; padding: 0 8px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-family: inherit; font-size: 14px; font-weight: 600; }
-.prec button[aria-checked="true"] { background: var(--text); color: var(--bg); }
+.prec { display: flex; background: #1b1b1d; border-radius: 10px; padding: 3px; gap: 2px; }
+.prec button { min-height: 40px; min-width: 50px; padding: 0 8px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-family: inherit; font-size: 14px; font-weight: 600; }
+.prec button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
 
 .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px 4px 10px; text-align: right; }
 .history { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; justify-content: flex-end; }

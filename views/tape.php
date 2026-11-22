@@ -19,14 +19,13 @@
 <main class="app" data-version="<?= e($version) ?>">
   <header class="bar">
     <a class="brand" href="/calc" aria-label="All shop calculators">Fractions</a>
-    <button type="button" class="simp" id="simplify" aria-pressed="false">Simplify</button>
+    <div class="prec" role="group" aria-label="Show answers in this size. Tap again to go back to simplified.">
+      <button type="button" aria-pressed="false" data-prec="8">1/8</button>
+      <button type="button" aria-pressed="false" data-prec="16">1/16</button>
+      <button type="button" aria-pressed="false" data-prec="32">1/32</button>
+      <button type="button" aria-pressed="false" data-prec="64">1/64</button>
+    </div>
   </header>
-  <div class="prec" role="radiogroup" aria-label="Round to">
-    <button type="button" role="radio" data-prec="8">1/8</button>
-    <button type="button" role="radio" data-prec="16">1/16</button>
-    <button type="button" role="radio" data-prec="32">1/32</button>
-    <button type="button" role="radio" data-prec="64">1/64</button>
-  </div>
 
   <section class="screen" aria-live="polite">
     <ol class="history" id="history" aria-label="Past answers"></ol>

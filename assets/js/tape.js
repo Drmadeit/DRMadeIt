@@ -11,7 +11,10 @@
   let expr = '';
   let fresh = false;                 // just pressed = : a digit starts over, an operator keeps going
   let ans = null;                    // { text, value } so chaining uses the exact value, not the rounded one
-  let prec = store.get('prec', 16);
+  // Size buttons are on/off. On (e.g. 1/16): answers show in that size, not simplified (1/2 = 8/16).
+  // Off (nothing picked): regular simplified fractions, rounded to the nearest 1/16 like a tape.
+  const REGULAR = 16;
+  let pick = store.get('pick', 0);
   let history = store.get('history', []);
 
   const lastToken = () => expr.split(/ [+−×÷] /).pop();
@@ -28,22 +31,20 @@
     return C.evalLen(t);
   }
 
-  // Answers show in the size picked at the top (11/16 at 1/64 = 44/64) unless Simplify is on (= 11/16).
-  let simplify = store.get('simplify', false);
-  const opts = () => ({ keepDenom: !simplify });
-  const fmt = (x) => C.fmtIn(x, prec, opts());
-  const plain = (x) => C.fmtIn(x, prec, { ...opts(), noMark: true }).replace('"', '');
+  const size = () => pick || REGULAR;
+  const opts = () => ({ keepDenom: pick > 0 });
+  const fmt = (x) => C.fmtIn(x, size(), opts());
+  const plain = (x) => C.fmtIn(x, size(), { ...opts(), noMark: true }).replace('"', '');
 
   function render() {
     $('expr').textContent = expr || ' ';
     const x = value();
     const shown = isFinite(x) ? x : (fresh && ans ? ans.value : 0);
     $('result').textContent = fmt(shown);
-    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, prec, opts()) : '';
+    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, size(), opts()) : '';
     $('dec').textContent = (+shown.toFixed(4)) + '"';
     $('mm').textContent = (+(shown * 25.4).toFixed(1)) + ' mm';
-    document.querySelectorAll('[data-prec]').forEach((b) => b.setAttribute('aria-checked', String(+b.dataset.prec === prec)));
-    $('simplify').setAttribute('aria-pressed', String(simplify));
+    document.querySelectorAll('[data-prec]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.prec === pick)));
     const list = $('history');
     list.innerHTML = '';
     history.slice(-30).forEach((h) => {
@@ -126,19 +127,12 @@
     b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(b.dataset.k); } });
   });
   document.querySelectorAll('[data-prec]').forEach((b) => b.addEventListener('click', () => {
-    prec = +b.dataset.prec;
-    store.set('prec', prec);
+    pick = pick === +b.dataset.prec ? 0 : +b.dataset.prec; // tap again to turn it off
+    store.set('pick', pick);
     if (ans) ans.text = plain(ans.value);
     if (fresh && ans) expr = ans.text;
     render();
   }));
-  $('simplify').addEventListener('click', () => {
-    simplify = !simplify;
-    store.set('simplify', simplify);
-    if (ans) ans.text = plain(ans.value);
-    if (fresh && ans) expr = ans.text;
-    render();
-  });
   $('result').addEventListener('click', async () => {
     const text = $('result').textContent.replace(/ [+−]$/, '');
     try { await navigator.clipboard.writeText(text); flash('Copied ' + text); } catch { flash(text); }
