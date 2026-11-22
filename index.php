@@ -46,15 +46,13 @@ $q = function (string $sql, array $args = []): PDOStatement {
     return $st;
 };
 
-// ---- Home + About ----
+// ---- Home (About is a regular page now, made in Admin → Pages) ----
 if ($path === '/') {
     render('home', [
         'links' => $q('SELECT * FROM links WHERE visible = 1 ORDER BY sort_order, id')->fetchAll(),
         'videos' => setting('videos_on_home') === '1' ? videos_for_site(3) : [],
         'isHome' => true,
     ]);
-} elseif ($path === '/about') {
-    render('about', ['title' => setting('about_title', 'About'), 'ogImage' => setting('about_image') ? img_url(setting('about_image')) : '']);
 
 // ---- Tool lists ----
 } elseif ($path === '/tools') {

@@ -47,4 +47,3 @@ $names = [0 => 'No category'] + array_column($cats, 'name', 'id');
 <?php if (!$pages && !$cats): ?>
   <p class="a-hint">No pages yet. A <b>page</b> has a title, text, photos and buttons. A <b>category</b> groups pages into a photo grid, like a portfolio (e.g. "Builds" → "Reaper Trailer", "Shop Cart").</p>
 <?php endif; ?>
-<p class="a-hint">Your About page is in Settings.</p>

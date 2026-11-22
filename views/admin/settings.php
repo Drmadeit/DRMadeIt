@@ -10,7 +10,7 @@ $photo = function (string $key, string $label, string $hint = '') {
         <span class="a-btn a-btn-outline"><?= $cur ? 'Change' : 'Upload' ?></span>
         <input type="file" name="<?= e($key) ?>" accept="image/*" data-preview>
       </label>
-      <?php if ($cur): ?><label class="a-check"><input type="checkbox" name="remove_<?= e($key) ?>" value="1"> Remove (use default)</label><?php endif; ?>
+      <?php if ($cur): ?><button type="button" class="a-btn a-btn-outline a-remove" data-remove-photo="remove_<?= e($key) ?>" data-confirm-text="Remove this photo? The site goes back to the default one.">Remove photo</button><?php endif; ?>
     </div>
     <?php
 };
@@ -41,14 +41,9 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
   </section>
 
   <section class="a-card a-form">
-    <h2>About page</h2>
-    <?= $field('about_title', 'Page title') ?>
-    <label>Story <textarea name="about_text" rows="8"><?= e(setting('about_text')) ?></textarea></label>
-    <p class="a-hint">Leave a blank line between paragraphs.</p>
-    <?php $photo('about_image', 'Photo'); ?>
-    <?= $field('business_name', 'Business name', 'text', 'Raleigh Cabinets') ?>
-    <?= $field('business_url', 'Business link', 'url', 'https://…') ?>
-    <?= $field('contact_email', 'Contact email', 'email') ?>
+    <h2>Contact</h2>
+    <?= $field('contact_email', 'Your email', 'email') ?>
+    <p class="a-hint">Used for test emails. Your About page is now in <a href="/admin/pages">Pages</a>.</p>
   </section>
 
   <section class="a-card a-form" id="email">

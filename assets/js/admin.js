@@ -60,6 +60,19 @@
       if (!confirm(f.dataset.confirm)) ev.preventDefault();
     });
   });
+  // ---- One-tap "Remove photo": saves the form with the remove flag (a plain button, so Enter never triggers it) ----
+  document.querySelectorAll('[data-remove-photo]').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (!confirm(b.dataset.confirmText || 'Remove this photo?')) return;
+      const flag = document.createElement('input');
+      flag.type = 'hidden';
+      flag.name = b.dataset.removePhoto;
+      flag.value = '1';
+      b.form.appendChild(flag);
+      b.form.querySelectorAll('input[type=file]').forEach((f) => { f.value = ''; }); // don't upload a photo at the same moment
+      b.form.requestSubmit ? b.form.requestSubmit() : b.form.submit();
+    });
+  });
 
   // ---- Shrink photos on the phone before upload (fast on weak signal, under upload limits) ----
   const shrink = (file, max = 2000) => new Promise((resolve) => {

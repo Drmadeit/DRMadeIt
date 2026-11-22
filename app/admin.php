@@ -380,14 +380,14 @@ function save_videos(): void
 }
 
 const TEXT_SETTINGS = [
-    'site_name', 'bio', 'footer_text', 'about_title', 'about_text', 'contact_email', 'business_name', 'social_music_label',
+    'site_name', 'bio', 'footer_text', 'contact_email', 'social_music_label',
     'amazon_tag', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_port', 'smtp_user',
     'license_personal', 'license_commercial',
 ];
 const URL_SETTINGS = [
-    'social_tiktok', 'social_instagram', 'social_youtube', 'social_facebook', 'social_x', 'social_music', 'business_url',
+    'social_tiktok', 'social_instagram', 'social_youtube', 'social_facebook', 'social_x', 'social_music',
 ];
-const IMAGE_SETTINGS = ['logo_image', 'hero_image', 'about_image'];
+const IMAGE_SETTINGS = ['logo_image', 'hero_image'];
 
 function save_settings(): void
 {

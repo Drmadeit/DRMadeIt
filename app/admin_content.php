@@ -283,7 +283,8 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
     $h .= '<label class="a-file"><span class="a-btn a-btn-outline">' . ($current !== '' ? 'Change photo' : 'Add photo') . '</span>'
         . '<input type="file" name="' . e($name) . '" accept="image/*" data-preview></label>';
     if ($current !== '') {
-        $h .= '<label class="a-check"><input type="checkbox" name="' . e($removeName) . '" value="1"> Remove photo</label>';
+        // A real button: one tap removes the photo and saves (no checkbox + Save step).
+        $h .= '<button type="button" class="a-btn a-btn-outline a-remove" data-remove-photo="' . e($removeName) . '" data-confirm-text="Remove this photo?">Remove photo</button>';
     }
     return $h . '</div>';
 }

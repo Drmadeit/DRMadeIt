@@ -106,6 +106,29 @@ function migrate(PDO $pdo): void
             // /calc is now the Fractions app; the calculator list moved to /toolbox
             $pdo->exec("UPDATE links SET url = '/toolbox', title = CASE WHEN title = 'Shop Calculators' THEN 'Toolbox' ELSE title END WHERE url = '/calc'");
         },
+        7 => function (PDO $pdo): void {
+            // About moves from Settings to a regular page at /about, keeping its text, photo, business link and email.
+            if ($pdo->query("SELECT 1 FROM pages WHERE slug = 'about'")->fetchColumn()) {
+                return;
+            }
+            $s = [];
+            foreach ($pdo->query('SELECT key, value FROM settings') as $r) {
+                $s[$r['key']] = (string) $r['value'];
+            }
+            $buttons = [];
+            if (($s['business_url'] ?? '') !== '') {
+                $buttons[] = ['label' => ($s['business_name'] ?? '') ?: 'My business', 'url' => $s['business_url']];
+            }
+            if (($s['contact_email'] ?? '') !== '') {
+                $buttons[] = ['label' => 'Email me', 'url' => 'mailto:' . $s['contact_email']];
+            }
+            $img = $s['about_image'] ?? '';
+            $pdo->prepare('INSERT INTO pages (title, slug, body, cover, buttons, visible, sort_order) VALUES (?, ?, ?, ?, ?, 1, -1)')
+                ->execute([($s['about_title'] ?? '') ?: 'About Me', 'about', $s['about_text'] ?? '', $img, json_encode($buttons)]);
+            if ($img !== '') {
+                $pdo->prepare('INSERT INTO page_photos (page_id, image, sort_order) VALUES (?, ?, 0)')->execute([(int) $pdo->lastInsertId(), $img]);
+            }
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
