@@ -35,7 +35,7 @@ function pages_admin_routes(): array
             admin_render('pages', ['cats' => live_categories(), 'pages' => $pages, 'tab' => 'pages', 'title' => 'Pages']);
         },
         'GET /admin/pages/new' => fn () => admin_render('page_edit', [
-            'page' => ['id' => 0, 'title' => '', 'slug' => '', 'body' => '', 'cover' => '', 'buttons' => '[]', 'visible' => 1,
+            'page' => ['id' => 0, 'title' => '', 'slug' => '', 'body' => '', 'videos' => '', 'cover' => '', 'buttons' => '[]', 'visible' => 1,
                 'category_id' => (int) ($_GET['category'] ?? 0) ?: null, 'cat_slug' => null],
             'photos' => [], 'cats' => live_categories(), 'tab' => 'pages', 'title' => 'New page']),
         'GET /admin/pages/(\d+)' => function ($id) {
@@ -127,6 +127,7 @@ function save_page(): void
         'slug' => unique_public_slug((string) ($_POST['slug'] ?? '') ?: $title, 'pages', $id),
         'category_id' => $catId,
         'body' => trim((string) ($_POST['body'] ?? '')),
+        'videos' => trim((string) ($_POST['videos'] ?? '')),
         'buttons' => json_encode($buttons),
         'visible' => empty($_POST['visible']) ? 0 : 1,
     ];
@@ -134,8 +135,8 @@ function save_page(): void
         $sets = implode(', ', array_map(fn ($k) => "$k = :$k", array_keys($vals)));
         db()->prepare("UPDATE pages SET $sets WHERE id = :id")->execute($vals + ['id' => $id]);
     } else {
-        db()->prepare('INSERT INTO pages (title, slug, category_id, body, buttons, visible, sort_order)
-            VALUES (:title, :slug, :category_id, :body, :buttons, :visible, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM pages))')->execute($vals);
+        db()->prepare('INSERT INTO pages (title, slug, category_id, body, videos, buttons, visible, sort_order)
+            VALUES (:title, :slug, :category_id, :body, :videos, :buttons, :visible, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM pages))')->execute($vals);
         $id = (int) db()->lastInsertId();
     }
 
@@ -161,7 +162,11 @@ function save_page(): void
     if ($added && !empty($_POST['first_is_cover'])) {
         db()->prepare('UPDATE pages SET cover = ? WHERE id = ?')->execute([$added[0], $id]);
     }
-    flash(($errors ? 'Saved, but some photos failed. ' . implode(' ', $errors) : 'Saved.') . ($added ? ' Added ' . count($added) . ' photo' . (count($added) > 1 ? 's' : '') . '.' : ''));
+    $bad = array_filter(array_map('trim', preg_split('/\R/', $vals['videos'])), fn ($l) => $l !== '' && !youtube_video_id($l));
+    if ($bad) {
+        $errors[] = "Not a YouTube video link: " . '"' . implode('", "', $bad) . '".';
+    }
+    flash(($errors ? 'Saved, but: ' . implode(' ', $errors) : 'Saved.') . ($added ? ' Added ' . count($added) . ' photo' . (count($added) > 1 ? 's' : '') . '.' : ''));
     redirect("/admin/pages/$id");
 }
 

@@ -50,6 +50,18 @@ function page_cover(array $page): string
     return (string) ($st->fetchColumn() ?: '');
 }
 
+/** YouTube video IDs from the page's video box (one link per line). */
+function page_videos(array $page): array
+{
+    $ids = [];
+    foreach (preg_split('/\R/', (string) ($page['videos'] ?? '')) as $line) {
+        if ($id = youtube_video_id($line)) {
+            $ids[$id] = $id;
+        }
+    }
+    return array_values($ids);
+}
+
 function page_buttons(array $page): array
 {
     $b = json_decode($page['buttons'] ?: '[]', true);

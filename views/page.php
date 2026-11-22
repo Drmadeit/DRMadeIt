@@ -13,6 +13,10 @@ $buttons = page_buttons($page);
   <h1 class="page-title"><?= e($page['title']) ?></h1>
   <?php if ($page['body']): ?><div class="prose"><?= paragraphs($page['body']) ?></div><?php endif; ?>
 
+  <?php foreach (page_videos($page) as $vid): ?>
+    <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/<?= e($vid) ?>" title="<?= e($page['title']) ?> video" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+  <?php endforeach; ?>
+
   <?php if ($buttons): ?>
   <div class="stack">
     <?php foreach ($buttons as $i => $b): ?>

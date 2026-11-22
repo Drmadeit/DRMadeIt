@@ -94,6 +94,10 @@ function migrate(PDO $pdo): void
                 image TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT);
             SQL);
         },
+        4 => function (PDO $pdo): void {
+            // YouTube links that play on the page (one per line)
+            $pdo->exec("ALTER TABLE pages ADD COLUMN videos TEXT NOT NULL DEFAULT ''");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

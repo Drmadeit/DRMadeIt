@@ -24,6 +24,16 @@
     <p class="a-hint">Leave a blank line between paragraphs.</p>
   </section>
 
+  <section class="a-card a-form">
+    <h2>YouTube video</h2>
+    <label>Paste the video link <small>(more than one? one per line)</small>
+      <textarea name="videos" rows="2" autocapitalize="none" placeholder="https://youtu.be/…"><?= e($page['videos'] ?? '') ?></textarea></label>
+    <p class="a-hint">In the YouTube app: Share → Copy link. The video plays right on the page.</p>
+    <?php foreach (page_videos($page) as $vid): ?>
+      <img src="<?= e(youtube_thumb($vid)) ?>" alt="Video preview" width="160" height="90" style="border-radius:6px;object-fit:cover">
+    <?php endforeach; ?>
+  </section>
+
   <section class="a-card a-form" id="add-photos">
     <h2>Add photos</h2>
     <label class="a-file"><span class="a-btn a-btn-outline">Choose photos</span><input type="file" name="photos[]" accept="image/*" multiple data-count data-shrink></label>
