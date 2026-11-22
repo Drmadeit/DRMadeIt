@@ -68,7 +68,7 @@ function short_admin_routes(): array
     return [
         'GET /admin/short' => fn () => admin_render('short', [
             'links' => db()->query('SELECT * FROM short_links ORDER BY id DESC')->fetchAll(),
-            'tab' => 'home', 'title' => 'Short links']),
+            'tab' => 'more', 'title' => 'Short links']),
         'POST /admin/short/save' => function () {
             $id = (int) ($_POST['id'] ?? 0);
             $url = clean_url((string) ($_POST['url'] ?? ''));

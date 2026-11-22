@@ -1,5 +1,5 @@
 <?php if ($mailErr = setting('mail_error')): ?>
-  <a class="a-alert" href="/admin/settings#email"><b>Download emails aren't sending.</b> <?= e($mailErr) ?><br>People still get their file on the page. Tap to fix in Settings → Email.</a>
+  <a class="a-alert" href="/admin/settings/email"><b>Download emails aren't sending.</b> <?= e($mailErr) ?><br>People still get their file on the page. Tap to fix.</a>
 <?php endif; ?>
 <div class="a-stats">
   <div class="a-stat"><b><?= $downloadsWeek ?></b><span>downloads this week</span></div>
@@ -25,9 +25,4 @@
   </ol>
 </section>
 
-<nav class="a-card a-menu" aria-label="More">
-  <a href="/admin/emails"><?= icon('mail', 22) ?> Emails <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
-  <a href="/admin/short"><?= icon('link', 22) ?> Short links <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
-  <a href="/admin/videos"><?= icon('youtube', 22) ?> Videos <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
-  <a href="/admin/settings"><?= icon('sliders', 22) ?> Settings &amp; backup <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
-</nav>
+

@@ -1,24 +1,25 @@
 <?php
+// One settings screen at a time; the list of screens is on the More tab.
 $photo = function (string $key, string $label, string $hint = '', string $aspect = 'original') {
     echo photo_field($key, setting($key), $label, $hint, 'remove_' . $key, $aspect);
 };
 $field = fn (string $key, string $label, string $type = 'text', string $ph = '') =>
     '<label>' . e($label) . ' <input type="' . ($type === 'url' ? 'text' : $type) . '" name="' . e($key) . '" value="' . e(setting($key)) . '" placeholder="' . e($ph) . '"' . ($type === 'url' ? ' autocapitalize="none" inputmode="url"' : '') . '></label>';
 ?>
-<form method="post" enctype="multipart/form-data" class="a-form">
+<a class="a-back" href="/admin/more">‹ More</a>
+
+<?php if (in_array($section, ['profile', 'social', 'email', 'amazon', 'licenses', 'footer'], true)): ?>
+<form method="post" action="/admin/settings/<?= e($section) ?>" enctype="multipart/form-data" class="a-card a-form">
   <?= csrf_field() ?>
 
-  <section class="a-card a-form">
-    <h2>Profile</h2>
+  <?php if ($section === 'profile'): ?>
     <?= $field('site_name', 'Name') ?>
-    <?= $field('bio', 'One-line bio') ?>
-    <?php $photo('logo_image', 'Logo', 'Square works best. Removing it brings back the default logo.', '1'); ?>
-    <?php $photo('hero_image', 'Header photo', 'The wide photo behind the logo.', '16/9'); ?>
-  </section>
+    <?= $field('bio', 'One-line bio', 'text', 'Cabinets, CNC and shop builds.') ?>
+    <?php $photo('hero_image', 'Header photo', 'Leave empty to use your carved-board background.', '16/9'); ?>
+    <?php $photo('logo_image', 'Small logo', 'Shows at the top of inner pages and in browser tabs. Square works best.', '1'); ?>
 
-  <section class="a-card a-form">
-    <h2>Social links</h2>
-    <p class="a-hint">Leave blank to hide an icon.</p>
+  <?php elseif ($section === 'social'): ?>
+    <p class="a-hint">Leave a box empty to hide that icon.</p>
     <?= $field('social_tiktok', 'TikTok', 'url', 'https://www.tiktok.com/@…') ?>
     <?= $field('social_instagram', 'Instagram', 'url', 'https://www.instagram.com/…') ?>
     <?= $field('social_youtube', 'YouTube', 'url', 'https://www.youtube.com/@…') ?>
@@ -26,75 +27,61 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <?= $field('social_x', 'X', 'url', 'https://x.com/…') ?>
     <?= $field('social_music', 'Music link', 'url', 'Spotify / Apple Music link') ?>
     <?= $field('social_music_label', 'Music label', 'text', 'Spotify') ?>
-  </section>
 
-  <section class="a-card a-form">
-    <h2>Contact</h2>
-    <?= $field('contact_email', 'Your email', 'email') ?>
-    <p class="a-hint">Used for test emails. Your About page is now in <a href="/admin/pages">Pages</a>.</p>
-  </section>
-
-  <section class="a-card a-form" id="email">
-    <h2>Email (free download links)</h2>
+  <?php elseif ($section === 'email'): ?>
     <?php if ($mailErr = setting('mail_error')): ?><p class="a-error"><b>Last try failed:</b> <?= e($mailErr) ?></p><?php endif; ?>
-    <p class="a-hint"><b>Your email is on Google</b>, so use: SMTP server <code>smtp.gmail.com</code>, port <code>465</code>, username = your full Google email, password = a Google <b>App Password</b> (Google Account → Security → 2-Step Verification → App passwords). Send-from address = that same email or one of its aliases.</p>
-    <?= $field('mail_from', 'Send from address', 'email', 'files@drmadeit.com') ?>
+    <?= $field('contact_email', 'Your email (test emails go here)', 'email') ?>
+    <?= $field('mail_from', 'Send from address', 'email', 'you@drmadeit.com') ?>
     <?= $field('mail_from_name', 'Send from name', 'text', 'D.R. Made It') ?>
     <div class="a-grid2">
-      <?= $field('smtp_host', 'SMTP server', 'text', 'smtp.hostinger.com') ?>
+      <?= $field('smtp_host', 'SMTP server', 'text', 'smtp.gmail.com') ?>
       <?= $field('smtp_port', 'Port', 'text', '465') ?>
     </div>
-    <?= $field('smtp_user', 'SMTP username', 'text', 'Usually the same as the address') ?>
-    <label>SMTP password <small>(the mailbox password<?= setting('smtp_pass') !== '' ? ' — saved; leave blank to keep' : '' ?>)</small>
+    <?= $field('smtp_user', 'SMTP username', 'text', 'Your full Google email') ?>
+    <label>SMTP password <small>(Google App Password<?= setting('smtp_pass') !== '' ? ', saved; leave blank to keep' : '' ?>)</small>
       <input type="password" name="smtp_pass" autocomplete="new-password"></label>
-    <p class="a-hint">Save, then use "Send test email" below.</p>
-  </section>
+    <details class="a-help"><summary>How to get a Google App Password</summary>
+      <p>In Safari open <b>myaccount.google.com/apppasswords</b> (turn on 2-Step Verification first if it asks). Name it "drmadeit", tap Create, copy the 16 letters and paste them above. Server <code>smtp.gmail.com</code>, port <code>465</code>, username = your full Google email.</p>
+    </details>
 
-  <section class="a-card a-form">
-    <h2>Amazon</h2>
+  <?php elseif ($section === 'amazon'): ?>
     <?= $field('amazon_tag', 'Associates tracking ID (optional)', 'text', 'yourtag-20') ?>
     <p class="a-hint">If set, it's added to plain Amazon links that don't have one. Short amzn.to links already have it.</p>
-  </section>
 
-  <section class="a-card a-form">
-    <h2>File licenses</h2>
-    <label>Personal use wording <textarea name="license_personal" rows="3"><?= e(setting('license_personal')) ?></textarea></label>
-    <label>Commercial OK wording <textarea name="license_commercial" rows="3"><?= e(setting('license_commercial')) ?></textarea></label>
-  </section>
+  <?php elseif ($section === 'licenses'): ?>
+    <label>Personal use wording <textarea name="license_personal" rows="4"><?= e(setting('license_personal')) ?></textarea></label>
+    <label>Commercial OK wording <textarea name="license_commercial" rows="4"><?= e(setting('license_commercial')) ?></textarea></label>
 
-  <section class="a-card a-form">
-    <h2>Footer</h2>
+  <?php elseif ($section === 'footer'): ?>
     <?= $field('footer_text', 'Footer text') ?>
     <p class="a-hint">Keep the Amazon Associates disclosure here.</p>
-  </section>
+  <?php endif; ?>
 
-  <button class="a-btn a-sticky-save">Save settings</button>
+  <button class="a-btn">Save</button>
 </form>
 
+<?php if ($section === 'email'): ?>
 <form method="post" action="/admin/test-email" class="a-card a-form">
   <?= csrf_field() ?>
-  <h2>Test email</h2>
-  <p class="a-hint">Sends a test to your contact email<?= setting('contact_email') ? ' (' . e(setting('contact_email')) . ')' : '' ?>.</p>
+  <p class="a-hint">After saving, send yourself a test<?= setting('contact_email') ? ' (to ' . e(setting('contact_email')) . ')' : '' ?>.</p>
   <button class="a-btn a-btn-outline">Send test email</button>
 </form>
+<?php endif; ?>
 
+<?php elseif ($section === 'backup'): ?>
 <section class="a-card a-form">
-  <h2>Backup</h2>
   <?php $bk = glob(DATA_DIR . '/backups/backup-*.zip') ?: []; rsort($bk); ?>
-  <p class="a-hint">The site saves a backup of the database and photos once a day and keeps the last <?= BACKUPS_KEEP ?>.
+  <p class="a-hint">The site saves a backup of your pages, links, settings and photos once a day and keeps the last <?= BACKUPS_KEEP ?>.
     <?= $bk ? 'Last one: ' . e(date('M j, g:ia', filemtime($bk[0]))) . '.' : 'None yet.' ?></p>
-  <a class="a-btn a-btn-outline" href="/admin/backup">Download backup now</a>
+  <p class="a-hint">Once a month, download one and save it to iCloud, so a copy lives off Hostinger.</p>
+  <a class="a-btn" href="/admin/backup">Download backup now</a>
 </section>
 
-<form method="post" action="/admin/password" class="a-card a-form" id="password">
+<?php elseif ($section === 'password'): ?>
+<form method="post" action="/admin/password" class="a-card a-form">
   <?= csrf_field() ?>
-  <h2>Change password</h2>
   <label>Current password <input type="password" name="current" required autocomplete="current-password"></label>
   <label>New password <small>(12+ characters)</small> <input type="password" name="new" required minlength="12" autocomplete="new-password"></label>
-  <button class="a-btn a-btn-outline">Change password</button>
+  <button class="a-btn">Change password</button>
 </form>
-
-<form method="post" action="/admin/logout" class="a-danger">
-  <?= csrf_field() ?>
-  <button class="a-btn a-btn-outline">Log out</button>
-</form>
+<?php endif; ?>

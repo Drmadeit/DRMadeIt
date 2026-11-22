@@ -84,14 +84,14 @@ function admin_route(string $path, string $method): void
         // tool lists
         'GET /admin/tools' => fn () => admin_render('tools', [
             'lists' => db()->query('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id) n FROM tool_lists l ORDER BY sort_order, id')->fetchAll(),
-            'tab' => 'tools', 'title' => 'Tool lists']),
+            'tab' => 'more', 'title' => 'Tool lists']),
         'GET /admin/tools/new' => fn () => admin_render('tool_list_edit', [
-            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'tools', 'title' => 'New list']),
+            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'more', 'title' => 'New list']),
         'GET /admin/tools/(\d+)' => function ($id) {
             $list = find_row('tool_lists', (int) $id);
             $items = db()->prepare('SELECT * FROM tool_items WHERE list_id = ? ORDER BY sort_order, id');
             $items->execute([$list['id']]);
-            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'tools', 'title' => $list['title']]);
+            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'more', 'title' => $list['title']]);
         },
         'POST /admin/tools/save' => fn () => save_tool_list(),
         'POST /admin/tools/(\d+)/delete' => function ($id) {
@@ -108,10 +108,10 @@ function admin_route(string $path, string $method): void
         },
         'GET /admin/tools/(\d+)/items/new' => fn ($lid) => admin_render('tool_item_edit', [
             'list' => find_row('tool_lists', (int) $lid),
-            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'tools', 'title' => 'Add tool']),
+            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'more', 'title' => 'Add tool']),
         'GET /admin/items/(\d+)' => function ($id) {
             $item = find_row('tool_items', (int) $id);
-            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'tools', 'title' => 'Edit tool']);
+            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'more', 'title' => 'Edit tool']);
         },
         'POST /admin/items/save' => fn () => save_tool_item(),
         'POST /admin/items/(\d+)/delete' => function ($id) {
@@ -174,7 +174,7 @@ function admin_route(string $path, string $method): void
         // emails
         'GET /admin/emails' => fn () => admin_render('emails', [
             'subs' => db()->query('SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n FROM subscribers s ORDER BY s.id DESC')->fetchAll(),
-            'tab' => 'home', 'title' => 'Emails']),
+            'tab' => 'more', 'title' => 'Emails']),
         'GET /admin/emails.csv' => fn () => export_emails(),
         'POST /admin/emails/(\d+)/delete' => function ($id) {
             $s = find_row('subscribers', (int) $id);
@@ -188,14 +188,21 @@ function admin_route(string $path, string $method): void
         'POST /admin/videos' => fn () => save_videos(),
 
         // settings
-        'GET /admin/settings' => fn () => admin_render('settings', ['tab' => 'settings', 'title' => 'Settings']),
-        'POST /admin/settings' => fn () => save_settings(),
+        'GET /admin/more' => fn () => admin_render('more', ['tab' => 'more', 'title' => 'More']),
+        'GET /admin/settings' => fn () => redirect('/admin/more'),
+        'GET /admin/settings/(\w+)' => function ($section) {
+            if (!isset(SETTINGS_SECTIONS[$section])) {
+                not_found();
+            }
+            admin_render('settings', ['section' => $section, 'tab' => 'more', 'title' => SETTINGS_SECTIONS[$section][0]]);
+        },
+        'POST /admin/settings/(\w+)' => fn ($section) => save_settings(isset(SETTINGS_SECTIONS[$section]) ? $section : 'profile'),
         'POST /admin/password' => fn () => change_password(),
         'POST /admin/test-email' => function () {
             $to = setting('contact_email') ?: setting('mail_from');
             $err = $to === '' ? 'Add a contact email first.' : send_mail($to, 'Test email from your site', "It works! Download emails will look like they come from this address.\n\n" . base_url());
             flash($err === null ? "Test email sent to $to. Check your inbox (and spam)." : "Email failed: $err");
-            redirect('/admin/settings#email');
+            redirect('/admin/settings/email');
         },
         'GET /admin/backup' => function () {
             $zip = make_backup();
@@ -295,7 +302,7 @@ function change_password(): void
         set_setting('admin_pass_hash', password_hash($new, PASSWORD_DEFAULT));
         flash('Password changed.');
     }
-    redirect('/admin/settings#password');
+    redirect('/admin/settings/password');
 }
 
 function admin_dashboard(): void
@@ -339,7 +346,7 @@ function admin_videos(): void
         'videos' => youtube_feed(),
         'pinned' => video_pins(),
         'hidden' => video_hidden(),
-        'tab' => 'home', 'title' => 'Videos',
+        'tab' => 'more', 'title' => 'Videos',
     ]);
 }
 
@@ -395,6 +402,18 @@ function save_videos(): void
     redirect('/admin/videos');
 }
 
+/** The Settings screens listed on the More tab: key => [title, icon, short note]. */
+const SETTINGS_SECTIONS = [
+    'profile' => ['Profile & header', 'home', 'Name, bio, header photo'],
+    'social' => ['Social links', 'link', 'TikTok, Instagram, YouTube…'],
+    'email' => ['Email sending', 'mail', 'For free download links'],
+    'amazon' => ['Amazon', 'link', 'Associates tracking ID'],
+    'licenses' => ['File licenses', 'file', 'Personal / commercial wording'],
+    'footer' => ['Footer', 'sliders', 'Disclosure line'],
+    'password' => ['Password', 'sliders', 'Change your admin password'],
+    'backup' => ['Backup', 'download', 'Download a copy of everything'],
+];
+
 const TEXT_SETTINGS = [
     'site_name', 'bio', 'footer_text', 'contact_email', 'social_music_label',
     'amazon_tag', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_port', 'smtp_user',
@@ -405,7 +424,7 @@ const URL_SETTINGS = [
 ];
 const IMAGE_SETTINGS = ['logo_image', 'hero_image'];
 
-function save_settings(): void
+function save_settings(string $section = 'profile'): void
 {
     foreach (TEXT_SETTINGS as $k) {
         if (isset($_POST[$k])) {
@@ -435,6 +454,6 @@ function save_settings(): void
             $errors[] = $ex->getMessage();
         }
     }
-    flash($errors ? implode(' ', $errors) : 'Settings saved.');
-    redirect('/admin/settings');
+    flash($errors ? implode(' ', $errors) : 'Saved.');
+    redirect('/admin/settings/' . $section);
 }

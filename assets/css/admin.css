@@ -191,3 +191,11 @@ select {
 .a-short.is-new { border-color: var(--red); box-shadow: 0 0 0 2px rgb(215 20 30 / .15); }
 .a-long { font-size: 12px !important; opacity: .8; }
 .a-copy { width: auto; padding: 0 12px; color: var(--ink); font-weight: 600; font-size: 15px; border: 1.5px solid var(--line); }
+
+/* ---- More tab / settings screens ---- */
+.a-menu a { gap: 14px; }
+.a-menu-text { display: flex; flex-direction: column; min-width: 0; }
+.a-menu-text small { color: var(--muted); font-size: 13px; font-weight: 400; }
+.a-back { align-self: flex-start; min-height: 40px; display: inline-flex; align-items: center; color: var(--muted); text-decoration: none; font-weight: 600; margin-bottom: -6px; }
+.a-help summary { cursor: pointer; color: var(--muted); font-size: 14px; min-height: 36px; display: flex; align-items: center; }
+.a-help p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
