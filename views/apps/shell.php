@@ -5,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title><?= e($app['name']) ?></title>
 <meta name="description" content="<?= e($app['blurb']) ?>">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)">
+<script>
+  // Light / dark: the ☰ menu choice wins, otherwise follow the phone. Runs before paint so there's no flash.
+  try { var t = JSON.parse(localStorage.getItem('app.theme')); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="<?= e($app['name']) ?>">
 <link rel="manifest" href="/calc/manifest/<?= e($slug) ?>.webmanifest">
 <link rel="apple-touch-icon" href="<?= e(asset('img/app-180.png')) ?>">
@@ -35,6 +40,9 @@
         <li><a href="<?= e($a['path']) ?>"<?= $s === $slug ? ' aria-current="page"' : '' ?>><b><?= e($a['name']) ?></b><small><?= e($a['blurb']) ?></small></a></li>
       <?php endforeach; ?>
     </ul>
+    <div class="theme" role="group" aria-label="Colors">Colors
+      <span class="seg"><button type="button" data-theme-pick="auto" aria-pressed="false">Auto</button><button type="button" data-theme-pick="light" aria-pressed="false">Light</button><button type="button" data-theme-pick="dark" aria-pressed="false">Dark</button></span>
+    </div>
     <p class="menu-foot">Add any of these to your home screen: Safari → Share → Add to Home Screen. <a href="/toolbox">drmadeit.com/toolbox</a></p>
   </nav>
 

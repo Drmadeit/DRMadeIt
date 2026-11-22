@@ -22,6 +22,21 @@
   menu.addEventListener('click', (e) => { if (e.target === menu) setMenu(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 
+  // ---------- Light / Dark / Auto (Auto follows the phone) ----------
+  const metas = $$('meta[name="theme-color"]');
+  function applyTheme(t) {
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    metas.forEach((m) => m.setAttribute('content', t === 'auto' ? (m.media.includes('dark') ? '#0a0a0b' : '#f6f5f2') : bg));
+    $$('[data-theme-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themePick === t)));
+  }
+  applyTheme(store.get('app.theme', 'auto'));
+  $$('[data-theme-pick]').forEach((b) => b.addEventListener('click', () => {
+    store.set('app.theme', b.dataset.themePick);
+    applyTheme(b.dataset.themePick);
+  }));
+
   if (app === 'fractions') return; // Fractions has its own keypad (tape.js)
 
   // ---------- Size buttons (shared with Fractions: on = show in that size, off = simplified to 1/16) ----------
