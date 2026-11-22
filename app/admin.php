@@ -145,6 +145,13 @@ function admin_route(string $path, string $method): void
                 delete_image($img);
             }
             db()->prepare('DELETE FROM files WHERE id = ?')->execute([$file['id']]);
+            // Its home page button would point nowhere now
+            $links = db()->prepare('SELECT id, image FROM links WHERE url = ?');
+            $links->execute(['/files/' . $file['slug']]);
+            foreach ($links->fetchAll() as $l) {
+                db()->prepare('DELETE FROM links WHERE id = ?')->execute([$l['id']]);
+                delete_image($l['image']);
+            }
             flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
             redirect('/admin/files');
         },

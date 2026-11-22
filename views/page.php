@@ -29,6 +29,18 @@ $buttons = page_buttons($page);
   </div>
   <?php endif; ?>
 
+  <?php if ($pageFiles = page_files((int) $page['id'])): ?>
+  <div class="grid page-files">
+    <?php foreach ($pageFiles as $f): ?>
+      <a class="tile" href="/files/<?= e($f['slug']) ?>">
+        <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy"><?php else: ?><span class="tile-empty"></span><?php endif; ?>
+        <b><?= e($f['title']) ?></b>
+        <small><?= e(type_label($f['type'])) ?> · <span class="<?= $f['price_cents'] ? '' : 'free' ?>"><?= e(price_label((int) $f['price_cents'])) ?></span></small>
+      </a>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
   <?php if ($buttons): ?>
   <div class="stack">
     <?php foreach ($buttons as $i => $b): ?>

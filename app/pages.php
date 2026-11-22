@@ -32,6 +32,16 @@ function page_url(array $page): string
     return !empty($page['cat_slug']) ? '/' . $page['cat_slug'] . '/' . $page['slug'] : '/' . $page['slug'];
 }
 
+/** Live shop files picked to show on this page, with their cover photo. */
+function page_files(int $pageId): array
+{
+    $st = db()->prepare("SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
+        FROM page_files pf JOIN files f ON f.id = pf.file_id
+        WHERE pf.page_id = ? AND f.status = 'published' ORDER BY pf.sort_order, f.sort_order, f.id");
+    $st->execute([$pageId]);
+    return $st->fetchAll();
+}
+
 function page_photos(int $pageId): array
 {
     $st = db()->prepare('SELECT * FROM page_photos WHERE page_id = ? AND deleted_at IS NULL ORDER BY sort_order, id');

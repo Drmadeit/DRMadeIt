@@ -129,6 +129,14 @@ function migrate(PDO $pdo): void
                 $pdo->prepare('INSERT INTO page_photos (page_id, image, sort_order) VALUES (?, ?, 0)')->execute([(int) $pdo->lastInsertId(), $img]);
             }
         },
+        8 => function (PDO $pdo): void {
+            // Which shop files show on which pages (picked in the file editor or the page editor).
+            $pdo->exec('CREATE TABLE page_files (
+                page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+                file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (page_id, file_id))');
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

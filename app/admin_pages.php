@@ -200,8 +200,27 @@ function save_page(): void
     if ($bad) {
         $errors[] = 'Not a link (should start with https://): "' . implode('", "', $bad) . '".';
     }
+    if (isset($_POST['files_sent'])) {
+        // "Files on this page" checklist
+        $want = array_map('intval', (array) ($_POST['file_ids'] ?? []));
+        db()->prepare('DELETE FROM page_files WHERE page_id = ?' . ($want ? ' AND file_id NOT IN (' . implode(',', $want) . ')' : ''))->execute([$id]);
+        $ins = db()->prepare('INSERT OR IGNORE INTO page_files (page_id, file_id, sort_order) VALUES (?, ?, ?)');
+        foreach ($want as $i => $fid) {
+            $ins->execute([$id, $fid, $i]);
+        }
+    }
     flash(($errors ? 'Saved, but: ' . implode(' ', $errors) : 'Saved.') . ($added ? ' Added ' . count($added) . ' photo' . (count($added) > 1 ? 's' : '') . '.' : ''));
     redirect("/admin/pages/$id");
+}
+
+/** Every file, with whether it's on this page (for the page editor's checklist). */
+function files_for_page_pick(int $pageId): array
+{
+    $st = db()->prepare('SELECT f.id, f.title, f.status, f.type, f.price_cents,
+            (SELECT 1 FROM page_files pf WHERE pf.page_id = ? AND pf.file_id = f.id) on_page
+        FROM files f ORDER BY f.sort_order, f.id');
+    $st->execute([$pageId]);
+    return $st->fetchAll();
 }
 
 function save_category(): void

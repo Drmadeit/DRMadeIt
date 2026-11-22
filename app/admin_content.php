@@ -211,12 +211,72 @@ function save_file_item(): void
             $status === 'draft' && ($old['status'] ?? '') === 'published' => 'Unpublished. It\'s a draft again.',
             default => 'Saved.',
         };
-        if ($status === 'published') {
+        $msg .= place_file($id, $status);
+        if ($status === 'published' && !isset($_POST['placement_sent'])) {
             $msg .= show_files_button();
         }
         flash($errors ? $msg . ' But some photos failed: ' . implode(' ', $errors) : $msg);
     }
     redirect("/admin/files/$id");
+}
+
+/**
+ * "Show it on" in the file editor: the pages this file appears on, and a home page button for it.
+ * Returns a short note for the saved message.
+ */
+function place_file(int $fileId, string $status): string
+{
+    if (!isset($_POST['placement_sent'])) {
+        return '';
+    }
+    $file = find_row('files', $fileId);
+    $url = '/files/' . $file['slug'];
+
+    $want = array_map('intval', (array) ($_POST['page_ids'] ?? []));
+    db()->prepare('DELETE FROM page_files WHERE file_id = ?' . ($want ? ' AND page_id NOT IN (' . implode(',', $want) . ')' : ''))->execute([$fileId]);
+    $ins = db()->prepare('INSERT OR IGNORE INTO page_files (page_id, file_id, sort_order) VALUES (?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM page_files WHERE page_id = ?))');
+    foreach ($want as $pid) {
+        $ins->execute([$pid, $fileId, $pid]);
+    }
+
+    // Home page button: one link pointing at this file. Keep it if the address changed.
+    $oldUrl = (string) ($_POST['old_url'] ?? '');
+    if ($oldUrl !== '' && $oldUrl !== $url) {
+        db()->prepare('UPDATE links SET url = ? WHERE url = ?')->execute([$url, $oldUrl]);
+    }
+    $st = db()->prepare('SELECT * FROM links WHERE url = ?');
+    $st->execute([$url]);
+    $link = $st->fetch();
+    $note = '';
+    if (!empty($_POST['on_home']) && !$link) {
+        $img = db()->prepare('SELECT image FROM file_images WHERE file_id = ? ORDER BY sort_order, id LIMIT 1');
+        $img->execute([$fileId]);
+        db()->prepare('INSERT INTO links (title, url, image, icon, visible, sort_order) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))')
+            ->execute([$file['title'], $url, copy_image((string) $img->fetchColumn()), 'file', $status === 'published' ? 1 : 0]);
+        $note = $status === 'published' ? ' Added a button on the home page.' : ' A home page button is ready and shows when you publish.';
+    } elseif (empty($_POST['on_home']) && $link) {
+        db()->prepare('DELETE FROM links WHERE id = ?')->execute([$link['id']]);
+        delete_image($link['image']);
+        $note = ' Removed its home page button.';
+    } elseif ($link) {
+        // Follow the file: hidden while it's a draft, showing when it's live.
+        db()->prepare('UPDATE links SET visible = ? WHERE id = ?')->execute([$status === 'published' ? 1 : 0, $link['id']]);
+    }
+    if ($want) {
+        $note .= ' Showing on ' . count($want) . ' page' . (count($want) > 1 ? 's' : '') . ($status === 'published' ? '.' : ' once published.');
+    }
+    return $note;
+}
+
+/** Every page (with its category), and whether this file is on it — for the "Show it on" list. */
+function pages_for_file_pick(int $fileId): array
+{
+    $st = db()->prepare('SELECT p.id, p.title, c.name cat,
+            (SELECT 1 FROM page_files pf WHERE pf.page_id = p.id AND pf.file_id = ?) on_page
+        FROM pages p LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
+        WHERE p.deleted_at IS NULL ORDER BY c.sort_order IS NULL, c.sort_order, p.sort_order, p.id');
+    $st->execute([$fileId]);
+    return $st->fetchAll();
 }
 
 /** Make sure the home page has a button to the file shop once something is live. Returns a note for the message. */

@@ -44,6 +44,27 @@ $live = $file['status'] === 'published';
     </div>
   </section>
 
+  <?php
+  $onPages = pages_for_file_pick((int) $file['id']);
+  $homeUrl = '/files/' . $file['slug'];
+  $onHome = false;
+  if ($file['id']) {
+      $st = db()->prepare('SELECT 1 FROM links WHERE url = ?');
+      $st->execute([$homeUrl]);
+      $onHome = (bool) $st->fetchColumn();
+  }
+  ?>
+  <section class="a-card a-form">
+    <h2>Show it on</h2>
+    <input type="hidden" name="placement_sent" value="1">
+    <input type="hidden" name="old_url" value="<?= $file['id'] ? e($homeUrl) : '' ?>">
+    <label class="a-check"><input type="checkbox" name="on_home" value="1" <?= $onHome ? 'checked' : '' ?>> Home page <small class="a-hint">(a button with its photo)</small></label>
+    <?php foreach ($onPages as $pg): ?>
+      <label class="a-check"><input type="checkbox" name="page_ids[]" value="<?= (int) $pg['id'] ?>" <?= $pg['on_page'] ? 'checked' : '' ?>> <?= $pg['cat'] ? '<small class="a-hint">' . e($pg['cat']) . ' ›</small> ' : '' ?><?= e($pg['title']) ?></label>
+    <?php endforeach; ?>
+    <p class="a-hint">It's always in your file shop (/files) too<?= $onPages ? '' : '. Make pages in the Pages tab to show files there' ?>.</p>
+  </section>
+
   <details class="a-card a-more"<?= $file['description'] || $file['notes'] ? ' open' : '' ?>>
     <summary>More details <small>(optional)</small></summary>
     <div class="a-form">

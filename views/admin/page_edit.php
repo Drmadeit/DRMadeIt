@@ -40,6 +40,19 @@
     <?php endif; ?>
   </section>
 
+  <?php $pickFiles = files_for_page_pick((int) $page['id']); ?>
+  <?php if ($pickFiles): ?>
+  <section class="a-card a-form">
+    <h2>Files on this page</h2>
+    <input type="hidden" name="files_sent" value="1">
+    <?php foreach ($pickFiles as $f): ?>
+      <label class="a-check"><input type="checkbox" name="file_ids[]" value="<?= (int) $f['id'] ?>" <?= $f['on_page'] ? 'checked' : '' ?>> <?= e($f['title']) ?>
+        <small class="a-hint"><?= e(type_label($f['type'])) ?> · <?= e(price_label((int) $f['price_cents'])) ?><?= $f['status'] === 'published' ? '' : ' · draft' ?></small></label>
+    <?php endforeach; ?>
+    <p class="a-hint">Ticked files show as photo cards on this page. Drafts appear once they're published.</p>
+  </section>
+  <?php endif; ?>
+
   <section class="a-card a-form" id="add-photos">
     <h2>Add photos</h2>
     <label class="a-file"><span class="a-btn a-btn-outline">Choose photos</span><input type="file" name="photos[]" accept="image/*" multiple data-count data-shrink></label>
