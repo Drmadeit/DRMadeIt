@@ -336,3 +336,7 @@ a { color: inherit; }
 .tt-facebook .tt-empty { background: #1765d8; }
 .tt-link .tt-empty { background: #333; }
 .tt-card:not(:has(img)) .tt-title { background: none; font-size: 15px; }
+.app-promo { display: flex; align-items: center; gap: 14px; padding: 12px; margin-bottom: 16px; border-radius: var(--radius); background: var(--ink); color: #fff; text-decoration: none; }
+.app-promo img { width: 56px; height: 56px; border-radius: 13px; flex-shrink: 0; background: #fff; }
+.app-promo span { display: flex; flex-direction: column; gap: 2px; }
+.app-promo small { color: #c9c9cc; font-size: 13px; }

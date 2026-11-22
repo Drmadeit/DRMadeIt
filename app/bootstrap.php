@@ -30,5 +30,6 @@ require ROOT . '/app/shop.php';
 require ROOT . '/app/youtube.php';
 require ROOT . '/app/backup.php';
 require ROOT . '/app/pages.php';
+require ROOT . '/app/tape.php';
 
 start_session();
