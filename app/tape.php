@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Fractions: a fraction calculator you can add to the iPhone home screen.
  * Works offline through a service worker that caches the files below.
- *   /fractions/                       the app (/tape and /tape/ forward here; it was first called Tape Math)
+ *   /fractions/                       the app (/fcalc, /frac and the old /tape forward here)
  *   /fractions/sw.js                  offline worker (version changes whenever a file changes)
  *   /fractions/manifest.webmanifest   app name + icons
  */
@@ -21,7 +21,7 @@ function tape_version(): string
 
 function tape_route(string $path): bool
 {
-    if ($path === '/tape') {
+    if (in_array(strtolower($path), ['/tape', '/fcalc', '/frac', '/fractions'], true) && $path !== '/fractions') { // short, easy-to-type addresses
         header('Location: /fractions/', true, 301);
         return true;
     }
