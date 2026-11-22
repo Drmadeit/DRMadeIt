@@ -36,10 +36,30 @@ Login locks for 15 minutes after 5 wrong tries.
 DRM_DATA_DIR=/tmp/drm-data php -S 127.0.0.1:8000 index.php
 ```
 
+## What's here
+
+| Public | Admin (`/admin`) |
+|---|---|
+| `/` link hub (wood header, logo, socials, buttons) | Dashboard: downloads, new emails, top files |
+| `/about` | Links: add, photo, drag order, hide, feature |
+| `/tools`, `/tools/<list>` Amazon tool lists | Tools: lists + items with photos and Amazon links |
+| `/files`, `/files/<item>` CNC / 3D files, free (email) or paid (buy link) | Files: photos, download file, price, buy link, draft/live |
+| `/videos` latest YouTube + pinned | Videos: channel, pin, hide, show on home |
+| `/calc` shop calculators + DXF polyline fixer | Emails: list, CSV export, delete |
+| | Settings: profile, socials, about, email (SMTP), Amazon tag, licenses, backup, password |
+
+- **Free downloads:** visitor enters email → gets a link good for 5 downloads / 48 hours. Files are served by PHP from `drmadeit-data/files`, never by direct URL.
+- **Email:** Settings → Email. Hostinger: `smtp.hostinger.com`, port `465`, the mailbox address and password. Use "Send test email".
+- **Big files:** upload with Hostinger File Manager into `drmadeit-data/files`, then pick it on the file's admin page.
+- **Backups:** one a day automatically (keeps 14) in `drmadeit-data/backups`, plus "Download backup now" in Settings.
+- **YouTube:** public RSS feed, cached 1 hour. No API key.
+- **Calculators** run in the browser (`assets/js/calc.js`, `assets/js/dxf.js`). Nothing is uploaded.
+
 ## Build phases
 
-- [x] 1. Foundation + link hub: home, about, admin login, links (photos, drag order, hide, feature), settings
-- [ ] 2. Tool lists (`/tools`)
-- [ ] 3. File shop (`/files`): free email-gated downloads, buy links, subscriber CSV
-- [ ] 4. Videos (`/videos`), backups, polish
-- [ ] Shop calculators (`/calc`) + DXF polyline fixer
+- [x] 1. Foundation + link hub
+- [x] 2. Tool lists
+- [x] 3. File shop, email-gated downloads, subscriber CSV
+- [x] 4. Videos, backups, share previews
+- [x] Shop calculators + DXF polyline fixer
+- [ ] Later: sheet-goods cut list optimizer, login code by email

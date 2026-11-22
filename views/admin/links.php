@@ -1,7 +1,7 @@
 <a class="a-btn a-btn-block" href="/admin/links/new">+ Add link</a>
 <p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. Tap a link to edit it.</p>
 
-<ul class="a-list" data-sortable="/admin/links/reorder">
+<ul class="a-list" data-sortable="/admin/reorder/links">
 <?php foreach ($links as $l): ?>
   <li class="a-row<?= $l['visible'] ? '' : ' is-hidden' ?>" data-id="<?= (int) $l['id'] ?>">
     <button type="button" class="a-grip" aria-label="Drag to reorder <?= e($l['title']) ?>"><?= icon('grip', 22) ?></button>
@@ -20,7 +20,7 @@
       <?= csrf_field() ?>
       <button class="a-icon-btn<?= $l['featured'] ? ' on' : '' ?>" aria-label="<?= $l['featured'] ? 'Unfeature' : 'Feature' ?> <?= e($l['title']) ?>" aria-pressed="<?= $l['featured'] ? 'true' : 'false' ?>"><?= icon('star', 22) ?></button>
     </form>
-    <form method="post" action="/admin/links/<?= (int) $l['id'] ?>/toggle">
+    <form method="post" action="/admin/toggle/links/<?= (int) $l['id'] ?>">
       <?= csrf_field() ?>
       <button class="a-icon-btn" aria-label="<?= $l['visible'] ? 'Hide' : 'Show' ?> <?= e($l['title']) ?>"><?= icon($l['visible'] ? 'eye' : 'eye-off', 22) ?></button>
     </form>

@@ -57,6 +57,25 @@ function migrate(PDO $pdo): void
             SQL);
             seed($pdo);
         },
+        2 => function (PDO $pdo): void {
+            $st = $pdo->prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+            foreach ([
+                'amazon_tag' => '',
+                'mail_from' => '',
+                'mail_from_name' => 'D.R. Made It',
+                'smtp_host' => 'smtp.hostinger.com',
+                'smtp_port' => '465',
+                'license_personal' => "Personal use: make it for yourself or as a gift. Please don't sell items made from it or share the file.",
+                'license_commercial' => "Commercial OK: you can sell what you make with this file. Please don't share or resell the file itself.",
+                'videos_on_home' => '0',
+            ] as $k => $v) {
+                $st->execute([$k, $v]);
+            }
+            // Empty lists matching the old bio.site buttons. Fill them in Admin → Tools.
+            $st = $pdo->prepare('INSERT OR IGNORE INTO tool_lists (title, slug, description, sort_order) VALUES (?, ?, ?, ?)');
+            $st->execute(['Tools in My Videos', 'shop-tools', 'The tools I use in my shop and videos.', 0]);
+            $st->execute(['Reaper Build', 'reaper-build', 'Everything I used to build out the Reaper trailer.', 1]);
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
@@ -94,13 +113,13 @@ function seed(PDO $pdo): void
         $st->execute([$k, $v]);
     }
 
-    // [title, url, seed image, icon, visible]. Pages not built yet start hidden.
+    // [title, url, seed image, icon, visible]. Pages that start empty stay hidden until filled in.
     $links = [
         ['About Me', '/about', 'about.jpg', '', 1],
         ['Stuff I Design and Sell', '/files', 'design-sell.jpg', '', 0],
         ['Tools in My Videos', '/tools/shop-tools', 'shop-tools.jpg', '', 0],
         ['Reaper Build Items', '/tools/reaper-build', 'reaper-build.jpg', '', 0],
-        ['Shop Calculators', '/calc', '', 'ruler', 0],
+        ['Shop Calculators', '/calc', '', 'ruler', 1],
         ['My Amazon Storefront', 'https://www.amazon.com/shop/raleighcabinets', '', 'link', 1],
     ];
     $st = $pdo->prepare('INSERT INTO links (title, url, image, icon, sort_order, visible) VALUES (?, ?, ?, ?, ?, ?)');

@@ -10,6 +10,7 @@ define('UPLOAD_DIR', DATA_DIR . '/uploads');
 
 $isDev = PHP_SAPI === 'cli-server' || getenv('DRM_DEV') === '1';
 error_reporting(E_ALL);
+date_default_timezone_set('America/New_York');
 ini_set('display_errors', $isDev ? '1' : '0');
 ini_set('log_errors', '1');
 
@@ -24,5 +25,9 @@ require ROOT . '/app/helpers.php';
 require ROOT . '/app/db.php';
 require ROOT . '/app/images.php';
 require ROOT . '/app/auth.php';
+require ROOT . '/app/mail.php';
+require ROOT . '/app/shop.php';
+require ROOT . '/app/youtube.php';
+require ROOT . '/app/backup.php';
 
 start_session();

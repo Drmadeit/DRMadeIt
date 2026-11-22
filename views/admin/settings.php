@@ -51,6 +51,33 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <?= $field('contact_email', 'Contact email', 'email') ?>
   </section>
 
+  <section class="a-card a-form" id="email">
+    <h2>Email (free download links)</h2>
+    <p class="a-hint">Make a mailbox in Hostinger → Emails (e.g. files@drmadeit.com) and enter it here.</p>
+    <?= $field('mail_from', 'Send from address', 'email', 'files@drmadeit.com') ?>
+    <?= $field('mail_from_name', 'Send from name', 'text', 'D.R. Made It') ?>
+    <div class="a-grid2">
+      <?= $field('smtp_host', 'SMTP server', 'text', 'smtp.hostinger.com') ?>
+      <?= $field('smtp_port', 'Port', 'text', '465') ?>
+    </div>
+    <?= $field('smtp_user', 'SMTP username', 'text', 'Usually the same as the address') ?>
+    <label>SMTP password <small>(the mailbox password<?= setting('smtp_pass') !== '' ? ' — saved; leave blank to keep' : '' ?>)</small>
+      <input type="password" name="smtp_pass" autocomplete="new-password"></label>
+    <p class="a-hint">Save, then use "Send test email" below.</p>
+  </section>
+
+  <section class="a-card a-form">
+    <h2>Amazon</h2>
+    <?= $field('amazon_tag', 'Associates tracking ID (optional)', 'text', 'yourtag-20') ?>
+    <p class="a-hint">If set, it's added to plain Amazon links that don't have one. Short amzn.to links already have it.</p>
+  </section>
+
+  <section class="a-card a-form">
+    <h2>File licenses</h2>
+    <label>Personal use wording <textarea name="license_personal" rows="3"><?= e(setting('license_personal')) ?></textarea></label>
+    <label>Commercial OK wording <textarea name="license_commercial" rows="3"><?= e(setting('license_commercial')) ?></textarea></label>
+  </section>
+
   <section class="a-card a-form">
     <h2>Footer</h2>
     <?= $field('footer_text', 'Footer text') ?>
@@ -59,6 +86,21 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
 
   <button class="a-btn a-sticky-save">Save settings</button>
 </form>
+
+<form method="post" action="/admin/test-email" class="a-card a-form">
+  <?= csrf_field() ?>
+  <h2>Test email</h2>
+  <p class="a-hint">Sends a test to your contact email<?= setting('contact_email') ? ' (' . e(setting('contact_email')) . ')' : '' ?>.</p>
+  <button class="a-btn a-btn-outline">Send test email</button>
+</form>
+
+<section class="a-card a-form">
+  <h2>Backup</h2>
+  <?php $bk = glob(DATA_DIR . '/backups/backup-*.zip') ?: []; rsort($bk); ?>
+  <p class="a-hint">The site saves a backup of the database and photos once a day and keeps the last <?= BACKUPS_KEEP ?>.
+    <?= $bk ? 'Last one: ' . e(date('M j, g:ia', filemtime($bk[0]))) . '.' : 'None yet.' ?></p>
+  <a class="a-btn a-btn-outline" href="/admin/backup">Download backup now</a>
+</section>
 
 <form method="post" action="/admin/password" class="a-card a-form" id="password">
   <?= csrf_field() ?>

@@ -1,12 +1,18 @@
 <?php
 declare(strict_types=1);
 
+require ROOT . '/app/admin_content.php';
+
 function admin_render(string $view, array $vars = []): void
 {
     header('Cache-Control: no-store');
     header('X-Robots-Tag: noindex');
     render('admin/' . $view, $vars, 'admin/layout');
 }
+
+/** Tables the generic reorder / show-hide endpoints may touch. */
+const SORTABLE = ['links', 'tool_lists', 'tool_items', 'files', 'file_images'];
+const HIDEABLE = ['links', 'tool_lists', 'tool_items'];
 
 function admin_route(string $path, string $method): void
 {
@@ -32,74 +38,181 @@ function admin_route(string $path, string $method): void
 
     require_admin();
 
-    // ---- Links ----
-    if ($path === '/admin' || $path === '/admin/links') {
-        $links = db()->query('SELECT * FROM links ORDER BY sort_order, id')->fetchAll();
-        admin_render('links', ['links' => $links, 'tab' => 'links', 'title' => 'Links']);
-        return;
-    }
-    if ($path === '/admin/links/new') {
-        admin_render('link_edit', ['link' => ['id' => 0, 'title' => '', 'url' => '', 'image' => '', 'icon' => '', 'featured' => 0, 'visible' => 1], 'tab' => 'links', 'title' => 'Add link']);
-        return;
-    }
-    if (preg_match('#^/admin/links/(\d+)$#', $path, $m)) {
-        $link = find_link((int) $m[1]);
-        admin_render('link_edit', ['link' => $link, 'tab' => 'links', 'title' => 'Edit link']);
-        return;
-    }
-    if ($path === '/admin/links/save' && $post) {
-        save_link();
-        return;
-    }
-    if ($path === '/admin/links/reorder' && $post) {
-        $ids = array_map('intval', (array) ($_POST['ids'] ?? []));
-        $st = db()->prepare('UPDATE links SET sort_order = ? WHERE id = ?');
-        foreach ($ids as $i => $id) {
+    // ---- Generic: reorder + show/hide ----
+    if ($post && preg_match('#^/admin/reorder/(\w+)$#', $path, $m) && in_array($m[1], SORTABLE, true)) {
+        $st = db()->prepare("UPDATE {$m[1]} SET sort_order = ? WHERE id = ?");
+        foreach (array_map('intval', (array) ($_POST['ids'] ?? [])) as $i => $id) {
             $st->execute([$i, $id]);
         }
         header('Content-Type: application/json');
         echo '{"ok":true}';
         return;
     }
-    if (preg_match('#^/admin/links/(\d+)/(toggle|feature|delete)$#', $path, $m) && $post) {
-        $link = find_link((int) $m[1]);
-        if ($m[2] === 'toggle') {
-            db()->prepare('UPDATE links SET visible = 1 - visible WHERE id = ?')->execute([$link['id']]);
-            flash($link['visible'] ? 'Hidden from home page.' : 'Showing on home page.');
-        } elseif ($m[2] === 'feature') {
-            db()->prepare('UPDATE links SET featured = CASE WHEN id = ? THEN 1 - featured ELSE 0 END')->execute([$link['id']]);
-            flash($link['featured'] ? 'No featured link now.' : '"' . $link['title'] . '" is featured.');
-        } else {
-            db()->prepare('DELETE FROM links WHERE id = ?')->execute([$link['id']]);
-            delete_image($link['image']);
+    if ($post && preg_match('#^/admin/toggle/(\w+)/(\d+)$#', $path, $m) && in_array($m[1], HIDEABLE, true)) {
+        $row = find_row($m[1], (int) $m[2]);
+        db()->prepare("UPDATE {$m[1]} SET visible = 1 - visible WHERE id = ?")->execute([$row['id']]);
+        flash($row['visible'] ? 'Hidden.' : 'Showing.');
+        redirect(back_to('/admin'));
+    }
+
+    $routes = [
+        // dashboard
+        'GET /admin' => fn () => admin_dashboard(),
+
+        // links
+        'GET /admin/links' => fn () => admin_render('links', [
+            'links' => db()->query('SELECT * FROM links ORDER BY sort_order, id')->fetchAll(), 'tab' => 'links', 'title' => 'Links']),
+        'GET /admin/links/new' => fn () => admin_render('link_edit', [
+            'link' => ['id' => 0, 'title' => '', 'url' => '', 'image' => '', 'icon' => '', 'featured' => 0, 'visible' => 1], 'tab' => 'links', 'title' => 'Add link']),
+        'GET /admin/links/(\d+)' => fn ($id) => admin_render('link_edit', ['link' => find_row('links', (int) $id), 'tab' => 'links', 'title' => 'Edit link']),
+        'POST /admin/links/save' => fn () => save_link(),
+        'POST /admin/links/(\d+)/feature' => function ($id) {
+            $l = find_row('links', (int) $id);
+            db()->prepare('UPDATE links SET featured = CASE WHEN id = ? THEN 1 - featured ELSE 0 END')->execute([$l['id']]);
+            flash($l['featured'] ? 'No featured link now.' : '"' . $l['title'] . '" is featured.');
+            redirect('/admin/links');
+        },
+        'POST /admin/links/(\d+)/delete' => function ($id) {
+            $l = find_row('links', (int) $id);
+            db()->prepare('DELETE FROM links WHERE id = ?')->execute([$l['id']]);
+            delete_image($l['image']);
             flash('Link deleted.');
-        }
-        redirect('/admin/links');
-    }
+            redirect('/admin/links');
+        },
 
-    // ---- Settings ----
-    if ($path === '/admin/settings') {
-        if ($post) {
-            save_settings();
-        }
-        admin_render('settings', ['tab' => 'settings', 'title' => 'Settings']);
-        return;
-    }
-    if ($path === '/admin/password' && $post) {
-        $cur = (string) ($_POST['current'] ?? '');
-        $new = (string) ($_POST['new'] ?? '');
-        if (!password_verify($cur, setting('admin_pass_hash'))) {
-            flash('Current password is wrong. Nothing changed.');
-        } elseif ($err = password_problem($new)) {
-            flash($err);
-        } else {
-            set_setting('admin_pass_hash', password_hash($new, PASSWORD_DEFAULT));
-            flash('Password changed.');
-        }
-        redirect('/admin/settings#password');
-    }
+        // tool lists
+        'GET /admin/tools' => fn () => admin_render('tools', [
+            'lists' => db()->query('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id) n FROM tool_lists l ORDER BY sort_order, id')->fetchAll(),
+            'tab' => 'tools', 'title' => 'Tool lists']),
+        'GET /admin/tools/new' => fn () => admin_render('tool_list_edit', [
+            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'tools', 'title' => 'New list']),
+        'GET /admin/tools/(\d+)' => function ($id) {
+            $list = find_row('tool_lists', (int) $id);
+            $items = db()->prepare('SELECT * FROM tool_items WHERE list_id = ? ORDER BY sort_order, id');
+            $items->execute([$list['id']]);
+            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'tools', 'title' => $list['title']]);
+        },
+        'POST /admin/tools/save' => fn () => save_tool_list(),
+        'POST /admin/tools/(\d+)/delete' => function ($id) {
+            $list = find_row('tool_lists', (int) $id);
+            $imgs = db()->prepare('SELECT image FROM tool_items WHERE list_id = ?');
+            $imgs->execute([$list['id']]);
+            foreach ($imgs->fetchAll(PDO::FETCH_COLUMN) as $img) {
+                delete_image($img);
+            }
+            delete_image($list['cover_image']);
+            db()->prepare('DELETE FROM tool_lists WHERE id = ?')->execute([$list['id']]);
+            flash('List deleted.');
+            redirect('/admin/tools');
+        },
+        'GET /admin/tools/(\d+)/items/new' => fn ($lid) => admin_render('tool_item_edit', [
+            'list' => find_row('tool_lists', (int) $lid),
+            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'tools', 'title' => 'Add tool']),
+        'GET /admin/items/(\d+)' => function ($id) {
+            $item = find_row('tool_items', (int) $id);
+            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'tools', 'title' => 'Edit tool']);
+        },
+        'POST /admin/items/save' => fn () => save_tool_item(),
+        'POST /admin/items/(\d+)/delete' => function ($id) {
+            $item = find_row('tool_items', (int) $id);
+            delete_image($item['image']);
+            db()->prepare('DELETE FROM tool_items WHERE id = ?')->execute([$item['id']]);
+            flash('Tool deleted.');
+            redirect('/admin/tools/' . $item['list_id']);
+        },
 
+        // files
+        'GET /admin/files' => fn () => admin_render('files', [
+            'files' => db()->query('SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb FROM files f ORDER BY sort_order, id')->fetchAll(),
+            'tab' => 'files', 'title' => 'Files']),
+        'GET /admin/files/new' => fn () => admin_render('file_edit', [
+            'file' => ['id' => 0, 'title' => '', 'slug' => '', 'type' => 'cnc', 'price_cents' => 0, 'buy_url' => '', 'description' => '',
+                'formats' => '', 'notes' => '', 'license' => 'personal', 'video_url' => '', 'file_path' => '', 'status' => 'draft', 'featured' => 0],
+            'images' => [], 'tab' => 'files', 'title' => 'New file']),
+        'GET /admin/files/(\d+)' => function ($id) {
+            $file = find_row('files', (int) $id);
+            $imgs = db()->prepare('SELECT * FROM file_images WHERE file_id = ? ORDER BY sort_order, id');
+            $imgs->execute([$file['id']]);
+            admin_render('file_edit', ['file' => $file, 'images' => $imgs->fetchAll(), 'tab' => 'files', 'title' => $file['title']]);
+        },
+        'POST /admin/files/save' => fn () => save_file_item(),
+        'POST /admin/files/(\d+)/delete' => function ($id) {
+            $file = find_row('files', (int) $id);
+            $imgs = db()->prepare('SELECT image FROM file_images WHERE file_id = ?');
+            $imgs->execute([$file['id']]);
+            foreach ($imgs->fetchAll(PDO::FETCH_COLUMN) as $img) {
+                delete_image($img);
+            }
+            db()->prepare('DELETE FROM files WHERE id = ?')->execute([$file['id']]);
+            flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
+            redirect('/admin/files');
+        },
+        'POST /admin/file-images/(\d+)/delete' => function ($id) {
+            $img = find_row('file_images', (int) $id);
+            delete_image($img['image']);
+            db()->prepare('DELETE FROM file_images WHERE id = ?')->execute([$img['id']]);
+            flash('Photo removed.');
+            redirect('/admin/files/' . $img['file_id'] . '#photos');
+        },
+
+        // emails
+        'GET /admin/emails' => fn () => admin_render('emails', [
+            'subs' => db()->query('SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n FROM subscribers s ORDER BY s.id DESC')->fetchAll(),
+            'tab' => 'home', 'title' => 'Emails']),
+        'GET /admin/emails.csv' => fn () => export_emails(),
+        'POST /admin/emails/(\d+)/delete' => function ($id) {
+            $s = find_row('subscribers', (int) $id);
+            db()->prepare('DELETE FROM subscribers WHERE id = ?')->execute([$s['id']]);
+            flash($s['email'] . ' deleted.');
+            redirect('/admin/emails');
+        },
+
+        // videos
+        'GET /admin/videos' => fn () => admin_videos(),
+        'POST /admin/videos' => fn () => save_videos(),
+
+        // settings
+        'GET /admin/settings' => fn () => admin_render('settings', ['tab' => 'settings', 'title' => 'Settings']),
+        'POST /admin/settings' => fn () => save_settings(),
+        'POST /admin/password' => fn () => change_password(),
+        'POST /admin/test-email' => function () {
+            $to = setting('contact_email') ?: setting('mail_from');
+            $err = $to === '' ? 'Add a contact email first.' : send_mail($to, 'Test email from your site', "It works! Download emails will look like they come from this address.\n\n" . base_url());
+            flash($err === null ? "Test email sent to $to. Check your inbox (and spam)." : "Email failed: $err");
+            redirect('/admin/settings#email');
+        },
+        'GET /admin/backup' => function () {
+            $zip = make_backup();
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . basename($zip) . '"');
+            header('Content-Length: ' . filesize($zip));
+            readfile($zip);
+        },
+    ];
+
+    foreach ($routes as $key => $handler) {
+        [$verb, $pattern] = explode(' ', $key, 2);
+        if ($verb === $method && preg_match('#^' . $pattern . '$#', $path, $m)) {
+            $handler(...array_slice($m, 1));
+            return;
+        }
+    }
     not_found();
+}
+
+/** Where to go after a small action: the page the button was on. */
+function back_to(string $fallback): string
+{
+    $ref = $_SERVER['HTTP_REFERER'] ?? '';
+    $path = (string) parse_url($ref, PHP_URL_PATH);
+    return (parse_url($ref, PHP_URL_HOST) === ($_SERVER['HTTP_HOST'] ?? '') && str_starts_with($path, '/admin')) ? $path : $fallback;
+}
+
+function find_row(string $table, int $id): array
+{
+    $st = db()->prepare("SELECT * FROM $table WHERE id = ?");
+    $st->execute([$id]);
+    return $st->fetch() ?: not_found();
 }
 
 function admin_setup(bool $post): void
@@ -150,56 +263,122 @@ function admin_login(bool $post): void
     admin_render('login', ['error' => $error, 'title' => 'Log in', 'bare' => true]);
 }
 
-function find_link(int $id): array
+function change_password(): void
 {
-    $st = db()->prepare('SELECT * FROM links WHERE id = ?');
-    $st->execute([$id]);
-    return $st->fetch() ?: not_found();
+    $cur = (string) ($_POST['current'] ?? '');
+    $new = (string) ($_POST['new'] ?? '');
+    if (!password_verify($cur, setting('admin_pass_hash'))) {
+        flash('Current password is wrong. Nothing changed.');
+    } elseif ($err = password_problem($new)) {
+        flash($err);
+    } else {
+        set_setting('admin_pass_hash', password_hash($new, PASSWORD_DEFAULT));
+        flash('Password changed.');
+    }
+    redirect('/admin/settings#password');
 }
 
-function save_link(): void
+function admin_dashboard(): void
 {
-    $id = (int) ($_POST['id'] ?? 0);
-    $old = $id ? find_link($id) : null;
-    $title = trim((string) ($_POST['title'] ?? ''));
-    $url = clean_url((string) ($_POST['url'] ?? ''));
-    $image = $old['image'] ?? '';
+    $week = db()->query("SELECT datetime('now', '-7 days')")->fetchColumn(); // DB times are UTC
+    $q = fn (string $sql, array $args = []) => (function () use ($sql, $args) {
+        $st = db()->prepare($sql);
+        $st->execute($args);
+        return $st;
+    })();
+    admin_render('dashboard', [
+        'downloadsWeek' => (int) $q('SELECT COUNT(*) FROM downloads WHERE created_at >= ?', [$week])->fetchColumn(),
+        'emailsWeek' => (int) $q('SELECT COUNT(*) FROM subscribers WHERE created_at >= ?', [$week])->fetchColumn(),
+        'emailsTotal' => (int) $q('SELECT COUNT(*) FROM subscribers')->fetchColumn(),
+        'top' => $q('SELECT f.title, f.id, COUNT(d.id) n FROM downloads d JOIN files f ON f.id = d.file_id
+                     WHERE d.created_at >= ? GROUP BY f.id ORDER BY n DESC LIMIT 5', [db()->query("SELECT datetime('now', '-30 days')")->fetchColumn()])->fetchAll(),
+        'tab' => 'home', 'title' => 'Dashboard',
+    ]);
+}
 
-    try {
-        if ($title === '' || $url === '') {
-            throw new RuntimeException('Add a title and a link (https://… or a page like /about).');
-        }
-        if (!empty($_FILES['photo']['name'])) {
-            $new = save_uploaded_image($_FILES['photo']);
-            delete_image($image);
-            $image = $new;
-        } elseif (!empty($_POST['remove_photo'])) {
-            delete_image($image);
-            $image = '';
-        }
-    } catch (RuntimeException $ex) {
-        flash($ex->getMessage());
-        redirect($id ? "/admin/links/$id" : '/admin/links/new');
+function export_emails(): void
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="drmadeit-emails-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['email', 'wants_updates', 'signed_up', 'files_requested']);
+    $rows = db()->query('SELECT s.email, s.opted_in, s.created_at, GROUP_CONCAT(DISTINCT f.title) files
+        FROM subscribers s LEFT JOIN downloads d ON d.subscriber_id = s.id LEFT JOIN files f ON f.id = d.file_id
+        GROUP BY s.id ORDER BY s.id');
+    foreach ($rows as $r) {
+        // Prefix cells that a spreadsheet would treat as a formula.
+        $r = array_map(fn ($v) => preg_match('/^[=+\-@]/', (string) $v) ? "'" . $v : $v, $r);
+        fputcsv($out, [$r['email'], $r['opted_in'] ? 'yes' : 'no', $r['created_at'], $r['files']]);
     }
+    fclose($out);
+}
 
-    $visible = empty($_POST['visible']) ? 0 : 1;
-    $featured = empty($_POST['featured']) ? 0 : 1;
-    if ($featured) {
-        db()->exec('UPDATE links SET featured = 0');
+function admin_videos(): void
+{
+    admin_render('videos', [
+        'videos' => youtube_feed(),
+        'pinned' => video_pins(),
+        'hidden' => video_hidden(),
+        'tab' => 'home', 'title' => 'Videos',
+    ]);
+}
+
+function save_videos(): void
+{
+    $do = (string) ($_POST['do'] ?? '');
+    $id = (string) ($_POST['id'] ?? '');
+    if ($do === 'channel') {
+        $input = trim((string) ($_POST['channel'] ?? ''));
+        $cid = youtube_channel_id($input);
+        if ($input === '') {
+            set_setting('youtube_channel_id', '');
+            flash('Channel removed.');
+        } elseif ($cid === null) {
+            flash('Could not find that channel. Paste the channel ID (starts with UC) from YouTube → Settings → Advanced settings.');
+        } else {
+            set_setting('youtube_channel_id', $cid);
+            @unlink(youtube_cache_file());
+            flash('Channel saved.');
+        }
+    } elseif ($do === 'pin-url') {
+        $vid = youtube_video_id((string) ($_POST['url'] ?? ''));
+        if ($vid === null) {
+            flash("That doesn't look like a YouTube video link.");
+        } else {
+            $pins = array_values(array_filter(video_pins(), fn ($p) => $p['id'] !== $vid));
+            $pins[] = ['id' => $vid, 'title' => trim((string) ($_POST['title'] ?? '')) ?: (youtube_title($vid) ?? 'Watch on YouTube')];
+            set_setting('video_pinned', json_encode($pins));
+            flash('Video pinned.');
+        }
+    } elseif ($do === 'pin' && preg_match('/^[\w-]{11}$/', $id)) {
+        $pins = video_pins();
+        if (in_array($id, array_column($pins, 'id'), true)) {
+            $pins = array_values(array_filter($pins, fn ($p) => $p['id'] !== $id));
+            flash('Unpinned.');
+        } else {
+            $pins[] = ['id' => $id, 'title' => youtube_title($id) ?? 'Watch on YouTube'];
+            flash('Pinned to the top.');
+        }
+        set_setting('video_pinned', json_encode($pins));
+    } elseif ($do === 'hide' && preg_match('/^[\w-]{11}$/', $id)) {
+        $hidden = video_hidden();
+        $hidden = in_array($id, $hidden, true) ? array_values(array_diff($hidden, [$id])) : [...$hidden, $id];
+        set_setting('video_hidden', json_encode($hidden));
+        flash('Updated.');
+    } elseif ($do === 'refresh') {
+        @unlink(youtube_cache_file());
+        flash('Refreshed from YouTube.');
+    } elseif ($do === 'home') {
+        set_setting('videos_on_home', empty($_POST['on']) ? '0' : '1');
+        flash('Saved.');
     }
-    if ($id) {
-        db()->prepare('UPDATE links SET title = ?, url = ?, image = ?, featured = ?, visible = ? WHERE id = ?')
-            ->execute([$title, $url, $image, $featured, $visible, $id]);
-    } else {
-        db()->prepare('INSERT INTO links (title, url, image, featured, visible, sort_order) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))')
-            ->execute([$title, $url, $image, $featured, $visible]);
-    }
-    flash('Saved.');
-    redirect('/admin/links');
+    redirect('/admin/videos');
 }
 
 const TEXT_SETTINGS = [
     'site_name', 'bio', 'footer_text', 'about_title', 'about_text', 'contact_email', 'business_name', 'social_music_label',
+    'amazon_tag', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_port', 'smtp_user',
+    'license_personal', 'license_commercial',
 ];
 const URL_SETTINGS = [
     'social_tiktok', 'social_instagram', 'social_youtube', 'social_facebook', 'social_x', 'social_music', 'business_url',
@@ -217,6 +396,9 @@ function save_settings(): void
         if (isset($_POST[$k])) {
             set_setting($k, clean_url((string) $_POST[$k]));
         }
+    }
+    if (($_POST['smtp_pass'] ?? '') !== '') { // blank = keep the saved one
+        set_setting('smtp_pass', (string) $_POST['smtp_pass']);
     }
     $errors = [];
     foreach (IMAGE_SETTINGS as $k) {

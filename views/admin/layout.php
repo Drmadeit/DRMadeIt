@@ -20,8 +20,9 @@
 </main>
 <?php if (empty($bare)): ?>
 <nav class="a-tabs" aria-label="Admin sections">
-  <a href="/admin/links" class="<?= ($tab ?? '') === 'links' ? 'on' : '' ?>"><?= icon('link', 22) ?><span>Links</span></a>
-  <a href="/admin/settings" class="<?= ($tab ?? '') === 'settings' ? 'on' : '' ?>"><?= icon('sliders', 22) ?><span>Settings</span></a>
+  <?php foreach (['home' => ['/admin', 'home', 'Home'], 'links' => ['/admin/links', 'link', 'Links'], 'tools' => ['/admin/tools', 'ruler', 'Tools'], 'files' => ['/admin/files', 'file', 'Files'], 'settings' => ['/admin/settings', 'sliders', 'Settings']] as $k => [$href, $ic, $label]): ?>
+    <a href="<?= $href ?>" class="<?= ($tab ?? '') === $k ? 'on' : '' ?>"<?= ($tab ?? '') === $k ? ' aria-current="page"' : '' ?>><?= icon($ic, 22) ?><span><?= $label ?></span></a>
+  <?php endforeach; ?>
 </nav>
 <?php endif; ?>
 <script src="<?= e(asset('js/admin.js')) ?>" defer></script>

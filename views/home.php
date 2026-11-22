@@ -29,3 +29,15 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
     </a>
   <?php endforeach; ?>
 </nav>
+
+<?php if ($videos): ?>
+<section class="home-videos" aria-labelledby="latest">
+  <h2 id="latest" class="rule-title">Latest videos</h2>
+  <?php foreach ($videos as $v): ?>
+    <a class="video-row" href="https://www.youtube.com/watch?v=<?= e($v['id']) ?>" target="_blank" rel="noopener">
+      <img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="128" height="72">
+      <span><?= e($v['title']) ?></span>
+    </a>
+  <?php endforeach; ?>
+</section>
+<?php endif; ?>

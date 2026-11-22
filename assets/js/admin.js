@@ -61,6 +61,15 @@
     });
   });
 
+  // ---- Say how many files were picked ----
+  document.querySelectorAll('input[type=file][data-count]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const n = input.files?.length || 0;
+      const btn = input.previousElementSibling;
+      if (btn && n) btn.textContent = n === 1 ? `${input.files[0].name} — tap Save` : `${n} photos picked — tap Save`;
+    });
+  });
+
   // ---- Show the chosen photo right away ----
   document.querySelectorAll('input[type=file][data-preview]').forEach((input) => {
     input.addEventListener('change', () => {
