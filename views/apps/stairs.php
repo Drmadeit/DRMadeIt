@@ -14,7 +14,7 @@
     <?= app_field('max_riser', 'Max riser', 'len', '7 3/4') ?>
     <?= app_field('run', 'Tread run', 'len', '10') ?>
   </section>
-  <details class="help"><summary>How to use</summary>
+  <details class="help" open><summary>How to use</summary>
     <p>Defaults follow common US residential code: max riser 7 3/4", min tread 10" (not counting the nosing). Check your local code. Buy stringers longer than the minimum shown.</p>
   </details>
 </main>

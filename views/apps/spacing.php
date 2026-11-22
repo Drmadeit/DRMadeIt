@@ -12,7 +12,7 @@
   </section>
   <h2 class="list-title">Marks from the left / bottom</h2>
   <ol class="marks" data-out="marks"></ol>
-  <details class="help"><summary>How to use</summary>
+  <details class="help" open><summary>How to use</summary>
     <p><b>Space at ends:</b> shelves or dividers, with equal space above the first and below the last. <b>Item at ends:</b> posts, with the first and last item flush to the ends.</p>
     <p>Thickness 0 spaces points evenly (holes, screws). "Edge" is where the item starts, "center" is its middle.</p>
   </details>

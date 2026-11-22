@@ -13,7 +13,7 @@
     <?= app_field('waste', 'Waste', 'num', '15', '%') ?>
     <?= app_field('price', 'Price per board foot', 'num', '', '$') ?>
   </section>
-  <details class="help"><summary>How to use</summary>
+  <details class="help" open><summary>How to use</summary>
     <p>Board feet = thickness × width × length (all in inches) ÷ 144. Rough lumber goes by rough thickness: 4/4 = 1", 5/4 = 1 1/4", 8/4 = 2".</p>
   </details>
 </main>

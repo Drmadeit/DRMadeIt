@@ -9,7 +9,7 @@
     <?= app_choice('spring', 'Spring angle', ['38' => '38°', '45' => '45°', '52' => '52°', 'other' => 'Other'], '38') ?>
     <div data-show-when="spring=other"><?= app_field('spring_custom', 'Spring angle', 'num', '40', '°') ?></div>
   </section>
-  <details class="help"><summary>How to use</summary>
+  <details class="help" open><summary>How to use</summary>
     <p><b>Wall corner angle:</b> 90° for a normal corner, 135° for a 45° bay corner, 120° for a hexagon.</p>
     <p><b>Nested:</b> crown upside down on the saw, ceiling edge on the table, wall edge on the fence. Set the miter, bevel at 0°.</p>
     <p><b>Flat:</b> crown face up on the table. Set both miter and bevel. Good for wide crown.</p>

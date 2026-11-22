@@ -25,7 +25,7 @@
     <a class="file-btn dl" id="dxf-download" download>Download fixed DXF</a>
   </div>
 
-  <details class="help"><summary>How it works</summary>
+  <details class="help" open><summary>How it works</summary>
     <p>Breaks every line, arc and polyline into pieces, removes duplicates and tiny bits, then joins pieces that touch into closed polylines. Ends closer than the <b>join tolerance</b> snap together; gaps up to <b>close gaps</b> get a short line. Shapes only join on the same layer.</p>
     <p>Reads LINE, ARC, CIRCLE, LWPOLYLINE, POLYLINE, SPLINE, ELLIPSE. Text and blocks are left out (explode blocks first). Saves a plain R12 DXF that VCarve, Aspire, Fusion, Carbide Create and LightBurn read.</p>
     <p>Inches: 0.001 and 0.03. Millimeters: 0.02 and 0.8. Set automatically when the file says its units.</p>

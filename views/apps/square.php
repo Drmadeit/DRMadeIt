@@ -11,7 +11,7 @@
     <?= app_field('b', 'Side B', 'len', '48') ?>
     <?= app_field('measured', 'Measured diagonal', 'len', '', 'optional') ?>
   </section>
-  <details class="help"><summary>How to use</summary>
+  <details class="help" open><summary>How to use</summary>
     <p>Mark Side A on one edge and Side B on the other, measuring from the corner. The distance between the marks should be the diagonal. 3-4-5 is the classic: 3 ft and 4 ft gives exactly 5 ft. Bigger is more accurate (6-8-10, 9-12-15).</p>
     <p>Type your measured diagonal to see how far off you are. For a box, both diagonals should match.</p>
   </details>
