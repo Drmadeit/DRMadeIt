@@ -20,7 +20,10 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
 
   <?php if ($free): ?>
     <div class="get-box" id="get">
-      <?php if (!empty($sent)): ?>
+      <?php if (!empty($directLink)): ?>
+        <p class="ok"><b>Thanks!</b> Here's your download. (Our email is acting up, so you get it right here.)</p>
+        <a class="btn btn-wide" href="<?= e($directLink) ?>">Download now</a>
+      <?php elseif (!empty($sent)): ?>
         <p class="ok"><b>Check your email.</b> The download link is on its way to <?= e($email ?? '') ?>. It works <?= LINK_USES ?> times for <?= LINK_HOURS ?> hours. Not there? Check spam.</p>
       <?php else: ?>
         <form method="post" action="/files/<?= e($file['slug']) ?>/get#get" class="get-form">

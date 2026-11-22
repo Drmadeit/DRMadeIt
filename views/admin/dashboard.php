@@ -1,3 +1,6 @@
+<?php if ($mailErr = setting('mail_error')): ?>
+  <a class="a-alert" href="/admin/settings#email"><b>Download emails aren't sending.</b> <?= e($mailErr) ?><br>People still get their file on the page. Tap to fix in Settings → Email.</a>
+<?php endif; ?>
 <div class="a-stats">
   <div class="a-stat"><b><?= $downloadsWeek ?></b><span>downloads this week</span></div>
   <div class="a-stat"><b><?= $emailsWeek ?></b><span>new emails this week</span></div>

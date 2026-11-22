@@ -85,8 +85,9 @@ function request_download(array $file): void
         . "Thanks for downloading!\n$site\n" . base_url() . "\n";
     $err = send_mail($email, "Your download: {$file['title']}", $body);
     if ($err !== null) {
+        // Don't lose the visitor: their email is already saved, so hand them the link right here.
         error_log("Download email to $email failed: $err");
-        render('file', $state + ['formError' => "Sorry, we couldn't send the email right now. Please try again later."]);
+        render('file', $state + ['directLink' => $link]);
         return;
     }
     render('file', $state + ['sent' => true]);

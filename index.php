@@ -68,20 +68,21 @@ if ($path === '/') {
 
 // ---- File shop ----
 } elseif ($path === '/files') {
-    $type = in_array($_GET['type'] ?? '', ['cnc', '3d'], true) ? $_GET['type'] : '';
-    $price = in_array($_GET['price'] ?? '', ['free', 'paid'], true) ? $_GET['price'] : '';
-    $where = ["status = 'published'"];
-    $args = [];
-    if ($type) {
-        $where[] = 'type = ?';
-        $args[] = $type;
+    // One filter row: All · CNC · 3D print · Free · Paid. Only choices that would actually narrow the list are shown.
+    $filters = ['cnc' => ['CNC', "type = 'cnc'"], '3d' => ['3D print', "type = '3d'"], 'free' => ['Free', 'price_cents = 0'], 'paid' => ['Paid', 'price_cents > 0']];
+    $show = (string) ($_GET['show'] ?? $_GET['type'] ?? $_GET['price'] ?? ''); // old ?type= / ?price= links still work
+    $show = isset($filters[$show]) ? $show : '';
+    $total = (int) $q("SELECT COUNT(*) FROM files WHERE status = 'published'")->fetchColumn();
+    $chips = [];
+    foreach ($filters as $key => [$label, $cond]) {
+        $n = (int) $q("SELECT COUNT(*) FROM files WHERE status = 'published' AND $cond")->fetchColumn();
+        if (($n > 0 && $n < $total) || $key === $show) {
+            $chips[$key] = $label;
+        }
     }
-    if ($price) {
-        $where[] = $price === 'free' ? 'price_cents = 0' : 'price_cents > 0';
-    }
-    render('files', ['title' => 'Files', 'type' => $type, 'price' => $price, 'files' => $q(
-        'SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
-         FROM files f WHERE ' . implode(' AND ', $where) . ' ORDER BY featured DESC, sort_order, id', $args)->fetchAll()]);
+    render('files', ['title' => 'Files', 'show' => $show, 'chips' => $chips, 'files' => $q(
+        "SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
+         FROM files f WHERE status = 'published'" . ($show ? ' AND ' . $filters[$show][1] : '') . ' ORDER BY featured DESC, sort_order, id')->fetchAll()]);
 } elseif (preg_match('#^/files/([a-z0-9-]+)$#', $path, $m)) {
     $file = find_published_file($m[1]);
     $images = file_images((int) $file['id']);

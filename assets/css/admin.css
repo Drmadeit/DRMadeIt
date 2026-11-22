@@ -180,3 +180,4 @@ select {
 .a-more summary small { color: var(--muted); font-weight: 400; }
 .a-more[open] summary { margin-bottom: 12px; }
 [data-show-if][hidden] { display: none; }
+.a-alert { display: block; padding: 14px; border-radius: 12px; background: #fde8e9; color: #8b0f15; text-decoration: none; font-size: 15px; line-height: 1.4; border: 1.5px solid #f3b8bc; }

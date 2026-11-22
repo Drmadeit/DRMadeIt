@@ -1,19 +1,17 @@
 <?php
-$chip = function (string $label, string $t, string $p) use ($type, $price) {
-    $qs = http_build_query(array_filter(['type' => $t, 'price' => $p]));
-    $on = $t === $type && $p === $price;
-    return '<a class="chip' . ($on ? ' on' : '') . '" href="/files' . ($qs ? '?' . $qs : '') . '"' . ($on ? ' aria-current="page"' : '') . '>' . e($label) . '</a>';
+$chip = function (string $label, string $key) use ($show) {
+    $on = $key === $show;
+    return '<a class="chip' . ($on ? ' on' : '') . '" href="/files' . ($key ? '?show=' . $key : '') . '"' . ($on ? ' aria-current="page"' : '') . '>' . e($label) . '</a>';
 };
 ?>
 <section class="page">
   <h1 class="page-title">Files</h1>
   <p class="page-lede">CNC and 3D print files from my shop.</p>
-  <nav class="chips" aria-label="Filter by type">
-    <?= $chip('All', '', $price) ?><?= $chip('CNC', 'cnc', $price) ?><?= $chip('3D print', '3d', $price) ?>
+  <?php if ($chips): ?>
+  <nav class="chips" aria-label="Filter files">
+    <?= $chip('All', '') ?><?php foreach ($chips as $key => $label): ?><?= $chip($label, $key) ?><?php endforeach; ?>
   </nav>
-  <nav class="chips" aria-label="Filter by price">
-    <?= $chip('Any price', $type, '') ?><?= $chip('Free', $type, 'free') ?><?= $chip('Paid', $type, 'paid') ?>
-  </nav>
+  <?php endif; ?>
 
   <?php if (!$files): ?><p>No files here yet. Check back soon.</p><?php endif; ?>
   <div class="grid">

@@ -36,7 +36,8 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
 
   <section class="a-card a-form" id="email">
     <h2>Email (free download links)</h2>
-    <p class="a-hint">Make a mailbox in Hostinger → Emails (e.g. files@drmadeit.com) and enter it here.</p>
+    <?php if ($mailErr = setting('mail_error')): ?><p class="a-error"><b>Last try failed:</b> <?= e($mailErr) ?></p><?php endif; ?>
+    <p class="a-hint"><b>Your email is on Google</b>, so use: SMTP server <code>smtp.gmail.com</code>, port <code>465</code>, username = your full Google email, password = a Google <b>App Password</b> (Google Account → Security → 2-Step Verification → App passwords). Send-from address = that same email or one of its aliases.</p>
     <?= $field('mail_from', 'Send from address', 'email', 'files@drmadeit.com') ?>
     <?= $field('mail_from_name', 'Send from name', 'text', 'D.R. Made It') ?>
     <div class="a-grid2">

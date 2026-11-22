@@ -137,6 +137,11 @@ function migrate(PDO $pdo): void
                 sort_order INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (page_id, file_id))');
         },
+        9 => function (PDO $pdo): void {
+            // drmadeit.com email is on Google Workspace: point the untouched default at Gmail's server.
+            $pdo->exec("UPDATE settings SET value = 'smtp.gmail.com' WHERE key = 'smtp_host' AND value = 'smtp.hostinger.com'
+                AND COALESCE((SELECT value FROM settings WHERE key = 'smtp_user'), '') = ''");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
