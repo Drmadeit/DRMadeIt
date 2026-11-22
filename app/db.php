@@ -102,6 +102,10 @@ function migrate(PDO $pdo): void
             // Title + saved thumbnail for TikTok links, looked up once when the page is saved
             $pdo->exec("ALTER TABLE pages ADD COLUMN video_meta TEXT NOT NULL DEFAULT '{}'");
         },
+        6 => function (PDO $pdo): void {
+            // /calc is now the Fractions app; the calculator list moved to /toolbox
+            $pdo->exec("UPDATE links SET url = '/toolbox', title = CASE WHEN title = 'Shop Calculators' THEN 'Toolbox' ELSE title END WHERE url = '/calc'");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
@@ -145,7 +149,7 @@ function seed(PDO $pdo): void
         ['Stuff I Design and Sell', '/files', 'design-sell.jpg', '', 0],
         ['Tools in My Videos', '/tools/shop-tools', 'shop-tools.jpg', '', 0],
         ['Reaper Build Items', '/tools/reaper-build', 'reaper-build.jpg', '', 0],
-        ['Shop Calculators', '/calc', '', 'ruler', 1],
+        ['Toolbox', '/toolbox', '', 'ruler', 1],
         ['My Amazon Storefront', 'https://www.amazon.com/shop/raleighcabinets', '', 'link', 1],
     ];
     $st = $pdo->prepare('INSERT INTO links (title, url, image, icon, sort_order, visible) VALUES (?, ?, ?, ?, ?, ?)');

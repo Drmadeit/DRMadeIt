@@ -10,7 +10,6 @@ if (PHP_SAPI === 'cli-server') {
 }
 
 require __DIR__ . '/app/bootstrap.php';
-require ROOT . '/app/calc.php';
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
@@ -100,16 +99,10 @@ if ($path === '/') {
 } elseif ($path === '/videos') {
     render('videos', ['title' => 'Videos', 'videos' => videos_for_site(12)]);
 
-// ---- Calculators ----
-} elseif ($path === '/calc') {
-    render('calc/index', ['title' => 'Shop Calculators', 'description' => 'Free woodworking calculators and a DXF polyline fixer.']);
-} elseif (preg_match('#^/calc/([a-z0-9-]+)$#', $path, $m) && isset(CALCS[$m[1]])) {
-    render('calc/' . $m[1], ['title' => CALCS[$m[1]]['title'], 'description' => CALCS[$m[1]]['blurb'], 'calc' => $m[1]]);
-
 // ---- Robots ----
 } elseif ($path === '/robots.txt') {
     header('Content-Type: text/plain');
     echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\n";
-} elseif (!tape_route($path) && !pages_route($path)) { // pages and categories made in admin
+} elseif (!apps_route($path) && !pages_route($path)) { // pages and categories made in admin
     not_found();
 }

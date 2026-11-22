@@ -3,7 +3,7 @@
   <input type="hidden" name="id" value="<?= (int) $link['id'] ?>">
   <label>Button text <input name="title" required value="<?= e($link['title']) ?>" placeholder="Tools in My Videos"></label>
   <label>Link <input name="url" required value="<?= e($link['url']) ?>" placeholder="https://… or /about" autocapitalize="none" inputmode="url"></label>
-  <p class="a-hint">Site pages: <code>/about</code> <code>/files</code> <code>/tools/…</code> <code>/calc</code></p>
+  <p class="a-hint">Site pages: <code>/about</code> <code>/files</code> <code>/tools/…</code> <code>/toolbox</code> <code>/calc</code></p>
 
   <div class="a-photo">
     <?php if ($link['image']): ?>

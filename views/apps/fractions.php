@@ -1,32 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fractions</title>
-<meta name="description" content="Fraction calculator for the shop. Add, subtract, multiply and divide feet, inches and fractions.">
-<meta name="theme-color" content="#0a0a0b">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fractions">
-<link rel="manifest" href="/fractions/manifest.webmanifest">
-<link rel="apple-touch-icon" href="<?= e(asset('img/tape-180.png')) ?>">
-<link rel="icon" href="<?= e(asset('img/tape-192.png')) ?>">
-<link rel="stylesheet" href="<?= e(asset('css/tape.css')) ?>">
-</head>
-<body>
-<main class="app" data-version="<?= e($version) ?>">
-  <header class="bar">
-    <a class="brand" href="/calc" aria-label="All shop calculators">Fractions</a>
-    <div class="prec" role="group" aria-label="Show answers in this size. Tap again to go back to simplified.">
-      <button type="button" aria-pressed="false" data-prec="8">1/8</button>
-      <button type="button" aria-pressed="false" data-prec="16">1/16</button>
-      <button type="button" aria-pressed="false" data-prec="32">1/32</button>
-      <button type="button" aria-pressed="false" data-prec="64">1/64</button>
-    </div>
-  </header>
-
   <section class="screen" aria-live="polite">
     <ol class="history" id="history" aria-label="Past answers"></ol>
     <div class="expr" id="expr" aria-label="What you typed"></div>
@@ -64,11 +35,3 @@
   </section>
 
   <p class="hint" id="hint">Type <b>23</b> <b>␣</b> <b>5</b> <b>/</b> <b>8</b> for 23 5/8". Tap the answer to copy it.</p>
-</main>
-<script src="<?= e(asset('js/calc.js')) ?>"></script>
-<script src="<?= e(asset('js/tape.js')) ?>"></script>
-<script>
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/fractions/sw.js', { scope: '/fractions/' }).catch(() => {});
-</script>
-</body>
-</html>
