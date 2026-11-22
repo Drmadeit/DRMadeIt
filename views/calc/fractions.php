@@ -1,6 +1,6 @@
 <section class="page calc">
   <?= calc_head('fractions') ?>
-  <a class="app-promo" href="/tape/"><img src="<?= e(asset('img/tape-180.png')) ?>" alt="" width="56" height="56"><span><b>Want buttons? Try the Tape Math app</b><small>Works offline from your home screen.</small></span></a>
+  <a class="app-promo" href="/fractions/"><img src="<?= e(asset('img/tape-180.png')) ?>" alt="" width="56" height="56"><span><b>Want buttons? Try the Fractions app</b><small>Works offline from your home screen.</small></span></a>
   <form class="calc-form" data-calc="fractions" autocomplete="off">
     <label class="calc-field">Measurement or math
       <input name="expr" inputmode="text" value="23 5/8 + 1 3/16 - 3/4" autocapitalize="none" spellcheck="false">

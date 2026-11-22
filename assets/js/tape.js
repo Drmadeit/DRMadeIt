@@ -1,4 +1,4 @@
-// Tape Math keypad. Uses parseLen / evalLen / fmtIn from calc.js. Works offline.
+// Fractions app keypad. Uses parseLen / evalLen / fmtIn from calc.js. Works offline.
 (() => {
   const C = window.ShopCalc;
   const $ = (id) => document.getElementById(id);

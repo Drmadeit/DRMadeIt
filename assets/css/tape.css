@@ -1,4 +1,4 @@
-/* Tape Math — dark, big keys, made for one thumb. */
+/* Fractions app — dark, big keys, made for one thumb. */
 :root { --bg: #0a0a0b; --key: #262629; --key-down: #3a3a3e; --fn: #a5a5aa; --red: #d7141e; --red-down: #a80f17; --text: #f4f4f5; --muted: #9a9aa1; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); }

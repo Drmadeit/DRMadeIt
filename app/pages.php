@@ -8,7 +8,7 @@ declare(strict_types=1);
  *   /<page>              a page with no category
  * Page and category addresses share one namespace and can't use the site's built-in addresses.
  */
-const RESERVED_SLUGS = ['admin', 'about', 'tools', 'files', 'videos', 'calc', 'media', 'download', 'assets', 'robots-txt', 'index-php', 'sitemap', 'p', 'page', 'pages', 'tape'];
+const RESERVED_SLUGS = ['admin', 'about', 'tools', 'files', 'videos', 'calc', 'media', 'download', 'assets', 'robots-txt', 'index-php', 'sitemap', 'p', 'page', 'pages', 'tape', 'fractions'];
 
 function live_category(string $slug): ?array
 {

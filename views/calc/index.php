@@ -1,9 +1,9 @@
 <section class="page">
   <h1 class="page-title">Shop Calculators</h1>
   <p class="page-lede">Free tools I use in the shop. Made for phones. Nothing you type or upload leaves your device.</p>
-  <a class="app-promo" href="/tape/">
+  <a class="app-promo" href="/fractions/">
     <img src="<?= e(asset('img/tape-180.png')) ?>" alt="" width="56" height="56">
-    <span><b>Tape Math app</b><small>Fraction calculator with big buttons. Add it to your home screen; it works with no signal.</small></span>
+    <span><b>Fractions app</b><small>Fraction calculator with big buttons. Add it to your home screen; it works with no signal.</small></span>
   </a>
   <div class="cards">
     <?php foreach (CALCS as $slug => $c): ?>

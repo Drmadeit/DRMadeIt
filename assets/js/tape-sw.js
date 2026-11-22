@@ -1,4 +1,4 @@
-// Offline worker for Tape Math. VERSION and FILES are written above this line by the server.
+// Offline worker for the Fractions app. VERSION and FILES are written above this line by the server.
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
@@ -23,10 +23,10 @@ self.addEventListener('fetch', (e) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put('/tape/', copy));
+          caches.open(VERSION).then((c) => c.put('/fractions/', copy));
           return res;
         })
-        .catch(() => caches.match('/tape/'))
+        .catch(() => caches.match('/fractions/'))
     );
     return;
   }

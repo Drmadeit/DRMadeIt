@@ -2,11 +2,11 @@
 declare(strict_types=1);
 
 /**
- * Tape Math: a fraction calculator you can add to the iPhone home screen.
+ * Fractions: a fraction calculator you can add to the iPhone home screen.
  * Works offline through a service worker that caches the files below.
- *   /tape/                       the app
- *   /tape/sw.js                  offline worker (version changes whenever a file changes)
- *   /tape/manifest.webmanifest   app name + icons
+ *   /fractions/                       the app (/tape and /tape/ forward here; it was first called Tape Math)
+ *   /fractions/sw.js                  offline worker (version changes whenever a file changes)
+ *   /fractions/manifest.webmanifest   app name + icons
  */
 const TAPE_FILES = ['js/calc.js', 'js/tape.js', 'css/tape.css', 'img/tape-180.png', 'img/tape-192.png', 'img/tape-512.png'];
 
@@ -22,35 +22,39 @@ function tape_version(): string
 function tape_route(string $path): bool
 {
     if ($path === '/tape') {
+        header('Location: /fractions/', true, 301);
+        return true;
+    }
+    if ($path === '/fractions') {
         $raw = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
         if (!str_ends_with($raw, '/')) {
-            header('Location: /tape/', true, 301); // the app lives at /tape/ so the offline worker covers it
+            header('Location: /fractions/', true, 301); // the app lives at /fractions/ so the offline worker covers it
             return true;
         }
         header('Cache-Control: no-cache');
         render('tape', ['version' => tape_version()], null);
         return true;
     }
-    if ($path === '/tape/sw.js') {
+    if ($path === '/fractions/sw.js') {
         // text/javascript + no-store so neither the server nor Cloudflare keeps an old copy
         header('Content-Type: text/javascript; charset=utf-8');
         header('Cache-Control: no-store, max-age=0');
         header('Expires: 0');
-        $urls = array_merge(['/tape/', '/tape/manifest.webmanifest'], array_map('asset', TAPE_FILES));
+        $urls = array_merge(['/fractions/', '/fractions/manifest.webmanifest'], array_map('asset', TAPE_FILES));
         echo "const VERSION = " . json_encode('tape-' . tape_version()) . ";\n";
         echo "const FILES = " . json_encode($urls, JSON_UNESCAPED_SLASHES) . ";\n";
         readfile(ROOT . '/assets/js/tape-sw.js');
         return true;
     }
-    if ($path === '/tape/manifest.webmanifest') {
+    if ($path === '/fractions/manifest.webmanifest') {
         header('Content-Type: application/manifest+json');
         header('Cache-Control: no-cache');
         echo json_encode([
-            'name' => 'Tape Math',
-            'short_name' => 'Tape Math',
+            'name' => 'Fractions',
+            'short_name' => 'Fractions',
             'description' => 'Fraction calculator for the shop by D.R. Made It',
-            'start_url' => '/tape/',
-            'scope' => '/tape/',
+            'start_url' => '/fractions/',
+            'scope' => '/fractions/',
             'display' => 'standalone',
             'background_color' => '#0a0a0b',
             'theme_color' => '#0a0a0b',

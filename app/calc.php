@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /** Shop calculators. Each has a view in views/calc/<slug>.php; the math runs in the browser. */
 const CALCS = [
-    'fractions' => ['title' => 'Tape Math & Fractions', 'blurb' => 'Add and subtract feet, inches and fractions. Convert to decimal and mm.'],
+    'fractions' => ['title' => 'Fraction Math & Converter', 'blurb' => 'Add and subtract feet, inches and fractions. Convert to decimal and mm.'],
     'square' => ['title' => 'Square Corner (3-4-5)', 'blurb' => 'Check a corner or a box for square with the diagonal.'],
     'crown' => ['title' => 'Crown Molding Angles', 'blurb' => 'Miter and bevel settings for any wall corner and spring angle.'],
     'spacing' => ['title' => 'Equal Spacing', 'blurb' => 'Evenly space shelves, dividers, balusters or holes. Gives every mark.'],
