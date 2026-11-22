@@ -153,8 +153,16 @@ function icon(string $name, int $size = 24): string
         'sliders' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/>',
         'home' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
         'file' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 3h8l5 5v13H6z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M14 3v5h5M9 13h7M9 17h7"/>',
+        'download' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m-5-5 5 5 5-5M5 20h14"/>',
         'mail' => '<rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="m3 7 9 6 9-6"/>',
     ];
     $p = $paths[$name] ?? $paths['link'];
     return '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . $p . '</svg>';
+}
+
+function slugify(string $s): string
+{
+    $s = strtolower(trim($s));
+    $s = preg_replace('/[^a-z0-9]+/', '-', $s);
+    return trim($s, '-') ?: 'item';
 }

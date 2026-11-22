@@ -290,3 +290,49 @@ a { color: inherit; }
 .calc-legend { font-size: 13px; color: var(--muted); }
 .lg { display: inline-block; width: 18px; height: 3px; vertical-align: middle; background: var(--ink); }
 .lg.bad { background: var(--red); }
+
+/* ---- Pages & categories made in admin ---- */
+.cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 520px) { .cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.cat-card { position: relative; display: block; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; background: #eaeaeb; text-decoration: none; }
+.cat-card img, .cat-card-empty { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease; }
+.cat-card:hover img { transform: scale(1.03); }
+.cat-card-name {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 10px;
+  background: rgb(10 10 11 / .82); color: #fff; font-weight: 600; font-size: 14px; line-height: 1.3;
+}
+.page-hero { display: block; margin: 0 0 18px; }
+.page-hero img { width: 100%; max-height: 460px; object-fit: cover; border-radius: var(--radius); }
+.masonry { columns: 2 150px; column-gap: 8px; margin-top: 24px; }
+.masonry a { display: block; margin-bottom: 8px; break-inside: avoid; }
+.masonry img { width: 100%; border-radius: 6px; background: #eaeaeb; }
+.lightbox { position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .94); display: grid; place-items: center; }
+.lightbox[hidden] { display: none; }
+.lightbox img { max-width: 100vw; max-height: 100vh; object-fit: contain; }
+.lightbox button {
+  position: absolute; width: 52px; height: 52px; border: 0; border-radius: 50%;
+  background: rgb(255 255 255 / .14); color: #fff; font-size: 26px; line-height: 1; cursor: pointer;
+}
+.lb-close { top: max(12px, env(safe-area-inset-top)); right: 12px; }
+.lb-prev { left: 8px; top: 50%; transform: translateY(-50%); }
+.lb-next { right: 8px; top: 50%; transform: translateY(-50%); }
+.tt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 8px 0 20px; }
+@media (min-width: 520px) { .tt-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tt-card { position: relative; display: block; aspect-ratio: 9 / 16; border-radius: var(--radius); overflow: hidden; background: #111; color: #fff; text-decoration: none; }
+.tt-card img, .tt-empty { width: 100%; height: 100%; object-fit: cover; display: grid; place-items: center; }
+.tt-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  background: rgb(0 0 0 / .5); font-size: 18px; padding-left: 3px;
+}
+.tt-title {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 10px 10px;
+  background: linear-gradient(transparent, rgb(0 0 0 / .85)); font-size: 13px; font-weight: 600; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tt-empty { color: #fff; }
+.tt-tiktok .tt-empty { background: #111; }
+.tt-instagram .tt-empty { background: linear-gradient(135deg, #5b3bd1, #c13584 55%, #f58529); }
+.tt-facebook .tt-empty { background: #1765d8; }
+.tt-link .tt-empty { background: #333; }
+.tt-card:not(:has(img)) .tt-title { background: none; font-size: 15px; }

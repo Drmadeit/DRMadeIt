@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require ROOT . '/app/admin_content.php';
+require ROOT . '/app/admin_pages.php';
 
 function admin_render(string $view, array $vars = []): void
 {
@@ -11,8 +12,8 @@ function admin_render(string $view, array $vars = []): void
 }
 
 /** Tables the generic reorder / show-hide endpoints may touch. */
-const SORTABLE = ['links', 'tool_lists', 'tool_items', 'files', 'file_images'];
-const HIDEABLE = ['links', 'tool_lists', 'tool_items'];
+const SORTABLE = ['links', 'tool_lists', 'tool_items', 'files', 'file_images', 'categories', 'pages', 'page_photos'];
+const HIDEABLE = ['links', 'tool_lists', 'tool_items', 'categories', 'pages'];
 
 function admin_route(string $path, string $method): void
 {
@@ -190,6 +191,8 @@ function admin_route(string $path, string $method): void
         },
     ];
 
+    $routes += pages_admin_routes();
+
     foreach ($routes as $key => $handler) {
         [$verb, $pattern] = explode(' ', $key, 2);
         if ($verb === $method && preg_match('#^' . $pattern . '$#', $path, $m)) {
@@ -205,7 +208,8 @@ function back_to(string $fallback): string
 {
     $ref = $_SERVER['HTTP_REFERER'] ?? '';
     $path = (string) parse_url($ref, PHP_URL_PATH);
-    return (parse_url($ref, PHP_URL_HOST) === ($_SERVER['HTTP_HOST'] ?? '') && str_starts_with($path, '/admin')) ? $path : $fallback;
+    $host = explode(':', (string) ($_SERVER['HTTP_HOST'] ?? ''))[0];
+    return (parse_url($ref, PHP_URL_HOST) === $host && str_starts_with($path, '/admin')) ? $path : $fallback;
 }
 
 function find_row(string $table, int $id): array

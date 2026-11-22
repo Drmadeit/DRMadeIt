@@ -16,13 +16,32 @@ function save_uploaded_image(array $file): string
             default => 'The photo did not upload. Try again.',
         });
     }
-    $info = @getimagesize($file['tmp_name']);
+    return process_image_file($file['tmp_name']);
+}
+
+/** Save image bytes downloaded from the web (e.g. a video thumbnail). Returns '' if they aren't an image. */
+function save_image_bytes(string $bytes): string
+{
+    $tmp = tempnam(sys_get_temp_dir(), 'img');
+    file_put_contents($tmp, $bytes);
+    try {
+        return process_image_file($tmp);
+    } catch (RuntimeException) {
+        return '';
+    } finally {
+        @unlink($tmp);
+    }
+}
+
+function process_image_file(string $path): string
+{
+    $info = @getimagesize($path);
     $type = $info[2] ?? 0;
     $src = match ($type) {
-        IMAGETYPE_JPEG => @imagecreatefromjpeg($file['tmp_name']),
-        IMAGETYPE_PNG => @imagecreatefrompng($file['tmp_name']),
-        IMAGETYPE_WEBP => @imagecreatefromwebp($file['tmp_name']),
-        IMAGETYPE_GIF => @imagecreatefromgif($file['tmp_name']),
+        IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
+        IMAGETYPE_PNG => @imagecreatefrompng($path),
+        IMAGETYPE_WEBP => @imagecreatefromwebp($path),
+        IMAGETYPE_GIF => @imagecreatefromgif($path),
         default => false,
     };
     if (!$src) {
@@ -30,7 +49,7 @@ function save_uploaded_image(array $file): string
     }
 
     if ($type === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
-        $exif = @exif_read_data($file['tmp_name']);
+        $exif = @exif_read_data($path);
         $angle = match ((int) ($exif['Orientation'] ?? 1)) { 3 => 180, 6 => -90, 8 => 90, default => 0 };
         if ($angle !== 0) {
             $rotated = imagerotate($src, $angle, 0);

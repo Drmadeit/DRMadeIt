@@ -61,6 +61,60 @@
     });
   });
 
+  // ---- Shrink photos on the phone before upload (fast on weak signal, under upload limits) ----
+  const shrink = (file, max = 2000) => new Promise((resolve) => {
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type) || file.size < 400 * 1024) return resolve(file);
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * scale);
+      c.height = Math.round(img.naturalHeight * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob((b) => resolve(b && b.size < file.size ? new File([b], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+  document.querySelectorAll('input[type=file][accept^="image"]').forEach((input) => {
+    input.addEventListener('change', async () => {
+      if (!input.files?.length || input.dataset.shrunk === '1' || typeof DataTransfer === 'undefined') return;
+      const form = input.form;
+      const save = form?.querySelector('button:not([type=button])');
+      if (save) save.disabled = true;
+      try {
+        const dt = new DataTransfer();
+        for (const f of input.files) dt.items.add(await shrink(f));
+        input.dataset.shrunk = '1';
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change'));
+        input.dataset.shrunk = '';
+      } catch { /* keep the originals */ }
+      if (save) save.disabled = false;
+    });
+  });
+
+  // ---- Repeating rows (page buttons) ----
+  document.querySelectorAll('[data-repeat]').forEach((box) => {
+    const addBtn = box.parentElement.querySelector('[data-repeat-add]');
+    addBtn?.addEventListener('click', () => {
+      const row = box.querySelector('[data-repeat-row]').cloneNode(true);
+      row.querySelectorAll('input').forEach((i) => { i.value = ''; });
+      box.appendChild(row);
+      row.querySelector('input').focus();
+    });
+    box.addEventListener('click', (e) => {
+      const rm = e.target.closest('[data-repeat-remove]');
+      if (!rm) return;
+      const rows = box.querySelectorAll('[data-repeat-row]');
+      const row = rm.closest('[data-repeat-row]');
+      if (rows.length > 1) row.remove();
+      else row.querySelectorAll('input').forEach((i) => { i.value = ''; });
+    });
+  });
+
   // ---- Say how many files were picked ----
   document.querySelectorAll('input[type=file][data-count]').forEach((input) => {
     input.addEventListener('change', () => {

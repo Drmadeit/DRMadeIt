@@ -198,12 +198,6 @@ function flash_pending(): bool
     return isset($_SESSION['flash']);
 }
 
-function slugify(string $s): string
-{
-    $s = strtolower(trim($s));
-    $s = preg_replace('/[^a-z0-9]+/', '-', $s);
-    return trim($s, '-') ?: 'item';
-}
 
 function unique_slug(string $table, string $want, int $exceptId): string
 {

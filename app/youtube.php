@@ -158,3 +158,21 @@ function http_get(string $url, int $timeout = 8): ?string
     $body = @file_get_contents($url, false, $ctx);
     return $body === false ? null : $body;
 }
+
+/** Follow redirects and return where a link ends up (for short links). */
+function http_final_url(string $url, int $timeout = 8): ?string
+{
+    if (!function_exists('curl_init')) {
+        return null;
+    }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_NOBODY => false, CURLOPT_RANGE => '0-0', CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SiteFeed/1.0)',
+    ]);
+    curl_exec($ch);
+    $final = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+    $ok = curl_errno($ch) === 0;
+    curl_close($ch);
+    return $ok && $final ? (string) $final : null;
+}

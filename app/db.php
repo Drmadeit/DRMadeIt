@@ -76,6 +76,32 @@ function migrate(PDO $pdo): void
             $st->execute(['Tools in My Videos', 'shop-tools', 'The tools I use in my shop and videos.', 0]);
             $st->execute(['Reaper Build', 'reaper-build', 'Everything I used to build out the Reaper trailer.', 1]);
         },
+        3 => function (PDO $pdo): void {
+            // Pages you create in admin, optionally grouped into categories (like a portfolio).
+            // "Delete" only sets deleted_at, so everything can be undone and photo files are never erased.
+            $pdo->exec(<<<SQL
+            CREATE TABLE categories (
+                id INTEGER PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, intro TEXT NOT NULL DEFAULT '',
+                cover TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0, visible INTEGER NOT NULL DEFAULT 1,
+                deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE pages (
+                id INTEGER PRIMARY KEY, category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+                title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, body TEXT NOT NULL DEFAULT '', cover TEXT NOT NULL DEFAULT '',
+                buttons TEXT NOT NULL DEFAULT '[]', sort_order INTEGER NOT NULL DEFAULT 0, visible INTEGER NOT NULL DEFAULT 1,
+                deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE page_photos (
+                id INTEGER PRIMARY KEY, page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+                image TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT);
+            SQL);
+        },
+        4 => function (PDO $pdo): void {
+            // YouTube links that play on the page (one per line)
+            $pdo->exec("ALTER TABLE pages ADD COLUMN videos TEXT NOT NULL DEFAULT ''");
+        },
+        5 => function (PDO $pdo): void {
+            // Title + saved thumbnail for TikTok links, looked up once when the page is saved
+            $pdo->exec("ALTER TABLE pages ADD COLUMN video_meta TEXT NOT NULL DEFAULT '{}'");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
