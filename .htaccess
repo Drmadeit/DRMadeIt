@@ -5,6 +5,10 @@ DirectoryIndex index.php
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # One address for the site: www.drmadeit.com -> drmadeit.com (keeps the page and query)
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
   # Never serve code, views, docs or dotfiles directly
   RewriteRule ^(app|views|docs|tests)(/|$) - [F,L]
   RewriteRule (^|/)\. - [F,L]
