@@ -1,10 +1,17 @@
 <?php
-// The default header is the logo carved straight into wood, so it doubles as the logo.
-$hero = setting('hero_image') !== '' ? img_url(setting('hero_image')) : asset('img/hero-engraved.jpg');
+// Default: the logo carved into a tall board stays still behind the page, and the page scrolls up over it.
+// A custom header photo from Settings uses the regular (scrolling) header instead.
+$custom = setting('hero_image') !== '';
 $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : asset('img/logo.webp');
 $showLogo = setting('home_logo') === '1';
+$label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 ?>
-<div class="hero" style="background-image:url('<?= e($hero) ?>')" role="img" aria-label="<?= e(setting('site_name', 'D.R. Made It')) ?> logo carved in wood"></div>
+<?php if ($custom): ?>
+<div class="hero" style="background-image:url('<?= e(img_url(setting('hero_image'))) ?>')" role="img" aria-label="<?= e($label) ?>"></div>
+<?php else: ?>
+<div class="page-bg" style="background-image:url('<?= e(asset('img/bg-engraved.jpg')) ?>')" aria-hidden="true"></div>
+<div class="hero-space" role="img" aria-label="<?= e($label) ?>"></div>
+<?php endif; ?>
 <header class="profile<?= $showLogo ? ' has-logo' : '' ?>">
   <?php if ($showLogo): ?><img class="profile-logo" src="<?= e($logo) ?>" alt="<?= e(setting('site_name')) ?> logo" width="124" height="124"><?php endif; ?>
   <h1 class="profile-name<?= $showLogo ? '' : ' visually-hidden' ?>"><?= e(setting('site_name', 'D.R. Made It')) ?></h1>

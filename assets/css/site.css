@@ -297,3 +297,23 @@ a { color: inherit; }
 .howto p { margin: 0; color: var(--muted); }
 .card-img.app-icon { border-radius: 14px; }
 .page-files { margin: 20px 0; }
+
+/* ---- Home: carved logo stays still, the page scrolls up over it ----
+   bg-engraved.jpg is a tall board with the logo; the logo's top is 27.7% down the photo and it is
+   64.5% of the photo's width across. It's sized to the column width and shifted up so the logo sits
+   at the top of the screen. */
+.page-bg {
+  --w: min(100vw, 560px);
+  position: fixed; top: 0; left: 50%; z-index: -1; /* behind everything in the page, above the page color */
+  width: var(--w); height: 100vh; height: 100lvh;
+  transform: translateX(-50%);
+  background-color: #d8bb92;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-position: center calc(14px - 0.413 * var(--w));
+  pointer-events: none;
+}
+.hero-space { --w: min(100vw, 560px); height: calc(34px + 0.645 * var(--w)); }
+.is-home main, .is-home .site-footer { position: relative; z-index: 1; }
+.is-home .hero-space ~ .links, .is-home .hero-space ~ .home-videos { background: var(--bg); margin: 0; }
+.is-home .site-footer { background: var(--bg); }

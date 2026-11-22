@@ -26,7 +26,7 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Michroma&display=swap">
 <link rel="stylesheet" href="<?= e(asset('css/site.css')) ?>">
 </head>
-<body>
+<body class="<?= empty($isHome) ? '' : 'is-home' ?>">
 <?php if (empty($isHome)): ?>
 <header class="topbar">
   <a class="topbar-brand" href="/">
