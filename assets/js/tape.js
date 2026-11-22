@@ -28,20 +28,22 @@
     return C.evalLen(t);
   }
 
-  // Always show answers in the size picked at the top: 11/16 at 1/64 shows as 44/64.
-  const KEEP = { keepDenom: true };
-  const fmt = (x) => C.fmtIn(x, prec, KEEP);
-  const plain = (x) => C.fmtIn(x, prec, { ...KEEP, noMark: true }).replace('"', '');
+  // Answers show in the size picked at the top (11/16 at 1/64 = 44/64) unless Simplify is on (= 11/16).
+  let simplify = store.get('simplify', false);
+  const opts = () => ({ keepDenom: !simplify });
+  const fmt = (x) => C.fmtIn(x, prec, opts());
+  const plain = (x) => C.fmtIn(x, prec, { ...opts(), noMark: true }).replace('"', '');
 
   function render() {
     $('expr').textContent = expr || ' ';
     const x = value();
     const shown = isFinite(x) ? x : (fresh && ans ? ans.value : 0);
     $('result').textContent = fmt(shown);
-    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, prec, KEEP) : '';
+    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, prec, opts()) : '';
     $('dec').textContent = (+shown.toFixed(4)) + '"';
     $('mm').textContent = (+(shown * 25.4).toFixed(1)) + ' mm';
     document.querySelectorAll('[data-prec]').forEach((b) => b.setAttribute('aria-checked', String(+b.dataset.prec === prec)));
+    $('simplify').setAttribute('aria-pressed', String(simplify));
     const list = $('history');
     list.innerHTML = '';
     history.slice(-30).forEach((h) => {
@@ -130,6 +132,13 @@
     if (fresh && ans) expr = ans.text;
     render();
   }));
+  $('simplify').addEventListener('click', () => {
+    simplify = !simplify;
+    store.set('simplify', simplify);
+    if (ans) ans.text = plain(ans.value);
+    if (fresh && ans) expr = ans.text;
+    render();
+  });
   $('result').addEventListener('click', async () => {
     const text = $('result').textContent.replace(/ [+−]$/, '');
     try { await navigator.clipboard.writeText(text); flash('Copied ' + text); } catch { flash(text); }
