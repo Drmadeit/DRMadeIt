@@ -28,37 +28,35 @@ img { max-width: 100%; display: block; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
 
-/* ---- Home: hero + profile ----
-   The wood photo runs down behind the white arch, and the arch is slightly see-through,
-   so the wood shows behind the name and bio and the buttons start high on the screen. */
+/* ---- Home: header ----
+   The header is the logo carved straight into wood, so it doubles as the logo and the buttons start
+   high on the screen. (Settings can bring back the round logo; it then sits on the arch like before.) */
 .hero {
-  height: 280px;
+  height: 190px;
   background-size: cover;
-  background-position: center 40%;
+  background-position: center;
   background-color: #c9a77c;
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+}
+@media (min-width: 600px) {
+  .hero { height: 260px; }
 }
 .profile {
   position: relative;
-  margin-top: -240px; /* arch peaks 40px from the top, right at the top of the logo */
-  background: rgb(250 250 249 / .84);
-  border-radius: 50% 50% 0 0 / 44px 44px 0 0;
-  padding: 0 20px 24px;
+  margin-top: -28px;
+  background: var(--bg);
+  border-radius: 50% 50% 0 0 / 28px 28px 0 0;
+  padding: 16px 20px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   text-align: center;
 }
-@media (min-width: 600px) {
-  .hero { height: 360px; }
-  .profile { margin-top: -300px; }
-}
+.profile.has-logo { margin-top: -44px; border-radius: 50% 50% 0 0 / 44px 44px 0 0; padding-top: 0; gap: 10px; }
 .profile-logo {
   width: 124px;
   height: 124px;
-  margin-top: 4px; /* the whole logo sits inside the arch */
+  margin-top: -62px;
   border-radius: 50%;
   background: #fff;
   border: 6px solid var(--bg);
@@ -71,7 +69,8 @@ a { color: inherit; }
   letter-spacing: 2px;
   text-transform: uppercase;
 }
-.profile-bio { margin: 0; color: #3f4045; font-size: 15px; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.profile-bio { margin: 0; color: var(--muted); font-size: 15px; }
 .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
 .socials a {
   width: 46px; height: 46px;

@@ -1,11 +1,13 @@
 <?php
-$hero = setting('hero_image') !== '' ? img_url(setting('hero_image')) : asset('img/hero.webp');
+// The default header is the logo carved straight into wood, so it doubles as the logo.
+$hero = setting('hero_image') !== '' ? img_url(setting('hero_image')) : asset('img/hero-engraved.jpg');
 $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : asset('img/logo.webp');
+$showLogo = setting('home_logo') === '1';
 ?>
-<div class="hero" style="background-image:url('<?= e($hero) ?>')" role="presentation"></div>
-<header class="profile">
-  <img class="profile-logo" src="<?= e($logo) ?>" alt="<?= e(setting('site_name')) ?> logo" width="124" height="124">
-  <h1 class="profile-name"><?= e(setting('site_name', 'D.R. Made It')) ?></h1>
+<div class="hero" style="background-image:url('<?= e($hero) ?>')" role="img" aria-label="<?= e(setting('site_name', 'D.R. Made It')) ?> logo carved in wood"></div>
+<header class="profile<?= $showLogo ? ' has-logo' : '' ?>">
+  <?php if ($showLogo): ?><img class="profile-logo" src="<?= e($logo) ?>" alt="<?= e(setting('site_name')) ?> logo" width="124" height="124"><?php endif; ?>
+  <h1 class="profile-name<?= $showLogo ? '' : ' visually-hidden' ?>"><?= e(setting('site_name', 'D.R. Made It')) ?></h1>
   <?php if ($bio = setting('bio')): ?><p class="profile-bio"><?= e($bio) ?></p><?php endif; ?>
   <?php if ($socials = socials()): ?>
   <nav class="socials" aria-label="Social">
