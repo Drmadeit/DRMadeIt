@@ -5,7 +5,7 @@
   <label>Link <input name="url" required value="<?= e($link['url']) ?>" placeholder="https://… or /about" autocapitalize="none" inputmode="url"></label>
   <p class="a-hint">Site pages: <code>/about</code> <code>/files</code> <code>/tools/…</code> <code>/toolbox</code> <code>/calc</code></p>
 
-  <?= photo_field('photo', $link['image'], 'Thumbnail') ?>
+  <?= photo_field('photo', $link['image'], 'Thumbnail', '', 'remove_photo', '1') ?>
 
   <label class="a-check"><input type="checkbox" name="visible" value="1" <?= $link['visible'] ? 'checked' : '' ?>> Show on home page</label>
   <label class="a-check"><input type="checkbox" name="featured" value="1" <?= $link['featured'] ? 'checked' : '' ?>> Featured (red outline)</label>

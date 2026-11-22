@@ -24,7 +24,7 @@
   <input type="hidden" name="id" value="<?= (int) $cat['id'] ?>">
   <label>Name <input name="name" required value="<?= e($cat['name']) ?>" placeholder="Builds"></label>
   <label>Intro <small>(text under the title)</small> <textarea name="intro" rows="3"><?= e($cat['intro']) ?></textarea></label>
-  <?= photo_field('photo', $cat['cover'], 'Cover photo', 'Shown for sharing links. Optional.') ?>
+  <?= photo_field('photo', $cat['cover'], 'Cover photo', 'Shown for sharing links. Optional.', 'remove_photo', '4/3') ?>
   <label class="a-check"><input type="checkbox" name="visible" value="1" <?= $cat['visible'] ? 'checked' : '' ?>> Show on the site</label>
   <label>Web address <small>(blank = made from the name)</small> <input name="slug" value="<?= e($cat['slug']) ?>" autocapitalize="none" placeholder="builds"></label>
   <button class="a-btn">Save</button>

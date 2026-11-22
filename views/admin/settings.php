@@ -1,18 +1,6 @@
 <?php
-$photo = function (string $key, string $label, string $hint = '') {
-    $cur = setting($key);
-    ?>
-    <div class="a-photo">
-      <span class="a-label"><?= e($label) ?></span>
-      <?php if ($cur): ?><img src="<?= e(img_url($cur, true)) ?>" alt="" width="96" height="96"><?php endif; ?>
-      <?php if ($hint): ?><small class="a-hint"><?= e($hint) ?></small><?php endif; ?>
-      <label class="a-file">
-        <span class="a-btn a-btn-outline"><?= $cur ? 'Change' : 'Upload' ?></span>
-        <input type="file" name="<?= e($key) ?>" accept="image/*" data-preview>
-      </label>
-      <?php if ($cur): ?><button type="button" class="a-btn a-btn-outline a-remove" data-remove-photo="remove_<?= e($key) ?>" data-confirm-text="Remove this photo? The site goes back to the default one.">Remove photo</button><?php endif; ?>
-    </div>
-    <?php
+$photo = function (string $key, string $label, string $hint = '', string $aspect = 'original') {
+    echo photo_field($key, setting($key), $label, $hint, 'remove_' . $key, $aspect);
 };
 $field = fn (string $key, string $label, string $type = 'text', string $ph = '') =>
     '<label>' . e($label) . ' <input type="' . ($type === 'url' ? 'text' : $type) . '" name="' . e($key) . '" value="' . e(setting($key)) . '" placeholder="' . e($ph) . '"' . ($type === 'url' ? ' autocapitalize="none" inputmode="url"' : '') . '></label>';
@@ -24,8 +12,8 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <h2>Profile</h2>
     <?= $field('site_name', 'Name') ?>
     <?= $field('bio', 'One-line bio') ?>
-    <?php $photo('logo_image', 'Logo', 'Square works best.'); ?>
-    <?php $photo('hero_image', 'Header photo', 'The wide photo behind the logo.'); ?>
+    <?php $photo('logo_image', 'Logo', 'Square works best. Removing it brings back the default logo.', '1'); ?>
+    <?php $photo('hero_image', 'Header photo', 'The wide photo behind the logo.', '16/9'); ?>
   </section>
 
   <section class="a-card a-form">

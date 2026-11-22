@@ -79,6 +79,7 @@
         <span class="a-row-main"><img src="<?= e(img_url($ph['image'], true)) ?>" alt="Photo <?= $i + 1 ?>" width="48" height="48"><span class="a-row-text"><small><?= $isCover ? 'Cover photo' : 'Photo ' . ($i + 1) ?></small></span></span>
         <form method="post" action="/admin/page-photos/<?= (int) $ph['id'] ?>/cover"><?= csrf_field() ?>
           <button class="a-icon-btn<?= $isCover ? ' on' : '' ?>" aria-label="Make photo <?= $i + 1 ?> the cover"><?= icon('star', 22) ?></button></form>
+        <button type="button" class="a-icon-btn" data-crop-row="/admin/page-photos/<?= (int) $ph['id'] ?>/crop" data-src="<?= e(img_url($ph['image'])) ?>" aria-label="Crop photo <?= $i + 1 ?>"><?= icon('crop', 22) ?></button>
         <form method="post" action="/admin/page-photos/<?= (int) $ph['id'] ?>/delete"><?= csrf_field() ?>
           <button class="a-icon-btn" aria-label="Remove photo <?= $i + 1 ?>">✕</button></form>
       </li>

@@ -81,6 +81,7 @@
       <li class="a-row" data-id="<?= (int) $img['id'] ?>">
         <button type="button" class="a-grip" aria-label="Drag photo <?= $i + 1 ?>"><?= icon('grip', 22) ?></button>
         <span class="a-row-main"><img src="<?= e(img_url($img['image'], true)) ?>" alt="Photo <?= $i + 1 ?>" width="48" height="48"><span class="a-row-text"><small>Photo <?= $i + 1 ?></small></span></span>
+        <button type="button" class="a-icon-btn" data-crop-row="/admin/file-images/<?= (int) $img['id'] ?>/crop" data-src="<?= e(img_url($img['image'])) ?>" aria-label="Crop photo <?= $i + 1 ?>"><?= icon('crop', 22) ?></button>
         <form method="post" action="/admin/file-images/<?= (int) $img['id'] ?>/delete" data-confirm="Remove this photo?">
           <?= csrf_field() ?>
           <button class="a-icon-btn" aria-label="Remove photo <?= $i + 1 ?>">✕</button>

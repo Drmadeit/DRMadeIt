@@ -154,6 +154,7 @@ function icon(string $name, int $size = 24): string
         'home' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
         'file' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 3h8l5 5v13H6z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M14 3v5h5M9 13h7M9 17h7"/>',
         'download' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m-5-5 5 5 5-5M5 20h14"/>',
+        'crop' => '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/>',
         'mail' => '<rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="m3 7 9 6 9-6"/>',
     ];
     $p = $paths[$name] ?? $paths['link'];

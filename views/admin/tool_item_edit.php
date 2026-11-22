@@ -7,7 +7,7 @@
   <label>Amazon link <input name="amazon_url" value="<?= e($item['amazon_url']) ?>" placeholder="https://amzn.to/…" autocapitalize="none" inputmode="url"></label>
   <p class="a-hint">Tip: in the Amazon app tap Share → Copy link, or use your Associates SiteStripe link.</p>
   <label>Note <small>(optional, one line)</small> <input name="note" value="<?= e($item['note']) ?>" placeholder="What I use it for"></label>
-  <?= photo_field('photo', $item['image']) ?>
+  <?= photo_field('photo', $item['image'], 'Photo', '', 'remove_photo', '1') ?>
   <label class="a-check"><input type="checkbox" name="visible" value="1" <?= $item['visible'] ? 'checked' : '' ?>> Show on the list</label>
   <button class="a-btn">Save</button>
   <?php if (!$item['id']): ?><button class="a-btn a-btn-outline" name="add_another" value="1">Save &amp; add another</button><?php endif; ?>

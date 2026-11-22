@@ -30,7 +30,7 @@
   <label>Short description <input name="description" value="<?= e($list['description']) ?>"></label>
   <label>Web address <small>(after /tools/ — leave blank to make one from the name)</small>
     <input name="slug" value="<?= e($list['slug']) ?>" autocapitalize="none" placeholder="reaper-build"></label>
-  <?= photo_field('photo', $list['cover_image'], 'Cover photo', 'Optional. Uses the first tool photo if blank.') ?>
+  <?= photo_field('photo', $list['cover_image'], 'Cover photo', 'Optional. Uses the first tool photo if blank.', 'remove_photo', '1') ?>
   <label class="a-check"><input type="checkbox" name="visible" value="1" <?= $list['visible'] ? 'checked' : '' ?>> Show on /tools</label>
   <button class="a-btn">Save list</button>
 </form>

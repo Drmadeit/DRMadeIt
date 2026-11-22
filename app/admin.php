@@ -148,6 +148,14 @@ function admin_route(string $path, string $method): void
             flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
             redirect('/admin/files');
         },
+        'POST /admin/file-images/(\d+)/crop' => function ($id) {
+            $img = find_row('file_images', (int) $id);
+            $new = crop_upload();
+            db()->prepare('UPDATE file_images SET image = ? WHERE id = ?')->execute([$new, $img['id']]);
+            delete_image($img['image']);
+            flash('Photo cropped.');
+            echo '{"ok":true}';
+        },
         'POST /admin/file-images/(\d+)/delete' => function ($id) {
             $img = find_row('file_images', (int) $id);
             delete_image($img['image']);

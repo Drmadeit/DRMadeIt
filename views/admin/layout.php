@@ -28,6 +28,7 @@
   <?php endforeach; ?>
 </nav>
 <?php endif; ?>
+<script src="<?= e(asset('js/crop.js')) ?>" defer></script>
 <script src="<?= e(asset('js/admin.js')) ?>" defer></script>
 </body>
 </html>

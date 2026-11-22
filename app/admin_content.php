@@ -270,8 +270,24 @@ function human_size(int $bytes): string
     return "$bytes B";
 }
 
-/** Photo picker block used on edit screens. */
-function photo_field(string $name, string $current, string $label = 'Photo', string $hint = '', string $removeName = 'remove_photo'): string
+/** Save a cropped photo sent by the cropper (fetch upload). Answers JSON errors itself. */
+function crop_upload(): string
+{
+    header('Content-Type: application/json');
+    try {
+        return save_uploaded_image($_FILES['photo'] ?? []);
+    } catch (RuntimeException $ex) {
+        http_response_code(400);
+        echo json_encode(['error' => $ex->getMessage()]);
+        exit;
+    }
+}
+
+/**
+ * Photo picker block used on edit screens. Picking a photo opens the cropper ($aspect: original, 1, 4/3, 16/9, 3/4);
+ * a saved photo gets Crop (re-crop it) and Remove buttons.
+ */
+function photo_field(string $name, string $current, string $label = 'Photo', string $hint = '', string $removeName = 'remove_photo', string $aspect = 'original'): string
 {
     $h = '<div class="a-photo"><span class="a-label">' . e($label) . '</span>';
     if ($current !== '') {
@@ -281,9 +297,10 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
         $h .= '<small class="a-hint">' . e($hint) . '</small>';
     }
     $h .= '<label class="a-file"><span class="a-btn a-btn-outline">' . ($current !== '' ? 'Change photo' : 'Add photo') . '</span>'
-        . '<input type="file" name="' . e($name) . '" accept="image/*" data-preview></label>';
+        . '<input type="file" name="' . e($name) . '" accept="image/*" data-preview data-crop="' . e($aspect) . '"></label>';
     if ($current !== '') {
-        // A real button: one tap removes the photo and saves (no checkbox + Save step).
+        $h .= '<button type="button" class="a-btn a-btn-outline" data-crop-existing="' . e($name) . '" data-src="' . e(img_url($current)) . '" data-aspect="' . e($aspect) . '">Crop</button>';
+        // A plain button: one tap removes the photo and saves, and pressing Enter in a text box never triggers it.
         $h .= '<button type="button" class="a-btn a-btn-outline a-remove" data-remove-photo="' . e($removeName) . '" data-confirm-text="Remove this photo?">Remove photo</button>';
     }
     return $h . '</div>';

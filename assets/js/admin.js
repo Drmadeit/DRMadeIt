@@ -74,6 +74,59 @@
     });
   });
 
+  // ---- Crop: picking a single photo opens the cropper first (runs before the other photo handlers) ----
+  const putFile = (input, file) => {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dataset.cropped = '1';
+    input.dispatchEvent(new Event('change')); // now the preview / size handlers run on the cropped photo
+    input.dataset.cropped = '';
+  };
+  document.querySelectorAll('input[type=file][data-crop]').forEach((input) => {
+    input.addEventListener('change', async (ev) => {
+      // Skip when the change comes from us (cropped) or from the shrink step re-sending the photo.
+      if (input.dataset.cropped === '1' || input.dataset.shrunk === '1' || !window.cropPhoto || typeof DataTransfer === 'undefined') return;
+      const file = input.files?.[0];
+      if (!file) return;
+      ev.stopImmediatePropagation();
+      const cropped = await window.cropPhoto(file, { aspect: input.dataset.crop });
+      if (!cropped) { input.value = ''; return; } // Cancel: nothing picked
+      putFile(input, cropped);
+    }, { capture: true });
+  });
+
+  // Re-crop a photo that's already saved, then save right away.
+  document.querySelectorAll('[data-crop-existing]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      const input = b.form.querySelector(`input[type=file][name="${b.dataset.cropExisting}"]`);
+      const cropped = await window.cropPhoto(b.dataset.src, { aspect: b.dataset.aspect });
+      if (!cropped || !input) return;
+      putFile(input, cropped);
+      b.form.requestSubmit ? b.form.requestSubmit() : b.form.submit();
+    });
+  });
+
+  // Re-crop one photo in a page's or file's photo list.
+  document.querySelectorAll('[data-crop-row]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      const cropped = await window.cropPhoto(b.dataset.src, { aspect: 'original' });
+      if (!cropped) return;
+      const body = new FormData();
+      body.append('csrf', csrf);
+      body.append('photo', cropped);
+      b.disabled = true;
+      try {
+        const res = await fetch(b.dataset.cropRow, { method: 'POST', body });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload failed');
+        location.reload();
+      } catch (e) {
+        alert('Could not save the crop: ' + e.message);
+        b.disabled = false;
+      }
+    });
+  });
+
   // ---- Shrink photos on the phone before upload (fast on weak signal, under upload limits) ----
   const shrink = (file, max = 2000) => new Promise((resolve) => {
     if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type) || file.size < 400 * 1024) return resolve(file);

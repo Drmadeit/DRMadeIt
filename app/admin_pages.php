@@ -63,6 +63,15 @@ function pages_admin_routes(): array
             flash('Cover photo set.');
             redirect('/admin/pages/' . $ph['page_id'] . '#photos');
         },
+        'POST /admin/page-photos/(\d+)/crop' => function ($id) {
+            // Re-cropped photo replaces the old one (the old file is kept, like every page photo).
+            $ph = find_row('page_photos', (int) $id);
+            $new = crop_upload();
+            db()->prepare('UPDATE page_photos SET image = ? WHERE id = ?')->execute([$new, $ph['id']]);
+            db()->prepare('UPDATE pages SET cover = ? WHERE id = ? AND cover = ?')->execute([$new, $ph['page_id'], $ph['image']]);
+            flash('Photo cropped.');
+            echo '{"ok":true}';
+        },
         'POST /admin/page-photos/(\d+)/delete' => function ($id) {
             $ph = find_row('page_photos', (int) $id);
             db()->prepare("UPDATE pages SET cover = '' WHERE id = ? AND cover = ?")->execute([$ph['page_id'], $ph['image']]);
