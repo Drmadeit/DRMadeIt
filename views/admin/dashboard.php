@@ -27,6 +27,7 @@
 
 <nav class="a-card a-menu" aria-label="More">
   <a href="/admin/emails"><?= icon('mail', 22) ?> Emails <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
+  <a href="/admin/short"><?= icon('link', 22) ?> Short links <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
   <a href="/admin/videos"><?= icon('youtube', 22) ?> Videos <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
   <a href="/admin/settings"><?= icon('sliders', 22) ?> Settings &amp; backup <span class="a-chev"><?= icon('chevron', 18) ?></span></a>
 </nav>

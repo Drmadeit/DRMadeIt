@@ -219,7 +219,9 @@ function unique_public_slug(string $want, string $table, int $exceptId, string $
         $p->execute([$slug, $table, $exceptId]);
         $c = db()->prepare('SELECT 1 FROM categories WHERE slug = ? AND NOT (? = \'categories\' AND id = ?)');
         $c->execute([$slug, $table, $exceptId]);
-        return (bool) ($p->fetchColumn() || $c->fetchColumn());
+        $s = db()->prepare('SELECT 1 FROM short_links WHERE code = ?'); // short links share the same addresses
+        $s->execute([$slug]);
+        return (bool) ($p->fetchColumn() || $c->fetchColumn() || $s->fetchColumn());
     };
     // Name taken and the page is in a category? "builds" in TikTok becomes "tiktok-builds" (nicer than builds-2).
     if ($prefix !== '' && $taken($base) && !str_starts_with($base, $prefix . '-')) {

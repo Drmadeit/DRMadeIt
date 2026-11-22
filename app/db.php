@@ -142,6 +142,12 @@ function migrate(PDO $pdo): void
             $pdo->exec("UPDATE settings SET value = 'smtp.gmail.com' WHERE key = 'smtp_host' AND value = 'smtp.hostinger.com'
                 AND COALESCE((SELECT value FROM settings WHERE key = 'smtp_user'), '') = ''");
         },
+        10 => function (PDO $pdo): void {
+            // Short links: drmadeit.com/<code> sends people to any long link, with a click count.
+            $pdo->exec('CREATE TABLE short_links (
+                id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, url TEXT NOT NULL, note TEXT NOT NULL DEFAULT \'\',
+                clicks INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

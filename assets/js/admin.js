@@ -221,4 +221,18 @@
     form.addEventListener('change', sync);
     sync();
   });
+
+  // ---- Copy buttons (short links) ----
+  document.querySelectorAll('[data-copy]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy);
+        const was = b.textContent;
+        b.textContent = 'Copied ✓';
+        setTimeout(() => { b.textContent = was; }, 1500);
+      } catch {
+        prompt('Copy this link:', b.dataset.copy);
+      }
+    });
+  });
 })();

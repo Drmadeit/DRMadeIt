@@ -207,6 +207,7 @@ function admin_route(string $path, string $method): void
     ];
 
     $routes += pages_admin_routes();
+    $routes += short_admin_routes();
 
     foreach ($routes as $key => $handler) {
         [$verb, $pattern] = explode(' ', $key, 2);
