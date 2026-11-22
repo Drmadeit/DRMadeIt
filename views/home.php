@@ -4,7 +4,7 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
 ?>
 <div class="hero" style="background-image:url('<?= e($hero) ?>')" role="presentation"></div>
 <header class="profile">
-  <img class="profile-logo" src="<?= e($logo) ?>" alt="<?= e(setting('site_name')) ?> logo" width="100" height="100">
+  <img class="profile-logo" src="<?= e($logo) ?>" alt="<?= e(setting('site_name')) ?> logo" width="124" height="124">
   <h1 class="profile-name"><?= e(setting('site_name', 'D.R. Made It')) ?></h1>
   <?php if ($bio = setting('bio')): ?><p class="profile-bio"><?= e($bio) ?></p><?php endif; ?>
   <?php if ($socials = socials()): ?>

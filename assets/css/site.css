@@ -28,48 +28,53 @@ img { max-width: 100%; display: block; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
 
-/* ---- Home: hero + profile ---- */
+/* ---- Home: hero + profile ----
+   The wood photo runs down behind the white arch, and the arch is slightly see-through,
+   so the wood shows behind the name and bio and the buttons start high on the screen. */
 .hero {
-  height: 150px; /* short header so the buttons start near the top */
+  height: 280px;
   background-size: cover;
-  background-position: center 45%;
+  background-position: center 40%;
   background-color: #c9a77c;
-}
-@media (min-width: 600px) {
-  .hero { height: 220px; }
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
 }
 .profile {
   position: relative;
-  margin-top: -36px;
-  background: var(--bg);
-  border-radius: 50% 50% 0 0 / 36px 36px 0 0;
-  padding: 0 20px 14px;
+  margin-top: -200px; /* arch starts 80px from the top */
+  background: rgb(250 250 249 / .84);
+  border-radius: 50% 50% 0 0 / 44px 44px 0 0;
+  padding: 0 20px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   text-align: center;
 }
+@media (min-width: 600px) {
+  .hero { height: 360px; }
+  .profile { margin-top: -240px; }
+}
 .profile-logo {
-  width: 100px;
-  height: 100px;
-  margin-top: -50px;
+  width: 124px;
+  height: 124px;
+  margin-top: -62px;
   border-radius: 50%;
   background: #fff;
-  border: 5px solid var(--bg);
+  border: 6px solid var(--bg);
   object-fit: contain;
   box-shadow: 0 4px 14px rgb(0 0 0 / .12);
 }
 .profile-name {
-  margin: 2px 0 0;
-  font: 400 22px/1.2 var(--display);
+  margin: 6px 0 0;
+  font: 400 24px/1.2 var(--display);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
-.profile-bio { margin: 0; color: var(--muted); font-size: 15px; }
+.profile-bio { margin: 0; color: #3f4045; font-size: 15px; }
 .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
 .socials a {
-  width: 44px; height: 44px;
+  width: 46px; height: 46px;
   display: grid; place-items: center;
   border-radius: 50%;
   color: var(--ink);
