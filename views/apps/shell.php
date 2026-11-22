@@ -16,8 +16,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="<?= e($app['name']) ?>">
 <link rel="manifest" href="/calc/manifest/<?= e($slug) ?>.webmanifest">
-<link rel="apple-touch-icon" href="<?= e(asset('img/app-180.png')) ?>">
-<link rel="icon" href="<?= e(asset('img/app-192.png')) ?>">
+<link rel="apple-touch-icon" href="<?= e(asset("img/apps/$slug-180.png")) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= e(asset("icons/$slug-auto.svg")) ?>">
+<link rel="alternate icon" type="image/png" href="<?= e(asset("img/apps/$slug-192.png")) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body data-app="<?= e($slug) ?>">

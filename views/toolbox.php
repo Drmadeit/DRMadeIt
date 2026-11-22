@@ -4,7 +4,7 @@
   <div class="cards">
     <?php foreach (APPS as $slug => $a): ?>
       <a class="card" href="<?= e($a['path']) ?>">
-        <img class="card-img" src="<?= e(asset('img/app-180.png')) ?>" alt="" width="60" height="60">
+        <img class="card-img app-icon" src="<?= e(asset("img/apps/$slug-180.png")) ?>" alt="" width="60" height="60">
         <span class="card-body"><b><?= e($a['name']) ?></b><small><?= e($a['blurb']) ?></small></span>
       </a>
     <?php endforeach; ?>

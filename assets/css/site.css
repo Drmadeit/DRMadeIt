@@ -291,3 +291,4 @@ a { color: inherit; }
 .howto ol { margin: 0 0 8px; padding-left: 20px; }
 .howto li { margin-bottom: 6px; }
 .howto p { margin: 0; color: var(--muted); }
+.card-img.app-icon { border-radius: 14px; }

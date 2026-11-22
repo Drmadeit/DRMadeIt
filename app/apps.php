@@ -20,8 +20,19 @@ const APPS = [
     'dxf' => ['name' => 'DXF Fix', 'path' => '/calc/dxf', 'blurb' => 'Join broken lines into closed shapes for CNC. Your file never leaves your phone.', 'lengths' => false],
 ];
 
-/** Shared files every app needs offline. */
-const APP_ASSETS = ['js/calc.js', 'js/app.js', 'js/tape.js', 'js/dxf.js', 'css/app.css', 'img/app-180.png', 'img/app-192.png', 'img/app-512.png'];
+/** Shared files every app needs offline, plus each app's icons (assets/icons/build.js makes the PNGs). */
+const APP_FILES = ['js/calc.js', 'js/app.js', 'js/tape.js', 'js/dxf.js', 'css/app.css'];
+
+function app_assets(): array
+{
+    $files = APP_FILES;
+    foreach (array_keys(APPS) as $slug) {
+        $files[] = "img/apps/$slug-180.png";
+        $files[] = "img/apps/$slug-192.png";
+        $files[] = "icons/$slug-auto.svg";
+    }
+    return $files;
+}
 
 /** Old addresses that now live elsewhere. */
 const APP_REDIRECTS = [
@@ -35,7 +46,7 @@ function apps_version(): string
     foreach (glob(ROOT . '/views/apps/*.php') ?: [] as $f) {
         $parts[] = filemtime($f);
     }
-    foreach (APP_ASSETS as $f) {
+    foreach (app_assets() as $f) {
         $parts[] = @filemtime(ROOT . '/assets/' . $f);
     }
     $parts[] = filemtime(__FILE__);
@@ -66,7 +77,7 @@ function apps_route(string $path): bool
         header('Content-Type: text/javascript; charset=utf-8');
         header('Cache-Control: no-store, max-age=0');
         header('Expires: 0');
-        $urls = array_merge(array_column(APPS, 'path'), array_map(fn ($s) => "/calc/manifest/$s.webmanifest", array_keys(APPS)), array_map('asset', APP_ASSETS));
+        $urls = array_merge(array_column(APPS, 'path'), array_map(fn ($s) => "/calc/manifest/$s.webmanifest", array_keys(APPS)), array_map('asset', app_assets()));
         echo 'const VERSION = ' . json_encode('apps-' . apps_version()) . ";\n";
         echo 'const FILES = ' . json_encode($urls, JSON_UNESCAPED_SLASHES) . ";\n";
         readfile(ROOT . '/assets/js/app-sw.js');
@@ -87,8 +98,8 @@ function apps_route(string $path): bool
             'background_color' => '#0a0a0b',
             'theme_color' => '#0a0a0b',
             'icons' => [
-                ['src' => asset('img/app-192.png'), 'sizes' => '192x192', 'type' => 'image/png'],
-                ['src' => asset('img/app-512.png'), 'sizes' => '512x512', 'type' => 'image/png'],
+                ['src' => asset("img/apps/{$m[1]}-192.png"), 'sizes' => '192x192', 'type' => 'image/png'],
+                ['src' => asset("img/apps/{$m[1]}-512.png"), 'sizes' => '512x512', 'type' => 'image/png'],
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         return true;
