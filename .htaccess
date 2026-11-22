@@ -10,9 +10,11 @@ DirectoryIndex index.php
   RewriteRule (^|/)\. - [F,L]
   RewriteRule \.(md|sqlite|log|sh|json|lock)$ - [F,L]
 
-  # Only index.php may run as PHP
-  RewriteCond %{REQUEST_URI} !^/index\.php$
-  RewriteRule \.php$ - [F,L]
+  # Only index.php may run as PHP. THE_REQUEST is the visitor's original request,
+  # so this never blocks our own rewrite to index.php (Apache or LiteSpeed).
+  RewriteCond %{THE_REQUEST} \.php[\s?/]
+  RewriteCond %{THE_REQUEST} !\s/+index\.php[\s?]
+  RewriteRule ^ - [F,L]
 
   # Everything that isn't a real file goes to the router
   RewriteCond %{REQUEST_FILENAME} !-f
