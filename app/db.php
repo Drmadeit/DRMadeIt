@@ -98,6 +98,10 @@ function migrate(PDO $pdo): void
             // YouTube links that play on the page (one per line)
             $pdo->exec("ALTER TABLE pages ADD COLUMN videos TEXT NOT NULL DEFAULT ''");
         },
+        5 => function (PDO $pdo): void {
+            // Title + saved thumbnail for TikTok links, looked up once when the page is saved
+            $pdo->exec("ALTER TABLE pages ADD COLUMN video_meta TEXT NOT NULL DEFAULT '{}'");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

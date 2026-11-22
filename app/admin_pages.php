@@ -114,6 +114,12 @@ function save_page(): void
         $c->execute([$catId]);
         $catId = $c->fetchColumn() ? $catId : null;
     }
+    $catSlug = '';
+    if ($catId !== null) {
+        $c = db()->prepare('SELECT slug FROM categories WHERE id = ?');
+        $c->execute([$catId]);
+        $catSlug = (string) $c->fetchColumn();
+    }
     $buttons = [];
     foreach ((array) ($_POST['btn_label'] ?? []) as $i => $label) {
         $label = trim((string) $label);
@@ -124,7 +130,7 @@ function save_page(): void
     }
     $vals = [
         'title' => $title,
-        'slug' => unique_public_slug((string) ($_POST['slug'] ?? '') ?: $title, 'pages', $id),
+        'slug' => unique_public_slug((string) ($_POST['slug'] ?? '') ?: $title, 'pages', $id, $catSlug),
         'category_id' => $catId,
         'body' => trim((string) ($_POST['body'] ?? '')),
         'videos' => trim((string) ($_POST['videos'] ?? '')),
@@ -162,9 +168,23 @@ function save_page(): void
     if ($added && !empty($_POST['first_is_cover'])) {
         db()->prepare('UPDATE pages SET cover = ? WHERE id = ?')->execute([$added[0], $id]);
     }
-    $bad = array_filter(array_map('trim', preg_split('/\R/', $vals['videos'])), fn ($l) => $l !== '' && !youtube_video_id($l));
+    // TikTok: look up title + thumbnail once per link; keep what we already know.
+    $oldMeta = json_decode($old['video_meta'] ?? '{}', true) ?: [];
+    $meta = [];
+    foreach (array_map('trim', preg_split('/\R/', $vals['videos'])) as $line) {
+        $v = video_link($line);
+        if ($v && $v['provider'] === 'tiktok') {
+            $meta[$line] = $oldMeta[$line] ?? tiktok_lookup($line);
+            if (empty($meta[$line]['id']) && empty($meta[$line]['title'])) {
+                $errors[] = "Couldn't read that TikTok link right now, so it shows as a plain \"Watch on TikTok\" card.";
+            }
+        }
+    }
+    db()->prepare('UPDATE pages SET video_meta = ? WHERE id = ?')->execute([json_encode($meta), $id]);
+
+    $bad = array_filter(array_map('trim', preg_split('/\R/', $vals['videos'])), fn ($l) => $l !== '' && !video_link($l));
     if ($bad) {
-        $errors[] = "Not a YouTube video link: " . '"' . implode('", "', $bad) . '".';
+        $errors[] = "Not a YouTube or TikTok link: " . '"' . implode('", "', $bad) . '".';
     }
     flash(($errors ? 'Saved, but: ' . implode(' ', $errors) : 'Saved.') . ($added ? ' Added ' . count($added) . ' photo' . (count($added) > 1 ? 's' : '') . '.' : ''));
     redirect("/admin/pages/$id");

@@ -50,16 +50,88 @@ function page_cover(array $page): string
     return (string) ($st->fetchColumn() ?: '');
 }
 
-/** YouTube video IDs from the page's video box (one link per line). */
+/** Which site a video link is from, and its ID. */
+function video_link(string $line): ?array
+{
+    $line = trim($line);
+    if ($line === '') {
+        return null;
+    }
+    if ($id = youtube_video_id($line)) {
+        return ['provider' => 'youtube', 'id' => $id, 'url' => 'https://www.youtube.com/watch?v=' . $id];
+    }
+    if (preg_match('#^https?://([a-z0-9-]+\.)?tiktok\.com/#i', $line)) {
+        $id = tiktok_video_id($line);
+        return ['provider' => 'tiktok', 'id' => $id, 'url' => $line];
+    }
+    return null;
+}
+
+function tiktok_video_id(string $url): ?string
+{
+    return preg_match('#tiktok\.com/(?:@[^/]+/video|v|embed(?:/v2)?|player/v1)/(\d{8,25})#i', $url, $m) ? $m[1] : null;
+}
+
+/**
+ * Videos from the page's video box, in order: YouTube plays on the page,
+ * TikTok shows as a thumbnail card that opens TikTok.
+ */
 function page_videos(array $page): array
 {
-    $ids = [];
+    $meta = json_decode($page['video_meta'] ?? '{}', true) ?: [];
+    $out = [];
+    $seen = [];
     foreach (preg_split('/\R/', (string) ($page['videos'] ?? '')) as $line) {
-        if ($id = youtube_video_id($line)) {
-            $ids[$id] = $id;
+        $v = video_link($line);
+        if (!$v) {
+            continue;
+        }
+        $m = $meta[trim($line)] ?? [];
+        $v = array_merge($v, array_intersect_key($m, array_flip(['id', 'url', 'title', 'thumb'])));
+        $v += ['title' => '', 'thumb' => ''];
+        $key = $v['provider'] . ($v['id'] ?: $v['url']);
+        if (!isset($seen[$key])) {
+            $seen[$key] = true;
+            $out[] = $v;
         }
     }
-    return array_values($ids);
+    return $out;
+}
+
+/** Look up a TikTok link once: real address, title, and a saved copy of the thumbnail. */
+function tiktok_lookup(string $url): array
+{
+    $info = ['url' => $url, 'id' => tiktok_video_id($url), 'title' => '', 'thumb' => ''];
+    if (!$info['id'] && ($final = http_final_url($url))) { // short links like vm.tiktok.com/abc
+        $info['url'] = strtok($final, '?');
+        $info['id'] = tiktok_video_id($final);
+    }
+    $json = http_get('https://www.tiktok.com/oembed?url=' . rawurlencode($info['url']));
+    $data = $json ? json_decode($json, true) : null;
+    if (is_array($data)) {
+        $info['title'] = mb_strimwidth(trim((string) ($data['title'] ?? '')), 0, 120, '…');
+        if (!empty($data['thumbnail_url']) && ($bytes = http_get((string) $data['thumbnail_url']))) {
+            $info['thumb'] = save_image_bytes($bytes); // TikTok's own thumbnail links expire, so keep a copy
+        }
+    }
+    return $info;
+}
+
+/** Card image for a page: cover photo, else first photo, else first video thumbnail. */
+function page_card_image(array $page): string
+{
+    if ($img = page_cover($page)) {
+        return img_url($img, true);
+    }
+    foreach (page_videos($page) as $v) {
+        if ($v['provider'] === 'youtube') {
+            return youtube_thumb($v['id']);
+        }
+        if ($v['thumb']) {
+            return img_url($v['thumb'], true);
+        }
+    }
+    return '';
 }
 
 function page_buttons(array $page): array
@@ -106,19 +178,26 @@ function show_page(array $page, string $path): bool
 }
 
 /** Slug unique across pages AND categories, and not a built-in address. */
-function unique_public_slug(string $want, string $table, int $exceptId): string
+function unique_public_slug(string $want, string $table, int $exceptId, string $prefix = ''): string
 {
     $base = slugify($want);
     if (in_array($base, RESERVED_SLUGS, true)) {
         $base .= '-page';
     }
-    $slug = $base;
-    for ($i = 2; ; $i++) {
+    $taken = function (string $slug) use ($table, $exceptId): bool {
         $p = db()->prepare('SELECT 1 FROM pages WHERE slug = ? AND NOT (? = \'pages\' AND id = ?)');
         $p->execute([$slug, $table, $exceptId]);
         $c = db()->prepare('SELECT 1 FROM categories WHERE slug = ? AND NOT (? = \'categories\' AND id = ?)');
         $c->execute([$slug, $table, $exceptId]);
-        if (!$p->fetchColumn() && !$c->fetchColumn()) {
+        return (bool) ($p->fetchColumn() || $c->fetchColumn());
+    };
+    // Name taken and the page is in a category? "builds" in TikTok becomes "tiktok-builds" (nicer than builds-2).
+    if ($prefix !== '' && $taken($base) && !str_starts_with($base, $prefix . '-')) {
+        $base = $prefix . '-' . $base;
+    }
+    $slug = $base;
+    for ($i = 2; ; $i++) {
+        if (!$taken($slug)) {
             return $slug;
         }
         $slug = "$base-$i";

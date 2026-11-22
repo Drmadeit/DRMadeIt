@@ -25,13 +25,18 @@
   </section>
 
   <section class="a-card a-form">
-    <h2>YouTube video</h2>
-    <label>Paste the video link <small>(more than one? one per line)</small>
-      <textarea name="videos" rows="2" autocapitalize="none" placeholder="https://youtu.be/…"><?= e($page['videos'] ?? '') ?></textarea></label>
-    <p class="a-hint">In the YouTube app: Share → Copy link. The video plays right on the page.</p>
-    <?php foreach (page_videos($page) as $vid): ?>
-      <img src="<?= e(youtube_thumb($vid)) ?>" alt="Video preview" width="160" height="90" style="border-radius:6px;object-fit:cover">
-    <?php endforeach; ?>
+    <h2>Videos</h2>
+    <label>Paste YouTube or TikTok links <small>(one per line)</small>
+      <textarea name="videos" rows="3" autocapitalize="none" placeholder="https://youtu.be/…&#10;https://www.tiktok.com/@drmadeit/video/…"><?= e($page['videos'] ?? '') ?></textarea></label>
+    <p class="a-hint">In the app: Share → Copy link. YouTube plays on the page. TikTok shows as a thumbnail card that opens TikTok.</p>
+    <?php if ($vids = page_videos($page)): ?>
+    <ul class="a-vids">
+      <?php foreach ($vids as $v): $th = $v['provider'] === 'youtube' ? youtube_thumb($v['id']) : ($v['thumb'] ? img_url($v['thumb'], true) : ''); ?>
+        <li><?php if ($th): ?><img src="<?= e($th) ?>" alt="" width="48" height="48"><?php else: ?><span class="a-thumb-empty"><?= icon($v['provider'], 20) ?></span><?php endif; ?>
+          <span><b><?= $v['provider'] === 'youtube' ? 'YouTube' : 'TikTok' ?></b> <?= e($v['title'] ?: '') ?></span></li>
+      <?php endforeach; ?>
+    </ul>
+    <?php endif; ?>
   </section>
 
   <section class="a-card a-form" id="add-photos">

@@ -6,11 +6,11 @@
   </div>
   <?php if ($pages): ?>
   <ul class="a-list" data-sortable="/admin/reorder/pages">
-    <?php foreach ($pages as $p): $img = page_cover($p); ?>
+    <?php foreach ($pages as $p): $img = page_card_image($p); ?>
       <li class="a-row<?= $p['visible'] ? '' : ' is-hidden' ?>" data-id="<?= (int) $p['id'] ?>">
         <button type="button" class="a-grip" aria-label="Drag to reorder <?= e($p['title']) ?>"><?= icon('grip', 22) ?></button>
         <a class="a-row-main" href="/admin/pages/<?= (int) $p['id'] ?>">
-          <?php if ($img): ?><img src="<?= e(img_url($img, true)) ?>" alt="" width="48" height="48"><?php else: ?><span class="a-thumb-empty"><?= icon('file', 22) ?></span><?php endif; ?>
+          <?php if ($img): ?><img src="<?= e($img) ?>" alt="" width="48" height="48"><?php else: ?><span class="a-thumb-empty"><?= icon('file', 22) ?></span><?php endif; ?>
           <span class="a-row-text"><b><?= e($p['title']) ?></b><small><?= $p['visible'] ? '' : 'Hidden' ?></small></span>
         </a>
       </li>

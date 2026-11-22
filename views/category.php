@@ -4,9 +4,9 @@
   <?php if ($cat['intro']): ?><div class="prose page-lede"><?= paragraphs($cat['intro']) ?></div><?php endif; ?>
   <?php if (!$pages): ?><p>Nothing here yet.</p><?php endif; ?>
   <div class="cat-grid">
-    <?php foreach ($pages as $p): $img = page_cover($p); ?>
+    <?php foreach ($pages as $p): $img = page_card_image($p); ?>
       <a class="cat-card" href="<?= e(page_url($p)) ?>">
-        <?php if ($img): ?><img src="<?= e(img_url($img, true)) ?>" alt="" loading="lazy"><?php else: ?><span class="cat-card-empty"></span><?php endif; ?>
+        <?php if ($img): ?><img src="<?= e($img) ?>" alt="" loading="lazy"><?php else: ?><span class="cat-card-empty"></span><?php endif; ?>
         <span class="cat-card-name"><?= e($p['title']) ?></span>
       </a>
     <?php endforeach; ?>
