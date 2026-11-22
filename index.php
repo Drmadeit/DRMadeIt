@@ -110,6 +110,6 @@ if ($path === '/') {
 } elseif ($path === '/robots.txt') {
     header('Content-Type: text/plain');
     echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\n";
-} else {
+} elseif (!pages_route($path)) { // pages and categories made in admin
     not_found();
 }
