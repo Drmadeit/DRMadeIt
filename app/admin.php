@@ -84,14 +84,14 @@ function admin_route(string $path, string $method): void
         // tool lists
         'GET /admin/tools' => fn () => admin_render('tools', [
             'lists' => db()->query('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id) n FROM tool_lists l ORDER BY sort_order, id')->fetchAll(),
-            'tab' => 'more', 'title' => 'Tool lists']),
+            'tab' => 'tools', 'title' => 'Tool lists']),
         'GET /admin/tools/new' => fn () => admin_render('tool_list_edit', [
-            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'more', 'title' => 'New list']),
+            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'tools', 'title' => 'New list']),
         'GET /admin/tools/(\d+)' => function ($id) {
             $list = find_row('tool_lists', (int) $id);
             $items = db()->prepare('SELECT * FROM tool_items WHERE list_id = ? ORDER BY sort_order, id');
             $items->execute([$list['id']]);
-            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'more', 'title' => $list['title']]);
+            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'tools', 'title' => $list['title']]);
         },
         'POST /admin/tools/save' => fn () => save_tool_list(),
         'POST /admin/tools/(\d+)/delete' => function ($id) {
@@ -108,10 +108,10 @@ function admin_route(string $path, string $method): void
         },
         'GET /admin/tools/(\d+)/items/new' => fn ($lid) => admin_render('tool_item_edit', [
             'list' => find_row('tool_lists', (int) $lid),
-            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'more', 'title' => 'Add tool']),
+            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'tools', 'title' => 'Add tool']),
         'GET /admin/items/(\d+)' => function ($id) {
             $item = find_row('tool_items', (int) $id);
-            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'more', 'title' => 'Edit tool']);
+            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'tools', 'title' => 'Edit tool']);
         },
         'POST /admin/items/save' => fn () => save_tool_item(),
         'POST /admin/items/(\d+)/delete' => function ($id) {

@@ -6,7 +6,6 @@ $mailErr = setting('mail_error') !== '';
 ?>
 <p class="a-group">Content</p>
 <nav class="a-card a-menu" aria-label="Content">
-  <?= $row('/admin/tools', 'ruler', 'Tool lists', 'Amazon tool lists') ?>
   <?= $row('/admin/videos', 'youtube', 'Videos', 'YouTube channel, pins') ?>
   <?= $row('/admin/short', 'link', 'Short links', 'drmadeit.com/anything') ?>
   <?= $row('/admin/emails', 'mail', 'Emails', 'People who downloaded files') ?>
