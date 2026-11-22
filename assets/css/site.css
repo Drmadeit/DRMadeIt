@@ -298,10 +298,7 @@ a { color: inherit; }
 .card-img.app-icon { border-radius: 14px; }
 .page-files { margin: 20px 0; }
 
-/* ---- Home: carved logo stays still, the page scrolls up over it ----
-   bg-engraved.jpg is a tall board with the logo; the logo's top is 27.7% down the photo and it is
-   64.5% of the photo's width across. It's sized to the column width and shifted up so the logo sits
-   at the top of the screen. */
+/* ---- Home: carved board stays centered on the screen; see-through white scrolls in front of it ---- */
 .page-bg {
   --w: min(100vw, 560px);
   position: fixed; top: 0; left: 50%; z-index: -1; /* behind everything in the page, above the page color */
@@ -309,11 +306,15 @@ a { color: inherit; }
   transform: translateX(-50%);
   background-color: #d8bb92;
   background-repeat: no-repeat;
-  background-size: 100% auto;
-  background-position: center calc(14px - 0.413 * var(--w));
+  background-size: cover;
+  background-position: center;
   pointer-events: none;
 }
-.hero-space { --w: min(100vw, 560px); height: calc(34px + 0.645 * var(--w)); }
+.hero-space { height: 30vh; height: 30svh; min-height: 150px; }
 .is-home main, .is-home .site-footer { position: relative; z-index: 1; }
-.is-home .hero-space ~ .links, .is-home .hero-space ~ .home-videos { background: var(--bg); margin: 0; }
-.is-home .site-footer { background: var(--bg); }
+.is-home .profile,
+.is-home .hero-space ~ .links,
+.is-home .hero-space ~ .home-videos { background: rgb(250 250 249 / .38); margin: 0; }
+.is-home .site-footer { background: rgb(250 250 249 / .7); border-top: 0; }
+.is-home .link { background: rgb(255 255 255 / .74); border-color: rgb(255 255 255 / .6); }
+.is-home .profile-bio { color: #2a2a2e; font-weight: 500; }
