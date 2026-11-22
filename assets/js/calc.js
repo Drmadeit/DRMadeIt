@@ -39,7 +39,7 @@
     const whole = Math.floor(units / denom);
     let num = units % denom;
     let den = denom;
-    if (num) {
+    if (num && !opts.keepDenom) { // keepDenom: 44/64 stays 44/64 instead of 11/16
       const g = gcd(num, den);
       num /= g;
       den /= g;
@@ -50,7 +50,7 @@
     return (neg ? '-' : '') + out + '"' + (mark ? ' ' + mark : '');
   }
 
-  function fmtFtIn(x, denom = 16) {
+  function fmtFtIn(x, denom = 16, opts = {}) {
     if (!isFinite(x)) return '—';
     const neg = x < 0;
     let ax = Math.abs(x);
@@ -60,7 +60,7 @@
       ft += 1;
       inch = 0;
     }
-    return (neg ? '-' : '') + (ft ? ft + "' " : '') + fmtIn(inch, denom, { noMark: true });
+    return (neg ? '-' : '') + (ft ? ft + "' " : '') + fmtIn(inch, denom, { ...opts, noMark: true });
   }
 
   /** "23 5/8 + 1 3/16 - 3/4", "96 ÷ 3", "2' 6 x 2". A hyphen right before a fraction means a mixed number. */

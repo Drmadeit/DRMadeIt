@@ -28,14 +28,17 @@
     return C.evalLen(t);
   }
 
-  const plain = (x) => C.fmtIn(x, prec, { noMark: true }).replace('"', '');
+  // Always show answers in the size picked at the top: 11/16 at 1/64 shows as 44/64.
+  const KEEP = { keepDenom: true };
+  const fmt = (x) => C.fmtIn(x, prec, KEEP);
+  const plain = (x) => C.fmtIn(x, prec, { ...KEEP, noMark: true }).replace('"', '');
 
   function render() {
     $('expr').textContent = expr || ' ';
     const x = value();
     const shown = isFinite(x) ? x : (fresh && ans ? ans.value : 0);
-    $('result').textContent = C.fmtIn(shown, prec);
-    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, prec) : '';
+    $('result').textContent = fmt(shown);
+    $('ftin').textContent = Math.abs(shown) >= 12 ? C.fmtFtIn(shown, prec, KEEP) : '';
     $('dec').textContent = (+shown.toFixed(4)) + '"';
     $('mm').textContent = (+(shown * 25.4).toFixed(1)) + ' mm';
     document.querySelectorAll('[data-prec]').forEach((b) => b.setAttribute('aria-checked', String(+b.dataset.prec === prec)));
@@ -47,7 +50,7 @@
       b.type = 'button';
       b.innerHTML = `<span></span><b></b>`;
       b.firstChild.textContent = h.expr + ' =';
-      b.lastChild.textContent = C.fmtIn(h.value, prec);
+      b.lastChild.textContent = fmt(h.value);
       b.addEventListener('click', () => useValue(h.value));
       li.appendChild(b);
       list.appendChild(li);
