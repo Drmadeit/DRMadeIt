@@ -41,7 +41,7 @@ a { color: inherit; }
 }
 .profile {
   position: relative;
-  margin-top: -200px; /* arch starts 80px from the top */
+  margin-top: -240px; /* arch peaks 40px from the top, right at the top of the logo */
   background: rgb(250 250 249 / .84);
   border-radius: 50% 50% 0 0 / 44px 44px 0 0;
   padding: 0 20px 24px;
@@ -53,12 +53,12 @@ a { color: inherit; }
 }
 @media (min-width: 600px) {
   .hero { height: 360px; }
-  .profile { margin-top: -240px; }
+  .profile { margin-top: -300px; }
 }
 .profile-logo {
   width: 124px;
   height: 124px;
-  margin-top: -62px;
+  margin-top: 4px; /* the whole logo sits inside the arch */
   border-radius: 50%;
   background: #fff;
   border: 6px solid var(--bg);
