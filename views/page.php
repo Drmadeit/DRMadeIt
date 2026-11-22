@@ -13,17 +13,17 @@ $buttons = page_buttons($page);
   <h1 class="page-title"><?= e($page['title']) ?></h1>
   <?php if ($page['body']): ?><div class="prose"><?= paragraphs($page['body']) ?></div><?php endif; ?>
 
-  <?php $videos = page_videos($page); $tiktoks = array_filter($videos, fn ($v) => $v['provider'] === 'tiktok'); ?>
+  <?php $videos = page_videos($page); $cards = array_filter($videos, fn ($v) => $v['provider'] !== 'youtube'); ?>
   <?php foreach ($videos as $v): if ($v['provider'] !== 'youtube') continue; ?>
     <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/<?= e($v['id']) ?>" title="<?= e($v['title'] ?: $page['title'] . ' video') ?>" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
   <?php endforeach; ?>
-  <?php if ($tiktoks): ?>
+  <?php if ($cards): ?>
   <div class="tt-grid">
-    <?php foreach ($tiktoks as $v): ?>
-      <a class="tt-card" href="<?= e($v['url']) ?>" target="_blank" rel="noopener">
-        <?php if ($v['thumb']): ?><img src="<?= e(img_url($v['thumb'], true)) ?>" alt="" loading="lazy"><?php else: ?><span class="tt-empty"><?= icon('tiktok', 40) ?></span><?php endif; ?>
-        <span class="tt-play" aria-hidden="true">▶</span>
-        <span class="tt-title"><?= e($v['title'] ?: 'Watch on TikTok') ?></span>
+    <?php foreach ($cards as $v): ?>
+      <a class="tt-card tt-<?= e($v['provider']) ?>" href="<?= e($v['url']) ?>" target="_blank" rel="noopener">
+        <?php if ($v['thumb']): ?><img src="<?= e(img_url($v['thumb'], true)) ?>" alt="" loading="lazy"><?php else: ?><span class="tt-empty"><?= icon($v['provider'], 44) ?></span><?php endif; ?>
+        <?php if ($v['thumb']): ?><span class="tt-play" aria-hidden="true">▶</span><?php endif; ?>
+        <span class="tt-title"><?= e($v['title'] ?: 'Watch on ' . $v['site']) ?></span>
       </a>
     <?php endforeach; ?>
   </div>

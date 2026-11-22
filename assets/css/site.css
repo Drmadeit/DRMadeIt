@@ -330,3 +330,9 @@ a { color: inherit; }
   background: linear-gradient(transparent, rgb(0 0 0 / .85)); font-size: 13px; font-weight: 600; line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
+.tt-empty { color: #fff; }
+.tt-tiktok .tt-empty { background: #111; }
+.tt-instagram .tt-empty { background: linear-gradient(135deg, #5b3bd1, #c13584 55%, #f58529); }
+.tt-facebook .tt-empty { background: #1765d8; }
+.tt-link .tt-empty { background: #333; }
+.tt-card:not(:has(img)) .tt-title { background: none; font-size: 15px; }

@@ -50,21 +50,36 @@ function page_cover(array $page): string
     return (string) ($st->fetchColumn() ?: '');
 }
 
-/** Which site a video link is from, and its ID. */
-function video_link(string $line): ?array
+const VIDEO_SITES = [
+    'youtube' => 'YouTube', 'tiktok' => 'TikTok', 'instagram' => 'Instagram', 'facebook' => 'Facebook', 'link' => 'Video',
+];
+
+/** One line of the video box: "link" or "link  your title". */
+function parse_video_line(string $line): array
 {
-    $line = trim($line);
-    if ($line === '') {
+    $parts = preg_split('/\s+/', trim($line), 2);
+    $title = trim(ltrim($parts[1] ?? '', "|-–— \t"));
+    return [$parts[0] ?? '', $title];
+}
+
+/** Which site a video link is from, and its ID. */
+function video_link(string $url): ?array
+{
+    $url = trim($url);
+    if ($url === '' || !preg_match('#^https?://#i', $url)) {
         return null;
     }
-    if ($id = youtube_video_id($line)) {
+    if ($id = youtube_video_id($url)) {
         return ['provider' => 'youtube', 'id' => $id, 'url' => 'https://www.youtube.com/watch?v=' . $id];
     }
-    if (preg_match('#^https?://([a-z0-9-]+\.)?tiktok\.com/#i', $line)) {
-        $id = tiktok_video_id($line);
-        return ['provider' => 'tiktok', 'id' => $id, 'url' => $line];
-    }
-    return null;
+    $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+    $provider = match (true) {
+        (bool) preg_match('/(^|\.)tiktok\.com$/', $host) => 'tiktok',
+        (bool) preg_match('/(^|\.)(instagram\.com|instagr\.am)$/', $host) => 'instagram',
+        (bool) preg_match('/(^|\.)(facebook\.com|fb\.watch|fb\.com)$/', $host) => 'facebook',
+        default => 'link',
+    };
+    return ['provider' => $provider, 'id' => $provider === 'tiktok' ? tiktok_video_id($url) : null, 'url' => $url];
 }
 
 function tiktok_video_id(string $url): ?string
@@ -73,8 +88,8 @@ function tiktok_video_id(string $url): ?string
 }
 
 /**
- * Videos from the page's video box, in order: YouTube plays on the page,
- * TikTok shows as a thumbnail card that opens TikTok.
+ * Videos from the page's video box, in order. YouTube plays on the page;
+ * everything else is a card that opens the video on its own site.
  */
 function page_videos(array $page): array
 {
@@ -82,13 +97,18 @@ function page_videos(array $page): array
     $out = [];
     $seen = [];
     foreach (preg_split('/\R/', (string) ($page['videos'] ?? '')) as $line) {
-        $v = video_link($line);
+        [$url, $title] = parse_video_line($line);
+        $v = video_link($url);
         if (!$v) {
             continue;
         }
-        $m = $meta[trim($line)] ?? [];
+        $m = $meta[$url] ?? [];
         $v = array_merge($v, array_intersect_key($m, array_flip(['id', 'url', 'title', 'thumb'])));
         $v += ['title' => '', 'thumb' => ''];
+        if ($title !== '') {
+            $v['title'] = $title; // your own title wins
+        }
+        $v['site'] = VIDEO_SITES[$v['provider']];
         $key = $v['provider'] . ($v['id'] ?: $v['url']);
         if (!isset($seen[$key])) {
             $seen[$key] = true;

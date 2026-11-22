@@ -171,20 +171,25 @@ function save_page(): void
     // TikTok: look up title + thumbnail once per link; keep what we already know.
     $oldMeta = json_decode($old['video_meta'] ?? '{}', true) ?: [];
     $meta = [];
-    foreach (array_map('trim', preg_split('/\R/', $vals['videos'])) as $line) {
-        $v = video_link($line);
-        if ($v && $v['provider'] === 'tiktok') {
-            $meta[$line] = $oldMeta[$line] ?? tiktok_lookup($line);
-            if (empty($meta[$line]['id']) && empty($meta[$line]['title'])) {
-                $errors[] = "Couldn't read that TikTok link right now, so it shows as a plain \"Watch on TikTok\" card.";
+    $bad = [];
+    foreach (preg_split('/\R/', $vals['videos']) as $line) {
+        if (trim($line) === '') {
+            continue;
+        }
+        [$url, $title] = parse_video_line($line);
+        $v = video_link($url);
+        if (!$v) {
+            $bad[] = trim($line);
+        } elseif ($v['provider'] === 'tiktok') {
+            $meta[$url] = $oldMeta[$url] ?? tiktok_lookup($url);
+            if (empty($meta[$url]['id']) && empty($meta[$url]['title']) && $title === '') {
+                $errors[] = "Couldn't read a TikTok link right now. Type a title after it to label the card.";
             }
         }
     }
     db()->prepare('UPDATE pages SET video_meta = ? WHERE id = ?')->execute([json_encode($meta), $id]);
-
-    $bad = array_filter(array_map('trim', preg_split('/\R/', $vals['videos'])), fn ($l) => $l !== '' && !video_link($l));
     if ($bad) {
-        $errors[] = "Not a YouTube or TikTok link: " . '"' . implode('", "', $bad) . '".';
+        $errors[] = 'Not a link (should start with https://): "' . implode('", "', $bad) . '".';
     }
     flash(($errors ? 'Saved, but: ' . implode(' ', $errors) : 'Saved.') . ($added ? ' Added ' . count($added) . ' photo' . (count($added) > 1 ? 's' : '') . '.' : ''));
     redirect("/admin/pages/$id");

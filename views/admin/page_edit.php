@@ -26,14 +26,15 @@
 
   <section class="a-card a-form">
     <h2>Videos</h2>
-    <label>Paste YouTube or TikTok links <small>(one per line)</small>
-      <textarea name="videos" rows="3" autocapitalize="none" placeholder="https://youtu.be/…&#10;https://www.tiktok.com/@drmadeit/video/…"><?= e($page['videos'] ?? '') ?></textarea></label>
-    <p class="a-hint">In the app: Share → Copy link. YouTube plays on the page. TikTok shows as a thumbnail card that opens TikTok.</p>
+    <label>Paste video links <small>(one per line)</small>
+      <textarea name="videos" rows="3" autocapitalize="none" placeholder="https://youtu.be/…&#10;https://www.instagram.com/reel/… My title"><?= e($page['videos'] ?? '') ?></textarea></label>
+    <p class="a-hint">In the app: Share → Copy link, paste, then a space and a title if you want one.<br>
+      YouTube plays on the page. TikTok, Instagram and Facebook show as cards that open the video. TikTok fills in its own title and picture; for Instagram and Facebook, type the title.</p>
     <?php if ($vids = page_videos($page)): ?>
     <ul class="a-vids">
       <?php foreach ($vids as $v): $th = $v['provider'] === 'youtube' ? youtube_thumb($v['id']) : ($v['thumb'] ? img_url($v['thumb'], true) : ''); ?>
         <li><?php if ($th): ?><img src="<?= e($th) ?>" alt="" width="48" height="48"><?php else: ?><span class="a-thumb-empty"><?= icon($v['provider'], 20) ?></span><?php endif; ?>
-          <span><b><?= $v['provider'] === 'youtube' ? 'YouTube' : 'TikTok' ?></b> <?= e($v['title'] ?: '') ?></span></li>
+          <span><b><?= e($v['site']) ?></b> <?= e($v['title'] ?: '(no title)') ?></span></li>
       <?php endforeach; ?>
     </ul>
     <?php endif; ?>
