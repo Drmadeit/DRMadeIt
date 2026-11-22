@@ -48,7 +48,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
       <dt>Formats</dt>
       <dd><?php foreach (array_filter(array_map('trim', explode(',', $file['formats']))) as $fmt): ?><span class="tag"><?= e($fmt) ?></span><?php endforeach; ?></dd>
     <?php endif; ?>
-    <?php if ($file['notes']): ?><dt><?= $file['type'] === '3d' ? 'Printer notes' : 'Material &amp; machine' ?></dt><dd><?= nl2br(e($file['notes'])) ?></dd><?php endif; ?>
+    <?php if ($file['notes']): ?><dt><?= $file['type'] === '3d' ? 'Printer notes' : 'Material &amp; machine' ?></dt><dd><?= nl2br(linkify($file['notes']), false) ?></dd><?php endif; ?>
     <dt>License</dt><dd><?= e(license_text($file['license'])) ?></dd>
   </dl>
 

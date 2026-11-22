@@ -21,7 +21,7 @@
       </select>
     </label>
     <label>Text <textarea name="body" rows="8" placeholder="Tell the story…"><?= e($page['body']) ?></textarea></label>
-    <p class="a-hint">Leave a blank line between paragraphs.</p>
+    <p class="a-hint">Leave a blank line between paragraphs. Links you paste become clickable; for nicer text type <code>[words](https://…)</code>.</p>
   </section>
 
   <section class="a-card a-form">

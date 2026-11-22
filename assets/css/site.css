@@ -318,3 +318,6 @@ a { color: inherit; }
 .is-home .site-footer { background: rgb(250 250 249 / .7); border-top: 0; }
 .is-home .link { background: rgb(255 255 255 / .74); border-color: rgb(255 255 255 / .6); }
 .is-home .profile-bio { color: #2a2a2e; font-weight: 500; }
+
+/* Links typed into text (descriptions, pages, About) */
+.prose a, .specs a { color: var(--red-dark); text-decoration-thickness: 1.5px; text-underline-offset: 2px; overflow-wrap: anywhere; }

@@ -84,10 +84,51 @@ function paragraphs(string $text): string
     $out = '';
     foreach (preg_split('/\R{2,}/', trim($text)) as $p) {
         if ($p !== '') {
-            $out .= '<p>' . nl2br(e($p)) . '</p>';
+            $out .= '<p>' . nl2br(linkify($p), false) . '</p>';
         }
     }
     return $out;
+}
+
+/**
+ * Safe HTML from plain text, with links made clickable:
+ *   https://… , www.… , amzn.to/…  → the link itself
+ *   [Router bit set](https://…)    → "Router bit set", linked
+ * Amazon links get the Associates tag (if set), open in a new tab and are marked sponsored.
+ */
+function linkify(string $text): string
+{
+    $re = '~\[([^\]\n]{1,100})\]\(((?:https?://|www\.)[^\s()<>]+)\)'      // [words](link)
+        . '|((?:https?://|www\.|amzn\.to/|a\.co/)[^\s<>]+)~i';             // bare link
+    $out = '';
+    $pos = 0;
+    while (preg_match($re, $text, $m, PREG_OFFSET_CAPTURE, $pos)) {
+        $start = $m[0][1];
+        $out .= e(substr($text, $pos, $start - $pos));
+        if (($m[1][0] ?? '') !== '') {
+            $label = $m[1][0];
+            $url = $m[2][0];
+            $trail = '';
+        } else {
+            $url = $m[3][0];
+            $trail = '';
+            while ($url !== '' && strpbrk(substr($url, -1), '.,!?;:)\'"') !== false) { // "see amzn.to/x." -> keep the dot as text
+                $trail = substr($url, -1) . $trail;
+                $url = substr($url, 0, -1);
+            }
+            $label = $url;
+        }
+        $href = preg_match('~^https?://~i', $url) ? $url : 'https://' . $url;
+        $host = strtolower((string) parse_url($href, PHP_URL_HOST));
+        $amazon = (bool) preg_match('/(^|\.)(amazon\.[a-z.]+|amzn\.to|a\.co)$/', $host);
+        if ($amazon && function_exists('amazon_link')) {
+            $href = amazon_link($href);
+        }
+        $ext = $host !== '' && $host !== strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        $out .= '<a href="' . e($href) . '"' . ($ext ? ' target="_blank" rel="' . ($amazon ? 'sponsored nofollow noopener' : 'noopener') . '"' : '') . '>' . e($label) . '</a>' . e($trail);
+        $pos = $start + strlen($m[0][0]);
+    }
+    return $out . e(substr($text, $pos));
 }
 
 function is_external(string $url): bool

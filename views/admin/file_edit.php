@@ -69,6 +69,7 @@ $live = $file['status'] === 'published';
     <summary>More details <small>(optional)</small></summary>
     <div class="a-form">
       <label>Description <textarea name="description" rows="5"><?= e($file['description']) ?></textarea></label>
+      <p class="a-hint">Links you paste become clickable. For nicer text type <code>[Router bit set](https://amzn.to/…)</code>.</p>
       <label>Material / machine / printer notes <textarea name="notes" rows="3" placeholder="3/4&quot; plywood, 1/4&quot; downcut bit"><?= e($file['notes']) ?></textarea></label>
       <label>File formats <small>(filled in from the file)</small> <input name="formats" value="<?= e($file['formats']) ?>" placeholder="DXF, SVG, CRV" autocapitalize="characters"></label>
       <div class="a-seg" role="radiogroup" aria-label="License">
