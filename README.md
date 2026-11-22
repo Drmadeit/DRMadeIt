@@ -1,63 +1,65 @@
-# Next + Netlify Starter
+# drmadeit.com
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/46648482-644c-4c80-bafb-872057e51b6b/deploy-status)](https://app.netlify.com/sites/next-dev-starter/deploys)
+Link hub, tool lists, file shop and shop calculators for D.R. Made It.
+Plain PHP 8.2+ and SQLite. No framework, no build step, no monthly fees.
 
-This is a [Next.js](https://nextjs.org/) v15 project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and set up to be instantly deployed to [Netlify](https://url.netlify.com/SyTBPVamO)!
+## Layout
 
-This project is a very minimal starter that includes 2 sample components, a global stylesheet, a `netlify.toml` for deployment, and a `jsconfig.json` for setting up absolute imports and aliases. With Netlify, you'll have access to features like Preview Mode, server-side rendering/incremental static regeneration via Netlify Functions, and internationalized routing on deploy automatically.
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/next-netlify-starter&utm_source=github&utm_medium=nextstarter-cs&utm_campaign=devex-cs)
-
-(If you click this button, it will create a new repo for you that looks exactly like this one, and sets that repo up immediately for deployment on Netlify)
-
-## Table of Contents:
-
-- [Getting Started](#getting-started)
-- [Installation options](#installation-options)
-- [Testing](#testing)
-  - [Included Default Testing](#included-default-testing)
-  - [Removing Renovate](#removing-renovate)
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
+```
+index.php        router (every request goes through here)
+.htaccess        sends requests to index.php, blocks app/ and views/
+app/             code: db + schema, auth, image resizing, admin
+views/           page templates (views/admin = admin screens)
+assets/          css, js, default logo + header photo
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Data lives outside the repo**, in `drmadeit-data/` next to `public_html`:
+the SQLite database, uploaded photos, download files, sessions and backups.
+A deploy can never overwrite it. Change the location with the `DRM_DATA_DIR` env var.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Deploy (Hostinger)
 
-### Installation options
+Hostinger → site → Advanced → Git: this repo, branch `main`, install path blank.
+Turn on Auto Deployment and add its webhook in GitHub. PHP 8.2+.
 
-**Option one:** One-click deploy
+## First login
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/next-netlify-starter&utm_source=github&utm_medium=nextstarter-cs&utm_campaign=devex-cs)
+1. Open `/admin`. It asks for a setup code.
+2. Hostinger → File Manager → `drmadeit-data/SETUP-CODE.txt` has the code.
+3. Enter it, pick a username and password (12+ characters). The code file is then deleted.
 
-**Option two:** Manual clone
+Login locks for 15 minutes after 5 wrong tries.
 
-1. Clone this repo: `git clone https://github.com/netlify-templates/next-netlify-starter.git`
-2. Navigate to the directory and run `npm install`
-3. Run `npm run dev`
-4. Make your changes
-5. Connect to [Netlify](https://url.netlify.com/Bk4UicocL) manually (the `netlify.toml` file is the one you'll need to make sure stays intact to make sure the export is done and pointed to the right stuff)
+## Run locally
 
-## Testing
+```
+DRM_DATA_DIR=/tmp/drm-data php -S 127.0.0.1:8000 index.php
+```
 
-### Included Default Testing
+## What's here
 
-We’ve included some tooling that helps us maintain these templates. This template currently uses:
+| Public | Admin (`/admin`) |
+|---|---|
+| `/` link hub (wood header, logo, socials, buttons) | Dashboard: downloads, new emails, top files |
+| `/about` | Links: add, photo, drag order, hide, feature |
+| `/tools`, `/tools/<list>` Amazon tool lists | Tools: lists + items with photos and Amazon links |
+| `/files`, `/files/<item>` CNC / 3D files, free (email) or paid (buy link) | Files: photos, download file, price, buy link, draft/live |
+| `/videos` latest YouTube + pinned | Videos: channel, pin, hide, show on home |
+| `/calc` shop calculators + DXF polyline fixer | Emails: list, CSV export, delete |
+| | Settings: profile, socials, about, email (SMTP), Amazon tag, licenses, backup, password |
 
-- [Renovate](https://www.mend.io/free-developer-tools/renovate/) - to regularly update our dependencies
-- [Cypress](https://www.cypress.io/) - to run tests against how the template runs in the browser
-- [Cypress Netlify Build Plugin](https://github.com/cypress-io/netlify-plugin-cypress) - to run our tests during our build process
+- **Free downloads:** visitor enters email → gets a link good for 5 downloads / 48 hours. Files are served by PHP from `drmadeit-data/files`, never by direct URL.
+- **Email:** Settings → Email. Hostinger: `smtp.hostinger.com`, port `465`, the mailbox address and password. Use "Send test email".
+- **Big files:** upload with Hostinger File Manager into `drmadeit-data/files`, then pick it on the file's admin page.
+- **Backups:** one a day automatically (keeps 14) in `drmadeit-data/backups`, plus "Download backup now" in Settings.
+- **YouTube:** public RSS feed, cached 1 hour. No API key.
+- **Calculators** run in the browser (`assets/js/calc.js`, `assets/js/dxf.js`). Nothing is uploaded.
 
-If your team is not interested in this tooling, you can remove them with ease!
+## Build phases
 
-### Removing Renovate
-
-In order to keep our project up-to-date with dependencies we use a tool called [Renovate](https://github.com/marketplace/renovate). If you’re not interested in this tooling, delete the `renovate.json` file and commit that onto your main branch.
+- [x] 1. Foundation + link hub
+- [x] 2. Tool lists
+- [x] 3. File shop, email-gated downloads, subscriber CSV
+- [x] 4. Videos, backups, share previews
+- [x] Shop calculators + DXF polyline fixer
+- [ ] Later: sheet-goods cut list optimizer, login code by email

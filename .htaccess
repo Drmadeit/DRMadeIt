@@ -1,0 +1,30 @@
+# D.R. Made It — Apache / LiteSpeed (Hostinger)
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Never serve code, views, docs or dotfiles directly
+  RewriteRule ^(app|views|docs|tests)(/|$) - [F,L]
+  RewriteRule (^|/)\. - [F,L]
+  RewriteRule \.(md|sqlite|log|sh|json|lock)$ - [F,L]
+
+  # Only index.php may run as PHP. THE_REQUEST is the visitor's original request,
+  # so this never blocks our own rewrite to index.php (Apache or LiteSpeed).
+  RewriteCond %{THE_REQUEST} \.php[\s?/]
+  RewriteCond %{THE_REQUEST} !\s/+index\.php[\s?]
+  RewriteRule ^ - [F,L]
+
+  # Everything that isn't a real file goes to the router
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+</IfModule>
