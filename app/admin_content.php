@@ -115,33 +115,51 @@ function save_file_item(): void
     $old = $id ? find_row('files', $id) : null;
     $back = $id ? "/admin/files/$id" : '/admin/files/new';
     $title = trim((string) ($_POST['title'] ?? ''));
-    $price = (int) round(((float) str_replace(['$', ','], '', (string) ($_POST['price'] ?? '0'))) * 100);
+    $paid = ($_POST['kind'] ?? '') === 'paid';
+    $price = $paid ? (int) round(((float) str_replace(['$', ','], '', (string) ($_POST['price'] ?? '0'))) * 100) : 0;
     $buyUrl = clean_url((string) ($_POST['buy_url'] ?? ''));
-    $status = ($_POST['status'] ?? '') === 'published' ? 'published' : 'draft';
+    // Publish / Save draft / Unpublish buttons; plain Save (or Enter) keeps the current status.
+    $status = match ($_POST['action'] ?? 'save') {
+        'publish' => 'published',
+        'draft' => 'draft',
+        default => $old['status'] ?? 'draft',
+    };
     $filePath = $old['file_path'] ?? '';
+    $newFile = false;
 
     try {
-        if ($title === '') {
-            throw new RuntimeException('Give the file a title.');
-        }
         if (!empty($_FILES['download']['name'])) {
             $filePath = save_download_file($_FILES['download']);
+            $newFile = true;
         } elseif (isset($_POST['existing_file']) && $_POST['existing_file'] !== '__keep') {
             $pick = basename((string) $_POST['existing_file']);
             $filePath = ($pick !== '' && is_file(DATA_DIR . '/files/' . $pick)) ? $pick : '';
+            $newFile = $filePath !== '';
         }
-        if ($status === 'published' && $price === 0 && $filePath === '') {
-            $status = 'draft';
-            flash('Saved as DRAFT: a free file needs a download file before it can go live.');
+        if ($title === '' && $filePath !== '') {
+            $title = title_from_filename($filePath); // "spice-rack_v2.zip" -> "Spice Rack V2"
         }
-        if ($status === 'published' && $price > 0 && $buyUrl === '') {
+        if ($title === '') {
+            throw new RuntimeException('Give the file a title (or upload the file and it uses the file name).');
+        }
+        if ($status === 'published' && !$paid && $filePath === '') {
             $status = 'draft';
-            flash('Saved as DRAFT: a paid file needs a Buy link before it can go live.');
+            flash('Saved as a DRAFT: upload the download file, then tap Publish.');
+        }
+        if ($status === 'published' && $paid && ($price <= 0 || $buyUrl === '')) {
+            $status = 'draft';
+            flash('Saved as a DRAFT: a paid file needs a price and a Buy link, then tap Publish.');
         }
     } catch (RuntimeException $ex) {
         flash($ex->getMessage());
         redirect($back);
     }
+
+    $formats = trim((string) ($_POST['formats'] ?? ''));
+    if ($filePath !== '' && ($formats === '' || $newFile)) {
+        $formats = implode(', ', detect_formats(DATA_DIR . '/files/' . $filePath)) ?: $formats;
+    }
+    $_POST['formats'] = $formats;
 
     $type = in_array($_POST['type'] ?? '', ['cnc', '3d'], true) ? $_POST['type'] : 'cnc';
     $license = in_array($_POST['license'] ?? '', ['personal', 'commercial'], true) ? $_POST['license'] : 'personal';
@@ -188,9 +206,67 @@ function save_file_item(): void
         }
     }
     if (!flash_pending()) {
-        flash($errors ? 'Saved, but some photos failed. ' . implode(' ', $errors) : 'Saved.');
+        $msg = match (true) {
+            $status === 'published' && ($old['status'] ?? '') !== 'published' => 'Published! It\'s live in your file shop.',
+            $status === 'draft' && ($old['status'] ?? '') === 'published' => 'Unpublished. It\'s a draft again.',
+            default => 'Saved.',
+        };
+        if ($status === 'published') {
+            $msg .= show_files_button();
+        }
+        flash($errors ? $msg . ' But some photos failed: ' . implode(' ', $errors) : $msg);
     }
     redirect("/admin/files/$id");
+}
+
+/** Make sure the home page has a button to the file shop once something is live. Returns a note for the message. */
+function show_files_button(): string
+{
+    $link = db()->query("SELECT id, visible FROM links WHERE url = '/files' ORDER BY id LIMIT 1")->fetch();
+    if ($link && (int) $link['visible'] === 1) {
+        return '';
+    }
+    if ($link) {
+        db()->prepare('UPDATE links SET visible = 1 WHERE id = ?')->execute([$link['id']]);
+    } else {
+        db()->exec("INSERT INTO links (title, url, icon, visible, sort_order) VALUES ('Stuff I Design and Sell', '/files', 'file', 1, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))");
+    }
+    return ' Your file shop button is now showing on the home page.';
+}
+
+function title_from_filename(string $name): string
+{
+    $base = preg_replace('/\.[A-Za-z0-9]+$/', '', $name);
+    return ucwords(trim(preg_replace('/[\s_\-.]+/', ' ', $base)));
+}
+
+/** File formats inside a download: its own extension, or the extensions inside a zip. */
+function detect_formats(string $path): array
+{
+    $known = ['dxf', 'svg', 'crv', 'crv3d', 'stl', '3mf', 'step', 'stp', 'obj', 'dwg', 'pdf', 'ai', 'eps', 'f3d', 'skp', 'c2d', 'lbrn', 'lbrn2', 'gcode', 'nc', 'tap', 'ngc'];
+    $ext = fn (string $n) => strtolower(pathinfo($n, PATHINFO_EXTENSION));
+    $found = [];
+    if ($ext($path) === 'zip' && class_exists('ZipArchive')) {
+        $zip = new ZipArchive();
+        if ($zip->open($path) === true) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $n = (string) $zip->getNameIndex($i);
+                if (!str_starts_with(basename($n), '.') && !str_contains($n, '__MACOSX')) {
+                    $found[] = $ext($n);
+                }
+            }
+            $zip->close();
+        }
+    } else {
+        $found[] = $ext($path);
+    }
+    $out = [];
+    foreach (array_unique($found) as $e) {
+        if (in_array($e, $known, true)) {
+            $out[] = in_array($e, ['gcode', 'nc', 'tap', 'ngc'], true) ? 'G-code' : strtoupper($e);
+        }
+    }
+    return array_values(array_unique($out));
 }
 
 function flash_pending(): bool

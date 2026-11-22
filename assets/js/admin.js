@@ -148,8 +148,8 @@
     input.addEventListener('change', async () => {
       if (!input.files?.length || input.dataset.shrunk === '1' || typeof DataTransfer === 'undefined') return;
       const form = input.form;
-      const save = form?.querySelector('button:not([type=button])');
-      if (save) save.disabled = true;
+      const saves = form ? [...form.querySelectorAll('button:not([type=button])')] : [];
+      saves.forEach((b) => { b.disabled = true; }); // wait until the photos are ready
       try {
         const dt = new DataTransfer();
         for (const f of input.files) dt.items.add(await shrink(f));
@@ -158,7 +158,7 @@
         input.dispatchEvent(new Event('change'));
         input.dataset.shrunk = '';
       } catch { /* keep the originals */ }
-      if (save) save.disabled = false;
+      saves.forEach((b) => { b.disabled = false; });
     });
   });
 
@@ -207,5 +207,18 @@
       const btn = input.previousElementSibling;
       if (btn) btn.textContent = 'Photo picked — tap Save';
     });
+  });
+
+  // ---- Show parts of a form only for one choice (e.g. Free vs Paid) ----
+  document.querySelectorAll('form').forEach((form) => {
+    const parts = form.querySelectorAll('[data-show-if]');
+    if (!parts.length) return;
+    const sync = () => parts.forEach((el) => {
+      const [name, value] = el.dataset.showIf.split('=');
+      const picked = form.querySelector(`input[name="${name}"]:checked`);
+      el.hidden = !picked || picked.value !== value;
+    });
+    form.addEventListener('change', sync);
+    sync();
   });
 })();
