@@ -31,6 +31,18 @@ $path = '/' . trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PA
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if (str_starts_with($path, '/admin') && $path !== '/admin.webmanifest') {
+    // After a deploy, make sure the server runs the new code (some hosts keep the old compiled PHP for a while)
+    $codeTime = max(array_map('filemtime', glob(ROOT . '/{app,views,views/admin}/*.php', GLOB_BRACE) ?: [__FILE__]));
+    if ((string) $codeTime !== setting('code_mtime')) {
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+        set_setting('code_mtime', (string) $codeTime);
+        if ($method === 'GET') {
+            header('Location: ' . $_SERVER['REQUEST_URI'], true, 303); // reload once on the fresh code
+            exit;
+        }
+    }
     require ROOT . '/app/admin.php';
     admin_route($path, $method);
     exit;
