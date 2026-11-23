@@ -33,4 +33,8 @@ require ROOT . '/app/pages.php';
 require ROOT . '/app/apps.php';
 require ROOT . '/app/stats.php';
 
-start_session();
+// The MakerWorld bookmark posts from makerworld.com, so Safari leaves your login cookie off; starting a session
+// there would hand back a fresh empty one and log you out. That request is checked by its own key instead.
+if (!(($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && str_starts_with((string) ($_SERVER['REQUEST_URI'] ?? ''), '/makerworld-sync'))) {
+    start_session();
+}

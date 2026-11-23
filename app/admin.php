@@ -77,7 +77,12 @@ function admin_route(string $path, string $method): void
         'GET /admin' => fn () => admin_dashboard(),
 
         // files
-        'GET /admin/files' => fn () => admin_render('files', [
+        'GET /admin/files' => fn () => (function () {
+            if (($r = setting('mw_last_result')) !== '') { // just came back from the MakerWorld bookmark
+                set_setting('mw_last_result', '');
+                flash('MakerWorld update: ' . $r);
+            }
+        })() ?? admin_render('files', [
             'files' => db()->query('SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb FROM files f ORDER BY sort_order, id')->fetchAll(),
             'tab' => 'files', 'title' => 'Files']),
         'GET /admin/files/new' => fn () => admin_render('file_edit', [
@@ -91,7 +96,7 @@ function admin_route(string $path, string $method): void
             admin_render('file_edit', ['file' => $file, 'images' => $imgs->fetchAll(), 'tab' => 'files', 'title' => $file['title']]);
         },
         'POST /admin/files/save' => fn () => save_file_item(),
-        'GET /admin/files/import' => fn () => admin_render('files_import', ['tab' => 'files', 'title' => 'Import from MakerWorld']),
+        'GET /admin/files/import' => fn () => admin_render('files_import', ['tab' => 'files', 'title' => 'MakerWorld']),
         'POST /admin/files/import' => fn () => import_makerworld(),
         'POST /admin/files/(\d+)/delete' => function ($id) {
             delete_file_item(find_row('files', (int) $id));

@@ -1,4 +1,4 @@
-<div class="a-btn-row"><a class="a-btn" href="/admin/files/new">+ New file</a><a class="a-btn a-btn-outline" href="/admin/files/import">Import from MakerWorld</a></div>
+<div class="a-btn-row"><a class="a-btn" href="/admin/files/new">+ New file</a><a class="a-btn a-btn-outline" href="/admin/files/import">Update from MakerWorld</a></div>
 
 <div data-select-list="/admin/files/bulk">
   <div class="a-list-head">

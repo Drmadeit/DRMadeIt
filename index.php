@@ -106,6 +106,23 @@ if ($path === '/') {
 } elseif ($path === '/videos') {
     render('videos', ['title' => 'Videos', 'videos' => videos_for_site(12)]);
 
+// ---- MakerWorld bookmark sends your models here (its secret key stands in for the login, which Safari won't send from another site) ----
+} elseif ($path === '/makerworld-sync' && $method === 'POST') {
+    $key = setting('mw_token');
+    if ($key === '' || !hash_equals($key, (string) ($_GET['k'] ?? ''))) {
+        http_response_code(403);
+        exit('This bookmark is out of date. Copy it again from DR Admin → Files → Update from MakerWorld.');
+    }
+    require ROOT . '/app/admin.php';
+    $_POST['links'] = (string) ($_POST['data'] ?? '');
+    set_setting('mw_last_result', makerworld_import_run());
+    // Hop to the admin from this page (not a redirect), so Safari treats it as your own site and keeps you logged in
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Updated</title>'
+        . '<p style="font:600 18px system-ui;padding:24px">Done. Opening your files…</p>'
+        . '<script>location.replace("/admin/files")</script><noscript><a href="/admin/files">Open your files</a></noscript>';
+    exit;
+
 // ---- Stats: taps sent by assets/js/stats.js ----
 } elseif ($path === '/t' && $method === 'POST') {
     stats_beacon();

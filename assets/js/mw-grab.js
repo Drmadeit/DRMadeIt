@@ -1,4 +1,4 @@
-// Run on your MakerWorld profile (as a bookmark): loads every model, reads each one's description, then shows it all to copy into DR Admin → Files → Import.
+// Run on your MakerWorld profile (as a bookmark): loads every model, reads each one's description, and sends them to your site.
 (async () => {
   if (!/makerworld\.com/.test(location.hostname)) { alert('Open your MakerWorld profile first, then tap this bookmark.'); return; }
   const note = document.createElement('div');
@@ -56,21 +56,16 @@
       if (!m.img) { const og = doc.querySelector('meta[property="og:image"]'); if (og) m.img = og.content; }
     } catch (e) {}
   }
-  const text = 'MAKERWORLD:' + JSON.stringify([...models.values()]);
-  note.remove();
-  document.body.innerHTML = '';
-  document.body.style.cssText = 'margin:0;padding:16px;font:16px system-ui;background:#fff;color:#111';
-  const h = document.createElement('p');
-  const withText = [...models.values()].filter((m) => m.description).length;
-  h.textContent = 'Found ' + models.size + ' models (' + withText + ' with descriptions). Tap Copy, then paste into DR Admin → Files → Import from MakerWorld.';
-  const b = document.createElement('button');
-  b.textContent = 'Copy';
-  b.style.cssText = 'font:600 18px system-ui;padding:14px 28px;border:0;border-radius:10px;background:#d7141e;color:#fff;margin:0 0 12px';
-  const t = document.createElement('textarea');
-  t.value = text;
-  t.style.cssText = 'width:100%;height:60vh;font:12px ui-monospace,monospace';
-  b.onclick = async () => {
-    try { await navigator.clipboard.writeText(text); b.textContent = 'Copied ✓'; } catch (e) { t.focus(); t.select(); document.execCommand('copy'); b.textContent = 'Copied ✓'; }
-  };
-  document.body.append(h, b, t);
+  // Send it straight to your site (no copy/paste). __SITE__ and __KEY__ are filled in by your admin when you copy the bookmark.
+  say('Sending ' + models.size + ' models to your site…');
+  const f = document.createElement('form');
+  f.method = 'post';
+  f.action = '__SITE__/makerworld-sync?k=__KEY__';
+  const i = document.createElement('input');
+  i.type = 'hidden';
+  i.name = 'data';
+  i.value = 'MAKERWORLD:' + JSON.stringify([...models.values()]);
+  f.append(i);
+  document.body.append(f);
+  f.submit();
 })();

@@ -376,25 +376,29 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
 }
 
 /** Paste MakerWorld model links (one per line): each becomes a draft file with its MakerWorld button. */
-const IMPORT_VERSION = 6; // shown on the import screen so we can tell which code the server is running
+const IMPORT_VERSION = 7; // shown on the import screen so we can tell which code the server is running
 
 function import_makerworld(): void
+{
+    flash(makerworld_import_run());
+    redirect(!empty($GLOBALS['mw_back']) ? $GLOBALS['mw_back'] : '/admin/files');
+}
+
+/** Import (or update) MakerWorld models from the posted text. Returns the result message. */
+function makerworld_import_run(): string
 {
     @set_time_limit(300);
     $made = $skipped = $bad = $updated = 0;
     $noPhoto = [];
     $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
-    if (!empty($_POST['saved']) && is_file($saved = ROOT . '/app/data/makerworld-saved.json')) {
-        $_POST['links'] = 'MAKERWORLD:' . file_get_contents($saved); // the list Claude saved into the site
-    }
     // What the Grab MakerWorld bookmark copies: MAKERWORLD:[{url, title, img, description}, …]
     // Older copies / plain links: one model per MakerWorld link (line breaks often get lost when pasting on a phone).
     $text = trim((string) ($_POST['links'] ?? ''));
     $items = [];
     $list = str_contains($text, 'MAKERWORLD:') ? makerworld_json($text) : null;
     if ($list === null && str_contains($text, 'MAKERWORLD:')) {
-        flash("Couldn't read the list the bookmark copied (it got changed on the way). Nothing was imported. Send a screenshot of the import box to Claude.");
-        redirect('/admin/files/import');
+        $GLOBALS['mw_back'] = '/admin/files/import';
+        return "Couldn't read the MakerWorld list (it got changed on the way). Nothing was imported.";
     }
     if ($list !== null) {
         foreach ($list as $it) {
@@ -427,7 +431,9 @@ function import_makerworld(): void
         if ($old = $dup->fetch()) {
             // Already here: fill in what an earlier import couldn't (real title, description, photo)
             $fixed = false;
-            if ($old['title'] !== $title && ($it['title'] !== '' || str_starts_with($old['title'], 'MakerWorld model '))) {
+            // Only replace a title the site made up (from the link); a name you changed on the site stays.
+            $madeUp = str_starts_with($old['title'], 'MakerWorld model ') || ($m['guess'] !== '' && strcasecmp($old['title'], $m['guess']) === 0);
+            if ($old['title'] !== $title && $madeUp) {
                 db()->prepare('UPDATE files SET title = ? WHERE id = ?')->execute([$title, $old['id']]);
                 $fixed = true;
             }
@@ -468,8 +474,7 @@ function import_makerworld(): void
     if ($noPhoto) {
         $msg .= ' No photo found for: ' . implode(', ', array_slice($noPhoto, 0, 5)) . (count($noPhoto) > 5 ? '…' : '') . '. Add a photo to those.';
     }
-    flash($msg);
-    redirect('/admin/files');
+    return $msg;
 }
 
 /** Keep a copy of a MakerWorld cover photo on your server; if that fails, show it straight from MakerWorld. */
