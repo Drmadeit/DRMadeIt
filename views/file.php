@@ -15,7 +15,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
   <?php if (count($images) > 1): ?><p class="gallery-hint">Swipe for more photos</p><?php endif; ?>
   <?php endif; ?>
 
-  <h1 class="page-title"><?= e($file['title']) ?></h1>
+  <h1 class="page-title<?= mb_strlen($file['title']) > 22 ? ' is-long' : '' ?>"><?= e($file['title']) ?></h1>
   <p class="meta"><?= e(type_label($file['type'])) ?> · <b class="<?= $free ? 'free' : '' ?>"><?= e(price_label((int) $file['price_cents'])) ?></b></p>
 
   <?php if ($mw = $file['makerworld_url'] ?? ''): ?>
@@ -55,7 +55,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
       <dt>Formats</dt>
       <dd><?php foreach (array_filter(array_map('trim', explode(',', $file['formats']))) as $fmt): ?><span class="tag"><?= e($fmt) ?></span><?php endforeach; ?></dd>
     <?php endif; ?>
-    <?php if ($file['notes']): ?><dt><?= $file['type'] === '3d' ? 'Printer notes' : 'Material &amp; machine' ?></dt><dd><?= nl2br(linkify($file['notes']), false) ?></dd><?php endif; ?>
+    <?php if ($file['notes']): ?><dt><?= $file['type'] === '3d' ? 'Printer notes' : 'Material &amp; machine' ?></dt><dd class="prose"><?= paragraphs($file['notes']) ?></dd><?php endif; ?>
     <dt>License</dt><dd><?= e(license_text($file['license'])) ?></dd>
   </dl>
 

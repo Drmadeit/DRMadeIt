@@ -86,7 +86,7 @@ $what = strtolower(BUTTON_KINDS[$page['kind']]);
     </section>
 
     <section class="a-card a-form">
-      <h2>Buttons on the page <small class="a-hint">(optional)</small></h2>
+      <h2>Extra links at the bottom <small class="a-hint">(optional)</small></h2>
       <div class="a-form" data-repeat>
         <?php foreach ($buttons as $b): ?>
           <div class="a-btn-pair" data-repeat-row>
@@ -96,7 +96,7 @@ $what = strtolower(BUTTON_KINDS[$page['kind']]);
           </div>
         <?php endforeach; ?>
       </div>
-      <button type="button" class="a-btn a-btn-outline" data-repeat-add>+ Add button</button>
+      <button type="button" class="a-btn a-btn-outline" data-repeat-add>+ Add link</button>
     </section>
   </div>
 

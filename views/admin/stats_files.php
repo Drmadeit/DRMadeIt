@@ -1,3 +1,4 @@
+<a class="a-back" href="/admin/stats">‹ Stats</a>
 <nav class="a-chips" aria-label="Time period">
   <?php foreach ([7 => '7 days', 30 => '30 days', 0 => 'All time'] as $d => $label): ?>
     <a href="/admin/stats/<?= $which ?><?= $d === 7 ? '' : '?days=' . $d ?>"<?= $d === $days ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>

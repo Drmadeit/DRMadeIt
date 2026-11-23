@@ -44,26 +44,18 @@ $fmtDay = fn (string $d) => strlen($d) === 7 ? date('M y', strtotime($d . '-01')
 </section>
 <?php endif; ?>
 
-<?php $list('Buttons tapped', $links, 'taps', 'No taps yet.'); ?>
+<?php
+$q = $days === 30 ? '?days=30' : ($days === 0 ? '?days=0' : '');
+$row = fn (string $href, string $ic, string $label, string $note) =>
+    '<a href="' . e($href) . '">' . icon($ic, 22) . '<span class="a-menu-text">' . e($label) . '<small>' . e($note) . '</small></span><span class="a-chev">' . icon('chevron', 18) . '</span></a>';
+?>
+<nav class="a-card a-menu" aria-label="Details">
+  <?= $row('/admin/stats/visitors' . $q, 'eye', 'Visitors', 'Day by day, and what they looked at') ?>
+  <?= $row('/admin/stats/files' . $q, 'download', 'File activity', 'Views, emails, downloads, MakerWorld per file') ?>
+  <?= $row('/admin/stats/taps' . $q, 'link', 'Link taps', 'Buttons, Amazon links, short addresses') ?>
+  <?= $row('/admin/emails' . ($days === 7 || $days === 30 ? '?days=' . $days : ''), 'mail', 'Emails', 'Who signed up and what they got') ?>
+</nav>
 
-<section class="a-card a-form" id="files">
-  <h2>Files</h2>
-  <?php if (!$files): ?><p class="a-hint">No download requests in this time.</p><?php else: ?>
-  <ol class="a-rank">
-    <?php foreach ($files as $f): ?>
-      <li><span class="a-rank-text"><a href="/admin/files/<?= (int) $f['id'] ?>"><b><?= e($f['title']) ?></b></a>
-        <small><?= (int) $f['asked'] ?> asked by email · <?= (int) $f['got'] ?> downloaded<?= !empty($f['mw']) ? ' · ' . (int) $f['mw'] . ' went to MakerWorld' : '' ?></small></span>
-        <span class="a-rank-n"><?= (int) $f['got'] + (int) ($f['mw'] ?? 0) ?></span></li>
-    <?php endforeach; ?>
-  </ol>
-  <p class="a-hint">"Downloaded" means they opened the link from the email at least once. MakerWorld counts taps on its button (MakerWorld itself shows who actually downloaded).</p>
-  <?php endif; ?>
-</section>
-
-<?php $list('Amazon taps', $amazon, 'taps', 'No Amazon taps yet.'); ?>
-<?php $list('Pages people looked at', $pages, 'views', 'No visits yet.'); ?>
 <?php if ($apps) $list('Calculators opened', $apps, 'opens', ''); ?>
-<?php if ($short) $list('Addresses people used', $short, 'clicks', ''); ?>
 
-<p class="a-hint a-center">Counting since <?= $since ? e(date('M j, Y', strtotime($since))) : 'today' ?>. Bots and you are left out, and no cookies are used.
-  Amazon's own report (Associates → Reports) shows what was actually bought.</p>
+<p class="a-hint a-center">Counting since <?= $since ? e(date('M j, Y', strtotime($since))) : 'today' ?>. Bots and you are left out, and no cookies are used.</p>

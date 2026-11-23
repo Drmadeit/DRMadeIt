@@ -84,18 +84,34 @@ function not_found(): never
 /** Turn plain text with blank lines into safe paragraphs. */
 function paragraphs(string $text): string
 {
+    // Every line is its own paragraph (people type one Enter between paragraphs on a phone),
+    // except list lines (•, -, *, 1.) which stay together as a tight list.
     $out = '';
-    foreach (preg_split('/\R{2,}/', trim($text)) as $p) {
-        if ($p !== '') {
-            $out .= '<p>' . nl2br(linkify($p), false) . '</p>';
+    $list = [];
+    $flush = function () use (&$out, &$list) {
+        if ($list) {
+            $out .= '<p class="p-list">' . implode('<br>', array_map('linkify', $list)) . '</p>';
+            $list = [];
+        }
+    };
+    foreach (preg_split('/\R/', trim($text)) as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            $flush();
+        } elseif (preg_match('/^([•\-*–]|\d+[.)])\s/u', $line)) {
+            $list[] = $line;
+        } else {
+            $flush();
+            $out .= '<p>' . linkify($line) . '</p>';
         }
     }
+    $flush();
     return $out;
 }
 
 /**
  * Safe HTML from plain text, with links made clickable:
- *   https://… , www.… , amzn.to/…  → the link itself
+ *   https://… , www.… , amzn.to/…  → the link itself (bare Amazon links read "View on Amazon")
  *   [Router bit set](https://…)    → "Router bit set", linked
  * Amazon links get the Associates tag (if set), open in a new tab and are marked sponsored.
  */
@@ -123,7 +139,10 @@ function linkify(string $text): string
         }
         $href = preg_match('~^https?://~i', $url) ? $url : 'https://' . $url;
         $host = strtolower((string) parse_url($href, PHP_URL_HOST));
-        $amazon = (bool) preg_match('/(^|\.)(amazon\.[a-z.]+|amzn\.to|a\.co)$/', $host);
+        $amazon = (bool) preg_match('/(^|\.)(amazon\.[a-z.]+|amzn\.to|a\.co|link\.amazon)$/', $host);
+        if ($amazon && $label === $url) {
+            $label = 'View on Amazon'; // a bare Amazon link reads better as words than as a long address
+        }
         if ($amazon && function_exists('amazon_link')) {
             $href = amazon_link($href);
         }

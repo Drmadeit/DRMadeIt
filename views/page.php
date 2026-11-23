@@ -10,7 +10,7 @@ $buttons = page_buttons($page);
     <a class="page-hero" href="<?= e(img_url($cover)) ?>" data-lightbox><img src="<?= e(img_url($cover)) ?>" alt="<?= e($page['title']) ?>"></a>
   <?php endif; ?>
 
-  <h1 class="page-title"><?= e($page['title']) ?></h1>
+  <h1 class="page-title<?= mb_strlen($page['title']) > 22 ? ' is-long' : '' ?>"><?= e($page['title']) ?></h1>
   <?php if ($page['body']): ?><div class="prose"><?= paragraphs($page['body']) ?></div><?php endif; ?>
 
   <?php $videos = page_videos($page); $cards = array_filter($videos, fn ($v) => $v['provider'] !== 'youtube'); ?>
@@ -55,6 +55,11 @@ $buttons = page_buttons($page);
       <a href="<?= e(img_url($ph['image'])) ?>" data-lightbox><img src="<?= e(img_url($ph['image'], true)) ?>" alt="<?= e($page['title']) ?> photo" loading="lazy"></a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
+  <?php if ($page['slug'] === 'about' && ($socials = socials())): ?>
+  <nav class="socials about-socials" aria-label="Social">
+    <?php foreach ($socials as $s): ?><a href="<?= e($s['url']) ?>" aria-label="<?= e($s['label']) ?>" target="_blank" rel="noopener"><?= icon($s['key']) ?></a><?php endforeach; ?>
+  </nav>
   <?php endif; ?>
 </article>
 <script src="<?= e(asset('js/gallery.js')) ?>" defer></script>

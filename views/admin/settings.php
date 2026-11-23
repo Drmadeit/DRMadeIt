@@ -8,7 +8,7 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
 ?>
 <a class="a-back" href="/admin/settings">‹ Settings</a>
 
-<?php if (in_array($section, ['profile', 'social', 'email', 'amazon', 'licenses', 'footer'], true)): ?>
+<?php if (in_array($section, ['profile', 'social', 'email', 'amazon', 'wording'], true)): ?>
 <form method="post" action="/admin/settings/<?= e($section) ?>" enctype="multipart/form-data" class="a-card a-form">
   <?= csrf_field() ?>
 
@@ -55,13 +55,11 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <?= $field('amazon_tag', 'Associates tracking ID (optional)', 'text', 'yourtag-20') ?>
     <p class="a-hint">If set, it's added to plain Amazon links that don't have one. Short amzn.to links already have it.</p>
 
-  <?php elseif ($section === 'licenses'): ?>
-    <label>Personal use wording <textarea name="license_personal" rows="4"><?= e(setting('license_personal')) ?></textarea></label>
-    <label>Commercial OK wording <textarea name="license_commercial" rows="4"><?= e(setting('license_commercial')) ?></textarea></label>
-
-  <?php elseif ($section === 'footer'): ?>
-    <?= $field('footer_text', 'Footer text') ?>
+  <?php elseif ($section === 'wording'): ?>
+    <?= $field('footer_text', 'Footer line (bottom of every page)') ?>
     <p class="a-hint">Keep the Amazon Associates disclosure here.</p>
+    <label>File license: personal use <textarea name="license_personal" rows="4"><?= e(setting('license_personal')) ?></textarea></label>
+    <label>File license: commercial OK <textarea name="license_commercial" rows="4"><?= e(setting('license_commercial')) ?></textarea></label>
   <?php endif; ?>
 
   <button class="a-btn">Save</button>

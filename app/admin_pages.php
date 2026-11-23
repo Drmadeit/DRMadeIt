@@ -75,6 +75,27 @@ function pages_admin_routes(): array
             soft_delete('pages', (int) $b['id']);
             redirect('/admin/buttons');
         },
+        'POST /admin/buttons/bulk' => function () {
+            $ids = array_values(array_filter(array_map('intval', (array) ($_POST['ids'] ?? []))));
+            $action = (string) ($_POST['action'] ?? '');
+            $n = 0;
+            foreach ($ids as $bid) {
+                $st = db()->prepare('SELECT id FROM pages WHERE id = ? AND deleted_at IS NULL');
+                $st->execute([$bid]);
+                if (!$st->fetchColumn()) {
+                    continue;
+                }
+                match ($action) {
+                    'delete' => db()->prepare('UPDATE pages SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$bid]),
+                    'hide' => db()->prepare('UPDATE pages SET visible = 0 WHERE id = ?')->execute([$bid]),
+                    'show' => db()->prepare('UPDATE pages SET visible = 1 WHERE id = ?')->execute([$bid]),
+                    default => null,
+                };
+                $n++;
+            }
+            flash((['delete' => 'Deleted', 'hide' => 'Hid', 'show' => 'Showing'][$action] ?? 'Updated') . " $n button" . ($n === 1 ? '' : 's') . '.');
+            redirect('/admin/buttons');
+        },
         'POST /admin/buttons/(\d+)/feature' => function ($id) {
             $b = admin_button((int) $id);
             db()->prepare('UPDATE pages SET featured = CASE WHEN id = ? THEN 1 - featured ELSE 0 END')->execute([$b['id']]);

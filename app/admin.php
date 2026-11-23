@@ -186,7 +186,7 @@ function admin_route(string $path, string $method): void
         // settings
         'GET /admin/stats/(visitors|files|taps)' => function ($which) {
             $days = in_array((int) ($_GET['days'] ?? 7), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 7) : 7;
-            admin_render('stats_' . $which, stats_detail($which, $days) + ['days' => $days, 'which' => $which, 'tab' => 'home',
+            admin_render('stats_' . $which, stats_detail($which, $days) + ['days' => $days, 'which' => $which, 'tab' => 'stats',
                 'title' => ['files' => 'File activity', 'taps' => 'Link taps', 'visitors' => 'Visitors'][$which]]);
         },
         'GET /admin/stats' => function () {
@@ -195,6 +195,7 @@ function admin_route(string $path, string $method): void
         },
         'GET /admin/content' => fn () => admin_render('content', ['tab' => 'content', 'title' => 'Content']),
         'GET /admin/settings' => fn () => admin_render('more', ['tab' => 'settings', 'title' => 'Settings']),
+        'GET /admin/settings/(licenses|footer)' => fn () => redirect('/admin/settings/wording'),
         'GET /admin/settings/(\w+)' => function ($section) {
             if (!isset(SETTINGS_SECTIONS[$section])) {
                 not_found();
@@ -415,8 +416,7 @@ const SETTINGS_SECTIONS = [
     'social' => ['Social links', 'link', 'TikTok, Instagram, YouTube…'],
     'email' => ['Email sending', 'mail', 'For free download links'],
     'amazon' => ['Amazon', 'link', 'Associates tracking ID'],
-    'licenses' => ['File licenses', 'file', 'Personal / commercial wording'],
-    'footer' => ['Footer', 'sliders', 'Disclosure line'],
+    'wording' => ['Wording', 'file', 'Footer line, file license text'],
     'password' => ['Password', 'sliders', 'Change your admin password'],
     'backup' => ['Backup', 'download', 'Download a copy of everything'],
 ];

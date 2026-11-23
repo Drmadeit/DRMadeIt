@@ -317,12 +317,11 @@
 
   // ---- Select mode: tick rows, then act on all of them at once ----
   document.querySelectorAll('[data-select-list]').forEach((wrap) => {
-    const list = wrap.querySelector('.a-list');
     const bar = wrap.querySelector('.a-select-bar');
     const toggle = wrap.querySelector('[data-select-toggle]');
     const all = wrap.querySelector('[data-select-all]');
     const countEls = wrap.querySelectorAll('[data-select-count]');
-    const rows = [...list.querySelectorAll('li[data-id]')];
+    const rows = [...wrap.querySelectorAll('.a-list li[data-id]')];
     const picked = new Set();
     const sync = () => {
       rows.forEach((r) => r.classList.toggle('is-picked', picked.has(r.dataset.id)));
@@ -357,7 +356,7 @@
         const uses = rows.filter((r) => picked.has(r.dataset.id)).reduce((sum, r) => sum + Number(r.dataset.uses || 0), 0);
         const msg = uses > 0
           ? `Hey fuckface, you're about to piss people off. ${uses} ${uses === 1 ? 'person' : 'people'} used these ${n} in the last month. Delete anyway?`
-          : `Delete ${n} file${n === 1 ? '' : 's'}?`;
+          : `Delete ${n} ${wrap.dataset.selectNoun || 'item'}${n === 1 ? '' : 's'}?`;
         if (!confirm(msg)) return;
       }
       postTo(wrap.dataset.selectList, { action, 'ids[]': [...picked] });

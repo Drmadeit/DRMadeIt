@@ -26,8 +26,9 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Michroma&display=swap">
 <link rel="stylesheet" href="<?= e(asset('css/site.css')) ?>">
 </head>
-<body class="<?= empty($isHome) ? '' : 'is-home' ?>">
+<body class="<?= empty($isHome) ? 'is-inner' : 'is-home' ?>">
 <?php if (empty($isHome)): ?>
+<div class="page-bg page-bg-inner" style="background-image:url('<?= e(asset('img/bg-engraved.jpg')) ?>')" aria-hidden="true"></div>
 <header class="topbar">
   <a class="topbar-brand" href="/">
     <img src="<?= e($logo) ?>" alt="" width="40" height="40">
@@ -39,6 +40,14 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
 <?= $content ?>
 </main>
 <footer class="site-footer">
+  <?php if (empty($isHome)):
+      $here = '/' . trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
+      $nav = ['/' => 'Home', '/files' => 'Files', '/videos' => 'Videos', '/toolbox' => 'Toolbox'];
+      if (live_button('about')) { $nav['/about'] = 'About'; } ?>
+  <nav class="foot-nav" aria-label="Site">
+    <?php foreach ($nav as $href => $label): ?><a href="<?= $href ?>"<?= $here === $href ? ' aria-current="page"' : '' ?>><?= $label ?></a><?php endforeach; ?>
+  </nav>
+  <?php endif; ?>
   <?php if ($t = setting('footer_text')): ?><p><?= e($t) ?></p><?php endif; ?>
   <p>© <?= date('Y') ?> <?= e($siteName) ?></p>
 </footer>

@@ -10,7 +10,7 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
             $sub .= ' → ' . preg_replace('#^https?://(www\.)?#', '', $b['url']);
         }
         $what = strtolower(BUTTON_KINDS[$b['kind']]);
-        echo '<li class="a-row' . ($b['visible'] ? '' : ' is-hidden') . '" data-id="' . (int) $b['id'] . '" data-delete="/admin/buttons/' . (int) $b['id'] . '/delete" data-confirm-delete="'
+        echo '<li class="a-row' . ($b['visible'] ? '' : ' is-hidden') . '" data-id="' . (int) $b['id'] . '" data-uses="' . address_uses(page_url($b), (int) $b['id']) . '" data-delete="/admin/buttons/' . (int) $b['id'] . '/delete" data-confirm-delete="'
             . e(delete_warning($what, address_uses(page_url($b), (int) $b['id']))) . '">'
             . '<button type="button" class="a-grip" aria-label="Drag to reorder ' . e($b['title']) . '">' . icon('grip', 22) . '</button>'
             . '<a class="a-row-main" href="/admin/buttons/' . (int) $b['id'] . '">'
@@ -28,6 +28,8 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
 };
 ?>
 <a class="a-btn a-btn-block" href="/admin/buttons/new">+ Add button</a>
+<div data-select-list="/admin/buttons/bulk" data-select-noun="button">
+<div class="a-list-head"><p class="a-hint">Swipe left to delete. Tap Select to clean up several at once.</p><button type="button" class="a-link-btn" data-select-toggle>Select</button></div>
 
 <p class="a-group"><span>Home page</span><a href="/admin/buttons/new?in=home">+ Add here</a></p>
 <?php if ($groups['home']): $list($groups['home'], true); else: ?><p class="a-hint">No buttons on the home page yet.</p><?php endif; ?>
@@ -42,5 +44,12 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
   <?php $list($groups['none'], false); ?>
 <?php endif; ?>
 
-<p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. Swipe left to delete. <span class="a-inline-icon"><?= icon('star', 16) ?></span> = featured (red outline). <span class="a-inline-icon"><?= icon('eye', 16) ?></span> = show / hide.
+<div class="a-select-bar" hidden>
+  <button type="button" class="a-link-btn" data-select-all>Select all</button>
+  <button type="button" data-bulk="show">Show</button>
+  <button type="button" data-bulk="hide">Hide</button>
+  <button type="button" data-bulk="delete">Delete <span data-select-count>0</span></button>
+</div>
+</div>
+<p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. <span class="a-inline-icon"><?= icon('star', 16) ?></span> = featured (red outline). <span class="a-inline-icon"><?= icon('eye', 16) ?></span> = show / hide.
   Every button has its own address, like <?= e($host) ?>/k7m.</p>

@@ -277,6 +277,12 @@ function migrate(PDO $pdo): void
             // Optional MakerWorld page for a file: shown first on the file page (downloads there earn rewards)
             $pdo->exec("ALTER TABLE files ADD COLUMN makerworld_url TEXT NOT NULL DEFAULT ''");
         },
+        16 => function (PDO $pdo): void {
+            // A long write-up typed into "Material & machine notes" belongs in the description
+            $pdo->exec("UPDATE files SET description = notes, notes = '' WHERE description = '' AND length(notes) > 300");
+            // The home "files" button repeats the Files section right under it: hide it (it can be shown again in Buttons)
+            $pdo->exec("UPDATE pages SET visible = 0 WHERE kind = 'link' AND place = 'home' AND url = '/files' AND deleted_at IS NULL");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

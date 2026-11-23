@@ -13,6 +13,7 @@
   <div class="a-grid2">
     <a class="a-btn" href="/admin/buttons/new">+ Button</a>
     <a class="a-btn" href="/admin/files/new">+ File</a>
+    <a class="a-btn a-btn-outline a-span2" href="/admin/files/import">Update from MakerWorld</a>
   </div>
 </section>
 

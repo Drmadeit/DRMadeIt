@@ -1,6 +1,6 @@
 <section class="page">
   <?php if ($up = button_parent($cat)): ?><a class="crumb" href="<?= e(page_url($up)) ?>">← <?= e($up['title']) ?></a><?php endif; ?>
-  <h1 class="page-title"><?= e($cat['title']) ?></h1>
+  <h1 class="page-title<?= mb_strlen($cat['title']) > 22 ? ' is-long' : '' ?>"><?= e($cat['title']) ?></h1>
   <?php if (!$cat['visible']): ?><p class="notice">Hidden: only you can see this page.</p><?php endif; ?>
   <?php if ($cat['body']): ?><div class="prose page-lede"><?= paragraphs($cat['body']) ?></div><?php endif; ?>
   <?php if (!$pages): ?><p>Nothing here yet.</p><?php endif; ?>

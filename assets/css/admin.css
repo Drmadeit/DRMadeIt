@@ -261,3 +261,4 @@ select {
 .a-table th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 0 0 6px; }
 .a-table td { padding: 8px 0; border-top: 1px solid var(--line); }
 .a-table th:not(:first-child), .a-table td:not(:first-child) { text-align: right; }
+.a-span2 { grid-column: 1 / -1; }

@@ -1,6 +1,6 @@
 <div class="a-btn-row"><a class="a-btn" href="/admin/files/new">+ New file</a><a class="a-btn a-btn-outline" href="/admin/files/import">Update from MakerWorld</a></div>
 
-<div data-select-list="/admin/files/bulk">
+<div data-select-list="/admin/files/bulk" data-select-noun="file">
   <div class="a-list-head">
     <p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. Swipe right to publish or unpublish, left to delete.</p>
     <?php if ($files): ?><button type="button" class="a-link-btn" data-select-toggle>Select</button><?php endif; ?>
