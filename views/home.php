@@ -46,8 +46,8 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
   <div class="thumbs thumbs-tall">
     <?php foreach ($videos as $v): ?>
       <a class="thumb" href="https://www.youtube.com/watch?v=<?= e($v['id']) ?>" target="_blank" rel="noopener">
-        <span class="thumb-crop"><img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="320" height="180"></span>
-        <span class="thumb-title"><?= e($v['title']) ?></span>
+        <span class="thumb-crop"><img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="320" height="180">
+          <span class="thumb-bar"><span><?= e($v['title']) ?></span></span></span>
       </a>
     <?php endforeach; ?>
   </div>
@@ -60,9 +60,11 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
   <div class="thumbs thumbs-square">
     <?php foreach ($homeFiles as $f): $free = !(int) $f['price_cents']; ?>
       <a class="thumb" href="/files/<?= e($f['slug']) ?>">
-        <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy" width="320" height="180"><?php else: ?><span class="thumb-empty"><?= icon('file', 26) ?></span><?php endif; ?>
-        <span class="thumb-title"><?= e($f['title']) ?></span>
-        <span class="pill<?= $free ? '' : ' pill-red' ?>"><?= e(price_label((int) $f['price_cents'])) ?> · <?= e($f['type'] === '3d' ? '3D' : 'CNC') ?></span>
+        <span class="thumb-media">
+          <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy" width="320" height="320"><?php else: ?><span class="thumb-empty"><?= icon('file', 26) ?></span><?php endif; ?>
+          <span class="pill<?= $free ? '' : ' pill-red' ?>"><?= e(price_label((int) $f['price_cents'])) ?> · <?= e($f['type'] === '3d' ? '3D' : 'CNC') ?></span>
+          <span class="thumb-bar"><span><?= e($f['title']) ?></span></span>
+        </span>
       </a>
     <?php endforeach; ?>
   </div>
