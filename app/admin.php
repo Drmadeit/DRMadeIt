@@ -323,6 +323,7 @@ function admin_dashboard(): void
     admin_render('dashboard', [
         'downloadsWeek' => (int) $q('SELECT COUNT(*) FROM downloads WHERE created_at >= ?', [$week])->fetchColumn(),
         'emailsWeek' => (int) $q('SELECT COUNT(*) FROM subscribers WHERE created_at >= ?', [$week])->fetchColumn(),
+        'visitorsWeek' => (int) $q("SELECT COALESCE(SUM(n), 0) FROM stats WHERE kind = 'people' AND day >= ?", [date('Y-m-d', strtotime('-6 days'))])->fetchColumn(),
         'emailsTotal' => (int) $q('SELECT COUNT(*) FROM subscribers')->fetchColumn(),
         'top' => $q('SELECT f.title, f.id, COUNT(d.id) n FROM downloads d JOIN files f ON f.id = d.file_id
                      WHERE d.created_at >= ? GROUP BY f.id ORDER BY n DESC LIMIT 5', [db()->query("SELECT datetime('now', '-30 days')")->fetchColumn()])->fetchAll(),
