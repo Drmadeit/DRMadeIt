@@ -2,7 +2,7 @@
 
 <div data-select-list="/admin/files/bulk" data-select-noun="file">
   <div class="a-list-head">
-    <p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. Swipe right to publish or unpublish, left to delete.</p>
+    <p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. <span class="hint-touch">Swipe right to publish or unpublish, left to delete.</span><span class="hint-mouse">Point at a file for Publish and Delete.</span></p>
     <?php if ($files): ?><button type="button" class="a-link-btn" data-select-toggle>Select</button><?php endif; ?>
   </div>
   <ul class="a-list" data-sortable="/admin/reorder/files">

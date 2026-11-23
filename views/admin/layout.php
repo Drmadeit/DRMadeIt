@@ -30,9 +30,11 @@
 </main>
 <?php if (empty($bare)): ?>
 <nav class="a-tabs" aria-label="Admin sections">
+  <a class="a-side-brand" href="/admin"><img src="<?= e(asset('img/admin-180.png')) ?>" alt="" width="36" height="36"><span><?= e(setting('site_name', 'D.R. Made It')) ?></span></a>
   <?php foreach (['home' => ['/admin', 'home', 'Home'], 'buttons' => ['/admin/buttons', 'link', 'Buttons'], 'files' => ['/admin/files', 'download', 'Files'], 'stats' => ['/admin/stats', 'chart', 'Stats'], 'content' => ['/admin/content', 'file', 'Content'], 'settings' => ['/admin/settings', 'sliders', 'Settings']] as $k => [$href, $ic, $label]): ?>
     <a href="<?= $href ?>" class="<?= ($tab ?? '') === $k ? 'on' : '' ?>"<?= ($tab ?? '') === $k ? ' aria-current="page"' : '' ?>><?= icon($ic, 22) ?><span><?= $label ?></span></a>
   <?php endforeach; ?>
+  <a class="a-side-site" href="/" target="_blank">View site ↗</a>
 </nav>
 <?php endif; ?>
 <script src="<?= e(asset('js/crop.js')) ?>" defer></script>

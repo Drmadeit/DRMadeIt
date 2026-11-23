@@ -29,7 +29,7 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
 ?>
 <a class="a-btn a-btn-block" href="/admin/buttons/new">+ Add button</a>
 <div data-select-list="/admin/buttons/bulk" data-select-noun="button">
-<div class="a-list-head"><p class="a-hint">Swipe left to delete. Tap Select to clean up several at once.</p><button type="button" class="a-link-btn" data-select-toggle>Select</button></div>
+<div class="a-list-head"><p class="a-hint"><span class="hint-touch">Swipe left to delete.</span><span class="hint-mouse">Point at a button to delete it.</span> Select cleans up several at once.</p><button type="button" class="a-link-btn" data-select-toggle>Select</button></div>
 
 <p class="a-group"><span>Home page</span><a href="/admin/buttons/new?in=home">+ Add here</a></p>
 <?php if ($groups['home']): $list($groups['home'], true); else: ?><p class="a-hint">No buttons on the home page yet.</p><?php endif; ?>
