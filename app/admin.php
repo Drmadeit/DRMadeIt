@@ -94,21 +94,50 @@ function admin_route(string $path, string $method): void
         'GET /admin/files/import' => fn () => admin_render('files_import', ['tab' => 'files', 'title' => 'Import from MakerWorld']),
         'POST /admin/files/import' => fn () => import_makerworld(),
         'POST /admin/files/(\d+)/delete' => function ($id) {
-            $file = find_row('files', (int) $id);
-            $imgs = db()->prepare('SELECT image FROM file_images WHERE file_id = ?');
-            $imgs->execute([$file['id']]);
-            foreach ($imgs->fetchAll(PDO::FETCH_COLUMN) as $img) {
-                delete_image($img);
-            }
-            db()->prepare('DELETE FROM files WHERE id = ?')->execute([$file['id']]);
-            // Its home page button would point nowhere now
-            $links = db()->prepare("SELECT id, thumb FROM pages WHERE kind = 'link' AND url = ?");
-            $links->execute(['/files/' . $file['slug']]);
-            foreach ($links->fetchAll() as $l) {
-                db()->prepare('DELETE FROM pages WHERE id = ?')->execute([$l['id']]);
-                delete_image($l['thumb']);
-            }
+            delete_file_item(find_row('files', (int) $id));
             flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
+            redirect('/admin/files');
+        },
+        'POST /admin/files/(\d+)/status' => function ($id) {
+            $file = find_row('files', (int) $id);
+            $live = $file['status'] === 'published';
+            $why = $live ? null : file_publish_problem($file);
+            if ($why !== null) {
+                flash("Can't publish \"{$file['title']}\" yet: $why");
+            } else {
+                set_file_status($file, $live ? 'draft' : 'published');
+                flash('"' . $file['title'] . '" ' . ($live ? 'is a draft now.' : 'is live.'));
+            }
+            redirect('/admin/files');
+        },
+        'POST /admin/files/bulk' => function () {
+            $ids = array_values(array_filter(array_map('intval', (array) ($_POST['ids'] ?? []))));
+            $action = (string) ($_POST['action'] ?? '');
+            $done = 0;
+            $blocked = [];
+            foreach ($ids as $fid) {
+                $st = db()->prepare('SELECT * FROM files WHERE id = ?');
+                $st->execute([$fid]);
+                if (!($file = $st->fetch())) {
+                    continue;
+                }
+                if ($action === 'delete') {
+                    delete_file_item($file);
+                    $done++;
+                } elseif ($action === 'publish') {
+                    if (($why = file_publish_problem($file)) !== null) {
+                        $blocked[] = $file['title'];
+                        continue;
+                    }
+                    set_file_status($file, 'published');
+                    $done++;
+                } elseif ($action === 'draft') {
+                    set_file_status($file, 'draft');
+                    $done++;
+                }
+            }
+            $word = ['delete' => 'Deleted', 'publish' => 'Published', 'draft' => 'Unpublished'][$action] ?? 'Updated';
+            flash("$word $done file" . ($done === 1 ? '' : 's') . '.' . ($blocked ? ' Not published (needs a download file, MakerWorld link, or price + buy link): ' . implode(', ', array_slice($blocked, 0, 5)) . (count($blocked) > 5 ? '…' : '') . '.' : ''));
             redirect('/admin/files');
         },
         'POST /admin/file-images/(\d+)/crop' => function ($id) {
@@ -422,4 +451,37 @@ function save_settings(string $section = 'profile'): void
     }
     flash($errors ? implode(' ', $errors) : 'Saved.');
     redirect('/admin/settings/' . $section);
+}
+
+/** Delete a file item: its photos, and any home button pointing at it. */
+function delete_file_item(array $file): void
+{
+    $imgs = db()->prepare('SELECT image FROM file_images WHERE file_id = ?');
+    $imgs->execute([$file['id']]);
+    foreach ($imgs->fetchAll(PDO::FETCH_COLUMN) as $img) {
+        delete_image($img);
+    }
+    db()->prepare('DELETE FROM files WHERE id = ?')->execute([$file['id']]);
+    $links = db()->prepare("SELECT id, thumb FROM pages WHERE kind = 'link' AND url = ?");
+    $links->execute(['/files/' . $file['slug']]);
+    foreach ($links->fetchAll() as $l) {
+        db()->prepare('DELETE FROM pages WHERE id = ?')->execute([$l['id']]);
+        delete_image($l['thumb']);
+    }
+}
+
+/** Why a file can't go live yet, or null if it can. */
+function file_publish_problem(array $file): ?string
+{
+    if ((int) $file['price_cents'] > 0) {
+        return $file['buy_url'] === '' ? 'a paid file needs a Buy link.' : null;
+    }
+    return $file['file_path'] === '' && ($file['makerworld_url'] ?? '') === '' ? 'upload the download file or add its MakerWorld link.' : null;
+}
+
+/** Publish or unpublish; its home page button follows along. */
+function set_file_status(array $file, string $status): void
+{
+    db()->prepare('UPDATE files SET status = ? WHERE id = ?')->execute([$status, $file['id']]);
+    db()->prepare("UPDATE pages SET visible = ? WHERE kind = 'link' AND url = ? AND place = 'home'")->execute([$status === 'published' ? 1 : 0, '/files/' . $file['slug']]);
 }

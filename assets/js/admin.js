@@ -241,41 +241,52 @@
     });
   });
 
-  // ---- Swipe a row left to delete it ----
+  // ---- Swipe a row: left = delete, right = its quick action (e.g. Publish / Unpublish) ----
+  const postTo = (url, extra = {}) => {
+    const f = document.createElement('form');
+    f.method = 'post';
+    f.action = url;
+    const add = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; f.append(i); };
+    add('csrf', document.querySelector('meta[name="csrf"]').content);
+    Object.entries(extra).forEach(([k, v]) => [].concat(v).forEach((one) => add(k, one)));
+    document.body.append(f);
+    f.submit();
+  };
   (() => {
-    const rows = document.querySelectorAll('li[data-delete]');
+    const rows = document.querySelectorAll('li[data-delete], li[data-right]');
     if (!rows.length) return;
     const OPEN = 92;
     let open = null;
-    const close = (row) => { if (row) { row.style.transform = ''; row.classList.remove('is-open'); } if (open === row) open = null; };
-    const post = (url) => {
-      const f = document.createElement('form');
-      f.method = 'post';
-      f.action = url;
-      const c = document.createElement('input');
-      c.type = 'hidden'; c.name = 'csrf'; c.value = document.querySelector('meta[name="csrf"]').content;
-      f.append(c);
-      document.body.append(f);
-      f.submit();
-    };
+    const close = (row) => { if (row) { row.style.transform = ''; row.dataset.open = ''; } if (open === row) open = null; };
+    const isOpen = (row) => row.dataset.open === 'left' || row.dataset.open === 'right';
     rows.forEach((row) => {
       row.classList.add('a-swipe');
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'a-swipe-del';
-      del.textContent = 'Delete';
-      del.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        if (confirm(row.dataset.confirmDelete || 'Delete this?')) post(row.dataset.delete);
-        else close(row);
-      });
-      row.append(del);
+      if (row.dataset.delete) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'a-swipe-act a-swipe-del';
+        del.textContent = 'Delete';
+        del.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (confirm(row.dataset.confirmDelete || 'Delete this?')) postTo(row.dataset.delete);
+          else close(row);
+        });
+        row.append(del);
+      }
+      if (row.dataset.right) {
+        const act = document.createElement('button');
+        act.type = 'button';
+        act.className = 'a-swipe-act a-swipe-right' + (row.dataset.rightTone ? ' is-' + row.dataset.rightTone : '');
+        act.textContent = row.dataset.rightLabel || 'Go';
+        act.addEventListener('click', (ev) => { ev.stopPropagation(); postTo(row.dataset.right); });
+        row.append(act);
+      }
       let x0 = 0, y0 = 0, dx = 0, base = 0, dir = null;
       row.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.a-grip')) { dir = 'skip'; return; }
+        if (e.target.closest('.a-grip') || document.body.classList.contains('is-selecting')) { dir = 'skip'; return; }
         if (open && open !== row) close(open);
         x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; dir = null;
-        base = row.classList.contains('is-open') ? -OPEN : 0;
+        base = row.dataset.open === 'left' ? -OPEN : row.dataset.open === 'right' ? OPEN : 0;
         row.style.transition = 'none';
       }, { passive: true });
       row.addEventListener('touchmove', (e) => {
@@ -284,22 +295,74 @@
         if (!dir) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; dir = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'; }
         if (dir !== 'x') return;
         dx = mx;
-        row.style.transform = `translateX(${Math.min(0, Math.max(-OPEN - 30, base + dx))}px)`;
+        const min = row.dataset.delete ? -OPEN - 30 : 0, max = row.dataset.right ? OPEN + 30 : 0;
+        row.style.transform = `translateX(${Math.min(max, Math.max(min, base + dx))}px)`;
       }, { passive: true });
       row.addEventListener('touchend', () => {
         row.style.transition = '';
         if (dir !== 'x') { dir = null; return; }
-        if (base + dx < -OPEN / 2) { row.style.transform = `translateX(${-OPEN}px)`; row.classList.add('is-open'); open = row; }
+        const at = base + dx;
+        if (at < -OPEN / 2 && row.dataset.delete) { row.style.transform = `translateX(${-OPEN}px)`; row.dataset.open = 'left'; open = row; }
+        else if (at > OPEN / 2 && row.dataset.right) { row.style.transform = `translateX(${OPEN}px)`; row.dataset.open = 'right'; open = row; }
         else close(row);
         dir = null;
       });
       // A swipe shouldn't also count as a tap on the row's link
       row.addEventListener('click', (e) => {
-        if (row.classList.contains('is-open') && !e.target.closest('.a-swipe-del')) { e.preventDefault(); close(row); }
+        if (isOpen(row) && !e.target.closest('.a-swipe-act')) { e.preventDefault(); close(row); }
       }, true);
     });
     document.addEventListener('touchstart', (e) => { if (open && !open.contains(e.target)) close(open); }, { passive: true });
   })();
+
+  // ---- Select mode: tick rows, then act on all of them at once ----
+  document.querySelectorAll('[data-select-list]').forEach((wrap) => {
+    const list = wrap.querySelector('.a-list');
+    const bar = wrap.querySelector('.a-select-bar');
+    const toggle = wrap.querySelector('[data-select-toggle]');
+    const all = wrap.querySelector('[data-select-all]');
+    const countEls = wrap.querySelectorAll('[data-select-count]');
+    const rows = [...list.querySelectorAll('li[data-id]')];
+    const picked = new Set();
+    const sync = () => {
+      rows.forEach((r) => r.classList.toggle('is-picked', picked.has(r.dataset.id)));
+      countEls.forEach((el) => { el.textContent = picked.size; });
+      bar.querySelectorAll('button[data-bulk]').forEach((b) => { b.disabled = !picked.size; });
+      all.textContent = picked.size === rows.length ? 'Select none' : 'Select all';
+    };
+    toggle.addEventListener('click', () => {
+      const on = !document.body.classList.contains('is-selecting');
+      document.body.classList.toggle('is-selecting', on);
+      bar.hidden = !on;
+      toggle.textContent = on ? 'Done' : 'Select';
+      if (!on) picked.clear();
+      sync();
+    });
+    all.addEventListener('click', () => {
+      if (picked.size === rows.length) picked.clear(); else rows.forEach((r) => picked.add(r.dataset.id));
+      sync();
+    });
+    rows.forEach((r) => r.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('is-selecting')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      picked.has(r.dataset.id) ? picked.delete(r.dataset.id) : picked.add(r.dataset.id);
+      sync();
+    }, true));
+    bar.querySelectorAll('button[data-bulk]').forEach((b) => b.addEventListener('click', () => {
+      const action = b.dataset.bulk;
+      const n = picked.size;
+      if (!n) return;
+      if (action === 'delete') {
+        const uses = rows.filter((r) => picked.has(r.dataset.id)).reduce((sum, r) => sum + Number(r.dataset.uses || 0), 0);
+        const msg = uses > 0
+          ? `Hey fuckface, you're about to piss people off. ${uses} ${uses === 1 ? 'person' : 'people'} used these ${n} in the last month. Delete anyway?`
+          : `Delete ${n} file${n === 1 ? '' : 's'}?`;
+        if (!confirm(msg)) return;
+      }
+      postTo(wrap.dataset.selectList, { action, 'ids[]': [...picked] });
+    }));
+  });
 
   // ---- Slow forms: show that it's working ----
   document.querySelectorAll('form[data-busy]').forEach((f) => {
