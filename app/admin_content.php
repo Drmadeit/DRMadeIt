@@ -384,6 +384,9 @@ function import_makerworld(): void
     $made = $skipped = $bad = $updated = 0;
     $noPhoto = [];
     $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
+    if (!empty($_POST['saved']) && is_file($saved = ROOT . '/app/data/makerworld-saved.json')) {
+        $_POST['links'] = 'MAKERWORLD:' . file_get_contents($saved); // the list Claude saved into the site
+    }
     // What the Grab MakerWorld bookmark copies: MAKERWORLD:[{url, title, img, description}, …]
     // Older copies / plain links: one model per MakerWorld link (line breaks often get lost when pasting on a phone).
     $text = trim((string) ($_POST['links'] ?? ''));

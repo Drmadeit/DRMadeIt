@@ -2,6 +2,17 @@
 $code = preg_replace('#^\s*//.*$#m', '', (string) file_get_contents(ROOT . '/assets/js/mw-grab.js'));
 $bookmark = 'javascript:' . rawurlencode(trim(preg_replace('/\s*\n\s*/', ' ', $code)));
 ?>
+<?php if (is_file(ROOT . '/app/data/makerworld-saved.json')): $saved = json_decode((string) file_get_contents(ROOT . '/app/data/makerworld-saved.json'), true) ?: []; ?>
+<form method="post" action="/admin/files/import" class="a-card a-form" data-busy="Importing…">
+  <?= csrf_field() ?>
+  <input type="hidden" name="saved" value="1">
+  <input type="hidden" name="type" value="3d">
+  <h2>Your <?= count($saved) ?> MakerWorld models are ready</h2>
+  <p class="a-hint">Saved from your bookmark: titles, photos and descriptions. Files you already have get fixed in place; nothing gets doubled.</p>
+  <button class="a-btn">Import my <?= count($saved) ?> models</button>
+</form>
+<?php endif; ?>
+
 <section class="a-card a-form">
   <h2>Grab all your models at once</h2>
   <p class="a-hint">MakerWorld blocks other sites from reading it, so this runs in your own Safari. One-time setup:</p>
