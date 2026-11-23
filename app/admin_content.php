@@ -376,7 +376,7 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
 }
 
 /** Paste MakerWorld model links (one per line): each becomes a draft file with its MakerWorld button. */
-const IMPORT_VERSION = 5; // shown on the import screen so we can tell which code the server is running
+const IMPORT_VERSION = 6; // shown on the import screen so we can tell which code the server is running
 
 function import_makerworld(): void
 {
@@ -388,7 +388,12 @@ function import_makerworld(): void
     // Older copies / plain links: one model per MakerWorld link (line breaks often get lost when pasting on a phone).
     $text = trim((string) ($_POST['links'] ?? ''));
     $items = [];
-    if (preg_match('/MAKERWORLD:\s*(\[.*\])/s', $text, $j) && is_array($list = json_decode($j[1], true))) {
+    $list = str_contains($text, 'MAKERWORLD:') ? makerworld_json($text) : null;
+    if ($list === null && str_contains($text, 'MAKERWORLD:')) {
+        flash("Couldn't read the list the bookmark copied (it got changed on the way). Nothing was imported. Send a screenshot of the import box to Claude.");
+        redirect('/admin/files/import');
+    }
+    if ($list !== null) {
         foreach ($list as $it) {
             if (is_array($it)) {
                 $items[] = ['line' => (string) ($it['url'] ?? ''), 'title' => trim((string) ($it['title'] ?? '')), 'image' => (string) ($it['img'] ?? ''),
@@ -480,4 +485,42 @@ function makerworld_photo(string $url): string
         }
     }
     return $saved !== '' ? $saved : $url;
+}
+
+/**
+ * Read what the Grab MakerWorld bookmark copied. Phones sometimes change it on the way
+ * (curly quotes, escaped slashes, odd spaces), so try a few repairs before giving up.
+ */
+function makerworld_json(string $text): ?array
+{
+    $raw = trim(substr($text, strpos($text, 'MAKERWORLD:') + 11));
+    $start = strpos($raw, '[');
+    $end = strrpos($raw, ']');
+    if ($start === false || $end === false) {
+        return null;
+    }
+    $raw = substr($raw, $start, $end - $start + 1);
+    $tries = [
+        $raw,
+        str_replace(["\u{201C}", "\u{201D}", "\u{201E}", "\u{2033}"], '"', $raw),
+        stripslashes($raw),
+        str_replace(["\u{00A0}", "\u{2028}", "\u{2029}"], [' ', '\n', '\n'], str_replace(["\u{201C}", "\u{201D}"], '"', $raw)),
+        html_entity_decode($raw, ENT_QUOTES | ENT_HTML5),
+    ];
+    foreach ($tries as $t) {
+        $list = json_decode($t, true, 16, JSON_INVALID_UTF8_SUBSTITUTE);
+        if (is_array($list)) {
+            return $list;
+        }
+    }
+    // Last resort: pull each model's pieces out by name
+    $q = '["\x{201C}\x{201D}]';
+    $field = fn (string $name) => $q . $name . $q . '\s*:\s*' . $q . '((?:[^"\\\\\x{201C}\x{201D}]|\\\\.)*)' . $q;
+    preg_match_all('/' . $field('url') . '\s*,\s*' . $field('title') . '\s*,\s*' . $field('img') . '(?:\s*,\s*' . $field('description') . ')?/u', $raw, $m, PREG_SET_ORDER);
+    $unq = fn (string $s) => (string) (json_decode('"' . $s . '"') ?? stripcslashes($s));
+    $out = [];
+    foreach ($m as $one) {
+        $out[] = ['url' => $unq($one[1]), 'title' => $unq($one[2]), 'img' => $unq($one[3]), 'description' => $unq($one[4] ?? '')];
+    }
+    return $out ?: null;
 }
