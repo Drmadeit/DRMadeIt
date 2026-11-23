@@ -19,6 +19,7 @@ function short_link_route(string $path): bool
         return false;
     }
     db()->prepare('UPDATE short_links SET clicks = clicks + 1 WHERE id = ?')->execute([$link['id']]);
+    stat_add('short', strtolower($m[1]));
     header('Cache-Control: no-store'); // so every click is counted
     header('X-Robots-Tag: noindex');
     header('Location: ' . $link['url'], true, 302);

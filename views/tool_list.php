@@ -12,7 +12,7 @@
           <h2 class="tool-name"><?= e($t['name']) ?></h2>
           <?php if ($t['note']): ?><p class="tool-note"><?= e($t['note']) ?></p><?php endif; ?>
           <?php if ($t['amazon_url']): ?>
-            <a class="btn btn-sm" href="<?= e(amazon_link($t['amazon_url'])) ?>" target="_blank" rel="sponsored nofollow noopener">View on Amazon</a>
+            <a class="btn btn-sm" data-t="tool:<?= (int) $t['id'] ?>" href="<?= e(amazon_link($t['amazon_url'])) ?>" target="_blank" rel="sponsored nofollow noopener">View on Amazon</a>
           <?php endif; ?>
         </div>
       </li>

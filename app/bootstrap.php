@@ -32,5 +32,6 @@ require ROOT . '/app/backup.php';
 require ROOT . '/app/pages.php';
 require ROOT . '/app/apps.php';
 require ROOT . '/app/short.php';
+require ROOT . '/app/stats.php';
 
 start_session();

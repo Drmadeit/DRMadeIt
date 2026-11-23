@@ -27,7 +27,7 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 
 <nav class="links" aria-label="Links">
   <?php foreach ($links as $l): $ext = is_external($l['url']); ?>
-    <a class="link<?= $l['featured'] ? ' is-featured' : '' ?>" href="<?= e($l['url']) ?>"<?= $ext ? ' target="_blank" rel="noopener"' : '' ?>>
+    <a class="link<?= $l['featured'] ? ' is-featured' : '' ?>" data-t="link:<?= (int) $l['id'] ?>" href="<?= e($l['url']) ?>"<?= $ext ? ' target="_blank" rel="noopener"' : '' ?>>
       <?php if ($l['image'] !== ''): ?>
         <img class="link-thumb" src="<?= e(img_url($l['image'], true)) ?>" alt="" width="60" height="60" loading="lazy">
       <?php else: ?>

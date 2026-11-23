@@ -38,6 +38,9 @@ function admin_route(string $path, string $method): void
     }
 
     require_admin();
+    if (!isset($_COOKIE[STAT_OWNER_COOKIE])) { // keep this phone out of the stats, even after logging out
+        setcookie(STAT_OWNER_COOKIE, '1', ['expires' => time() + 5 * 365 * 86400, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    }
 
     // ---- Generic: reorder + show/hide ----
     if ($post && preg_match('#^/admin/reorder/(\w+)$#', $path, $m) && in_array($m[1], SORTABLE, true)) {
@@ -188,6 +191,10 @@ function admin_route(string $path, string $method): void
         'POST /admin/videos' => fn () => save_videos(),
 
         // settings
+        'GET /admin/stats' => function () {
+            $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 30) : 30;
+            admin_render('stats', stats_report($days) + ['days' => $days, 'tab' => 'more', 'title' => 'Stats']);
+        },
         'GET /admin/more' => fn () => admin_render('more', ['tab' => 'more', 'title' => 'More']),
         'GET /admin/settings' => fn () => redirect('/admin/more'),
         'GET /admin/settings/(\w+)' => function ($section) {

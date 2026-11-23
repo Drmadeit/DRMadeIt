@@ -6,6 +6,7 @@
   <div class="a-stat"><b><?= $emailsWeek ?></b><span>new emails this week</span></div>
   <div class="a-stat"><b><?= $emailsTotal ?></b><span>emails total</span></div>
 </div>
+<a class="a-btn a-btn-outline" href="/admin/stats">See visitors, taps &amp; downloads</a>
 
 <section class="a-card a-form">
   <h2>Quick add</h2>

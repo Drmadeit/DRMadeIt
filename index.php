@@ -98,10 +98,14 @@ if ($path === '/') {
 } elseif ($path === '/videos') {
     render('videos', ['title' => 'Videos', 'videos' => videos_for_site(12)]);
 
+// ---- Stats: taps sent by assets/js/stats.js ----
+} elseif ($path === '/t' && $method === 'POST') {
+    stats_beacon();
+
 // ---- Robots ----
 } elseif ($path === '/robots.txt') {
     header('Content-Type: text/plain');
-    echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\n";
+    echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\nDisallow: /t\n";
 } elseif (!apps_route($path) && !pages_route($path) && !short_link_route($path)) { // pages, categories, short links
     not_found();
 }

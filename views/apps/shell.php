@@ -68,6 +68,7 @@
 </div>
 <script src="<?= e(asset('js/calc.js')) ?>"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
+<script src="<?= e(asset('js/stats.js')) ?>" defer></script>
 <?php if ($slug === 'fractions'): ?><script src="<?= e(asset('js/tape.js')) ?>"></script><?php endif; ?>
 <?php if ($slug === 'dxf'): ?><script src="<?= e(asset('js/dxf.js')) ?>"></script><?php endif; ?>
 <script>

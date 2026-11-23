@@ -148,6 +148,12 @@ function migrate(PDO $pdo): void
                 id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, url TEXT NOT NULL, note TEXT NOT NULL DEFAULT \'\',
                 clicks INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
         },
+        11 => function (PDO $pdo): void {
+            // Private stats: one counter per day per thing (see app/stats.php), plus today's "already counted" hashes.
+            $pdo->exec('CREATE TABLE stats (day TEXT NOT NULL, kind TEXT NOT NULL, ref TEXT NOT NULL DEFAULT \'\', n INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (day, kind, ref)) WITHOUT ROWID');
+            $pdo->exec('CREATE TABLE stat_seen (h TEXT PRIMARY KEY, day TEXT NOT NULL) WITHOUT ROWID');
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

@@ -21,7 +21,7 @@ const APPS = [
 ];
 
 /** Shared files every app needs offline, plus each app's icons (assets/icons/build.js makes the PNGs). */
-const APP_FILES = ['js/calc.js', 'js/app.js', 'js/tape.js', 'js/dxf.js', 'css/app.css'];
+const APP_FILES = ['js/calc.js', 'js/app.js', 'js/tape.js', 'js/dxf.js', 'js/stats.js', 'css/app.css'];
 
 function app_assets(): array
 {

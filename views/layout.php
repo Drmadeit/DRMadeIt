@@ -42,5 +42,6 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
   <?php if ($t = setting('footer_text')): ?><p><?= e($t) ?></p><?php endif; ?>
   <p>© <?= date('Y') ?> <?= e($siteName) ?></p>
 </footer>
+<script src="<?= e(asset('js/stats.js')) ?>" defer></script>
 </body>
 </html>
