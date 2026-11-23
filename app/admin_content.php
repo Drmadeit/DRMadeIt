@@ -397,14 +397,20 @@ function import_makerworld(): void
             $skipped++;
             continue;
         }
-        $info = makerworld_lookup($m['url']);
+        // Lines from the MakerWorld bookmark: "link | title | photo link". Plain links: ask MakerWorld (often blocked).
+        $parts = array_map('trim', explode('|', $line));
+        $given = ['title' => html_entity_decode($parts[1] ?? '', ENT_QUOTES | ENT_HTML5), 'image' => $parts[2] ?? '', 'description' => ''];
+        $info = $given['title'] !== '' ? $given : makerworld_lookup($m['url']);
+        if (empty($info['image']) && $given['image'] !== '') {
+            $info['image'] = $given['image'];
+        }
         $title = ($info['title'] ?? '') ?: ($m['guess'] ?: 'MakerWorld model ' . $m['id']);
         db()->prepare("INSERT INTO files (title, slug, type, price_cents, description, license, makerworld_url, status, sort_order)
             VALUES (?, ?, ?, 0, ?, 'personal', ?, 'draft', (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM files))")
             ->execute([$title, file_address('', 0, null), $type, (string) ($info['description'] ?? ''), $m['url']]);
         $id = (int) db()->lastInsertId();
         $img = '';
-        if (!empty($info['image']) && ($bytes = http_get($info['image'], 15))) {
+        if (!empty($info['image']) && preg_match('#^https://#', $info['image']) && ($bytes = http_get($info['image'], 15))) {
             $img = save_image_bytes($bytes);
         }
         if ($img !== '') {
