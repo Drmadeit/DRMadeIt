@@ -109,7 +109,7 @@ if ($path === '/') {
     echo json_encode([
         'name' => setting('site_name', 'D.R. Made It') . ' Admin', 'short_name' => 'DR Admin', 'id' => '/admin',
         'start_url' => '/admin', 'scope' => '/admin', 'display' => 'standalone',
-        'background_color' => '#0a0a0b', 'theme_color' => '#0a0a0b',
+        'background_color' => '#000000', 'theme_color' => '#0a0a0b',
         'icons' => [['src' => asset('img/admin-192.png'), 'sizes' => '192x192', 'type' => 'image/png'],
                     ['src' => asset('img/admin-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any']],
     ], JSON_UNESCAPED_SLASHES);
