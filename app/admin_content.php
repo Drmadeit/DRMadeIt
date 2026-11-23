@@ -382,7 +382,10 @@ function import_makerworld(): void
     $made = $skipped = $bad = $updated = 0;
     $noPhoto = [];
     $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
-    foreach (preg_split('/\R/', (string) ($_POST['links'] ?? '')) as $line) {
+    // One model per MakerWorld link, even if the line breaks got lost when pasting (it all arrives as one line)
+    $text = (string) ($_POST['links'] ?? '');
+    $chunks = preg_split('#(?=https?://(?:www\.)?makerworld\.com/)#i', $text);
+    foreach ($chunks as $line) {
         if (trim($line) === '') {
             continue;
         }
