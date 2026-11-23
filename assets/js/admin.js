@@ -216,13 +216,32 @@
     const sync = () => parts.forEach((el) => {
       const [name, value] = el.dataset.showIf.split('=');
       const picked = form.querySelector(`input[name="${name}"]:checked`);
-      el.hidden = !picked || picked.value !== value;
+      el.hidden = !picked || !value.split('|').includes(picked.value);
     });
     form.addEventListener('change', sync);
     sync();
   });
 
-  // ---- Copy buttons (short links) ----
+  // ---- Taking an address something else used to have: ask first (old links would land on the new thing) ----
+  document.querySelectorAll('form[data-reuse-check]').forEach((f) => {
+    let old = {};
+    try { old = JSON.parse(f.dataset.reuseCheck || '{}'); } catch (e) {}
+    const input = f.querySelector('[data-reuse-input]');
+    const ok = f.querySelector('input[name="reuse_ok"]');
+    if (!input || !ok) return;
+    f.addEventListener('submit', (ev) => {
+      const word = input.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (!word || word === f.dataset.reuseCurrent || !(word in old)) return;
+      const where = f.dataset.reusePrefix + word;
+      if (confirm(`Hey fuckface, you're about to piss people off. ${where} used to go to "${old[word]}". Anyone with that old link will land here instead. Use it anyway?`)) {
+        ok.value = '1';
+      } else {
+        ev.preventDefault();
+      }
+    });
+  });
+
+  // ---- Copy buttons ----
   document.querySelectorAll('[data-copy]').forEach((b) => {
     b.addEventListener('click', async () => {
       try {

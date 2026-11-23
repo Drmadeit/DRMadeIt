@@ -16,99 +16,6 @@ function handle_photo(string $field, string $current, string $removeField = 'rem
     return $current;
 }
 
-function save_link(): void
-{
-    $id = (int) ($_POST['id'] ?? 0);
-    $old = $id ? find_row('links', $id) : null;
-    $title = trim((string) ($_POST['title'] ?? ''));
-    $url = clean_url((string) ($_POST['url'] ?? ''));
-    try {
-        if ($title === '' || $url === '') {
-            throw new RuntimeException('Add a title and a link (https://… or a page like /about).');
-        }
-        $image = handle_photo('photo', $old['image'] ?? '');
-    } catch (RuntimeException $ex) {
-        flash($ex->getMessage());
-        redirect($id ? "/admin/links/$id" : '/admin/links/new');
-    }
-    $visible = empty($_POST['visible']) ? 0 : 1;
-    $featured = empty($_POST['featured']) ? 0 : 1;
-    if ($featured) {
-        db()->exec('UPDATE links SET featured = 0');
-    }
-    if ($id) {
-        db()->prepare('UPDATE links SET title = ?, url = ?, image = ?, featured = ?, visible = ? WHERE id = ?')
-            ->execute([$title, $url, $image, $featured, $visible, $id]);
-    } else {
-        db()->prepare('INSERT INTO links (title, url, image, featured, visible, sort_order) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))')
-            ->execute([$title, $url, $image, $featured, $visible]);
-    }
-    flash('Saved.');
-    redirect('/admin/links');
-}
-
-function save_tool_list(): void
-{
-    $id = (int) ($_POST['id'] ?? 0);
-    $old = $id ? find_row('tool_lists', $id) : null;
-    $title = trim((string) ($_POST['title'] ?? ''));
-    try {
-        if ($title === '') {
-            throw new RuntimeException('Give the list a name.');
-        }
-        $cover = handle_photo('photo', $old['cover_image'] ?? '');
-    } catch (RuntimeException $ex) {
-        flash($ex->getMessage());
-        redirect($id ? "/admin/tools/$id" : '/admin/tools/new');
-    }
-    $slug = unique_slug('tool_lists', (string) ($_POST['slug'] ?? '') ?: $title, $id);
-    $desc = trim((string) ($_POST['description'] ?? ''));
-    $visible = empty($_POST['visible']) ? 0 : 1;
-    if ($id) {
-        db()->prepare('UPDATE tool_lists SET title = ?, slug = ?, description = ?, cover_image = ?, visible = ? WHERE id = ?')
-            ->execute([$title, $slug, $desc, $cover, $visible, $id]);
-    } else {
-        db()->prepare('INSERT INTO tool_lists (title, slug, description, cover_image, visible, sort_order) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM tool_lists))')
-            ->execute([$title, $slug, $desc, $cover, $visible]);
-        $id = (int) db()->lastInsertId();
-    }
-    flash('List saved. Its page is /tools/' . $slug);
-    redirect("/admin/tools/$id");
-}
-
-function save_tool_item(): void
-{
-    $id = (int) ($_POST['id'] ?? 0);
-    $old = $id ? find_row('tool_items', $id) : null;
-    $listId = (int) ($old['list_id'] ?? $_POST['list_id'] ?? 0);
-    find_row('tool_lists', $listId);
-    $name = trim((string) ($_POST['name'] ?? ''));
-    $url = clean_url((string) ($_POST['amazon_url'] ?? ''));
-    try {
-        if ($name === '') {
-            throw new RuntimeException('Give the tool a name.');
-        }
-        $image = handle_photo('photo', $old['image'] ?? '');
-    } catch (RuntimeException $ex) {
-        flash($ex->getMessage());
-        redirect($id ? "/admin/items/$id" : "/admin/tools/$listId/items/new");
-    }
-    $note = trim((string) ($_POST['note'] ?? ''));
-    $visible = empty($_POST['visible']) ? 0 : 1;
-    if ($id) {
-        db()->prepare('UPDATE tool_items SET name = ?, amazon_url = ?, note = ?, image = ?, visible = ? WHERE id = ?')
-            ->execute([$name, $url, $note, $image, $visible, $id]);
-    } else {
-        db()->prepare('INSERT INTO tool_items (list_id, name, amazon_url, note, image, visible, sort_order) VALUES (?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM tool_items WHERE list_id = ?))')
-            ->execute([$listId, $name, $url, $note, $image, $visible, $listId]);
-    }
-    flash('Saved.');
-    if (!empty($_POST['add_another'])) {
-        redirect("/admin/tools/$listId/items/new");
-    }
-    redirect("/admin/tools/$listId");
-}
-
 function save_file_item(): void
 {
     $id = (int) ($_POST['id'] ?? 0);
@@ -165,7 +72,7 @@ function save_file_item(): void
     $license = in_array($_POST['license'] ?? '', ['personal', 'commercial'], true) ? $_POST['license'] : 'personal';
     $vals = [
         'title' => $title,
-        'slug' => unique_slug('files', (string) ($_POST['slug'] ?? '') ?: $title, $id),
+        'slug' => file_address((string) ($_POST['slug'] ?? ''), $id, $old),
         'type' => $type,
         'price_cents' => max(0, $price),
         'buy_url' => $buyUrl,
@@ -178,6 +85,9 @@ function save_file_item(): void
         'status' => $status,
         'featured' => empty($_POST['featured']) ? 0 : 1,
     ];
+    if ($old && $old['slug'] !== $vals['slug']) {
+        remember_old_address('/files/' . $old['slug'], 'file', $id);
+    }
     if ($id) {
         $sets = implode(', ', array_map(fn ($k) => "$k = :$k", array_keys($vals)));
         db()->prepare("UPDATE files SET $sets WHERE id = :id")->execute($vals + ['id' => $id]);
@@ -211,6 +121,7 @@ function save_file_item(): void
             $status === 'draft' && ($old['status'] ?? '') === 'published' => 'Unpublished. It\'s a draft again.',
             default => 'Saved.',
         };
+        $msg .= ($GLOBALS['addr_note'] ?? '') . (($old && $old['slug'] !== $vals['slug']) ? " New address /files/{$vals['slug']}. The old one still works." : '');
         $msg .= place_file($id, $status);
         if ($status === 'published' && !isset($_POST['placement_sent'])) {
             $msg .= show_files_button();
@@ -239,28 +150,27 @@ function place_file(int $fileId, string $status): string
         $ins->execute([$pid, $fileId, $pid]);
     }
 
-    // Home page button: one link pointing at this file. Keep it if the address changed.
+    // Home page button: one link button pointing at this file. Keep it if the address changed.
     $oldUrl = (string) ($_POST['old_url'] ?? '');
     if ($oldUrl !== '' && $oldUrl !== $url) {
-        db()->prepare('UPDATE links SET url = ? WHERE url = ?')->execute([$url, $oldUrl]);
+        db()->prepare("UPDATE pages SET url = ? WHERE kind = 'link' AND url = ?")->execute([$url, $oldUrl]);
     }
-    $st = db()->prepare('SELECT * FROM links WHERE url = ?');
+    $st = db()->prepare("SELECT * FROM pages WHERE kind = 'link' AND url = ? AND place = 'home' AND deleted_at IS NULL");
     $st->execute([$url]);
     $link = $st->fetch();
     $note = '';
     if (!empty($_POST['on_home']) && !$link) {
-        $img = db()->prepare('SELECT image FROM file_images WHERE file_id = ? ORDER BY sort_order, id LIMIT 1');
-        $img->execute([$fileId]);
-        db()->prepare('INSERT INTO links (title, url, image, icon, visible, sort_order) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))')
-            ->execute([$file['title'], $url, copy_image((string) $img->fetchColumn()), 'file', $status === 'published' ? 1 : 0]);
+        db()->prepare("INSERT INTO pages (kind, title, slug, url, place, icon, visible, sort_order)
+            VALUES ('link', ?, ?, ?, 'home', 'file', ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM pages WHERE place = 'home'))")
+            ->execute([$file['title'], button_address('', 0), $url, $status === 'published' ? 1 : 0]);
         $note = $status === 'published' ? ' Added a button on the home page.' : ' A home page button is ready and shows when you publish.';
     } elseif (empty($_POST['on_home']) && $link) {
-        db()->prepare('DELETE FROM links WHERE id = ?')->execute([$link['id']]);
-        delete_image($link['image']);
+        db()->prepare('DELETE FROM pages WHERE id = ?')->execute([$link['id']]);
+        delete_image($link['thumb']);
         $note = ' Removed its home page button.';
     } elseif ($link) {
         // Follow the file: hidden while it's a draft, showing when it's live.
-        db()->prepare('UPDATE links SET visible = ? WHERE id = ?')->execute([$status === 'published' ? 1 : 0, $link['id']]);
+        db()->prepare('UPDATE pages SET visible = ? WHERE id = ?')->execute([$status === 'published' ? 1 : 0, $link['id']]);
     }
     if ($want) {
         $note .= ' Showing on ' . count($want) . ' page' . (count($want) > 1 ? 's' : '') . ($status === 'published' ? '.' : ' once published.');
@@ -271,10 +181,10 @@ function place_file(int $fileId, string $status): string
 /** Every page (with its category), and whether this file is on it — for the "Show it on" list. */
 function pages_for_file_pick(int $fileId): array
 {
-    $st = db()->prepare('SELECT p.id, p.title, c.name cat,
+    $st = db()->prepare("SELECT p.id, p.title, c.title cat,
             (SELECT 1 FROM page_files pf WHERE pf.page_id = p.id AND pf.file_id = ?) on_page
-        FROM pages p LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
-        WHERE p.deleted_at IS NULL ORDER BY c.sort_order IS NULL, c.sort_order, p.sort_order, p.id');
+        FROM pages p LEFT JOIN pages c ON c.id = p.parent_id AND p.place = 'folder' AND c.deleted_at IS NULL
+        WHERE p.kind = 'page' AND p.deleted_at IS NULL ORDER BY c.title IS NOT NULL, c.title, p.sort_order, p.id");
     $st->execute([$fileId]);
     return $st->fetchAll();
 }
@@ -282,15 +192,13 @@ function pages_for_file_pick(int $fileId): array
 /** Make sure the home page has a button to the file shop once something is live. Returns a note for the message. */
 function show_files_button(): string
 {
-    $link = db()->query("SELECT id, visible FROM links WHERE url = '/files' ORDER BY id LIMIT 1")->fetch();
-    if ($link && (int) $link['visible'] === 1) {
-        return '';
-    }
+    $link = db()->query("SELECT id, visible, place FROM pages WHERE kind = 'link' AND url = '/files' AND deleted_at IS NULL ORDER BY id LIMIT 1")->fetch();
     if ($link) {
-        db()->prepare('UPDATE links SET visible = 1 WHERE id = ?')->execute([$link['id']]);
-    } else {
-        db()->exec("INSERT INTO links (title, url, icon, visible, sort_order) VALUES ('Stuff I Design and Sell', '/files', 'file', 1, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM links))");
+        return ''; // you've already got one (even hidden on purpose)
     }
+    db()->prepare("INSERT INTO pages (kind, title, slug, url, place, icon, visible, sort_order)
+        VALUES ('link', 'Stuff I Design and Sell', ?, '/files', 'home', 'file', 1, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM pages WHERE place = 'home'))")
+        ->execute([button_address('', 0)]);
     return ' Your file shop button is now showing on the home page.';
 }
 
@@ -334,6 +242,30 @@ function flash_pending(): bool
     return isset($_SESSION['flash']);
 }
 
+
+/** A file's address after /files/: the word you typed, or a short code. Won't steal an old address without asking. */
+function file_address(string $want, int $id, ?array $old): string
+{
+    $taken = function (string $slug) use ($id): bool {
+        $st = db()->prepare('SELECT 1 FROM files WHERE slug = ? AND id != ?');
+        $st->execute([$slug, $id]);
+        return (bool) $st->fetchColumn();
+    };
+    if (trim(preg_replace('/[^a-z0-9]+/i', '', $want)) === '') {
+        return $old['slug'] ?? new_code($taken);
+    }
+    $slug = slugify($want);
+    if ($slug !== ($old['slug'] ?? '') && old_address_owner('/files/' . $slug, 'file', $id) !== null && empty($_POST['reuse_ok'])) {
+        $GLOBALS['addr_note'] = " Didn't take /files/$slug: it used to be another file, and old links still go there.";
+        return $old['slug'] ?? new_code($taken);
+    }
+    $base = $slug;
+    for ($i = 2; $taken($slug); $i++) {
+        $slug = "$base-$i";
+    }
+    db()->prepare('DELETE FROM redirects WHERE path = ?')->execute(['/files/' . $slug]);
+    return $slug;
+}
 
 function unique_slug(string $table, string $want, int $exceptId): string
 {

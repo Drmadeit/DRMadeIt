@@ -30,7 +30,7 @@
 </main>
 <?php if (empty($bare)): ?>
 <nav class="a-tabs" aria-label="Admin sections">
-  <?php foreach (['home' => ['/admin', 'home', 'Home'], 'links' => ['/admin/links', 'link', 'Links'], 'pages' => ['/admin/pages', 'file', 'Pages'], 'tools' => ['/admin/tools', 'ruler', 'Tools'], 'files' => ['/admin/files', 'download', 'Files'], 'more' => ['/admin/more', 'sliders', 'More']] as $k => [$href, $ic, $label]): ?>
+  <?php foreach (['home' => ['/admin', 'home', 'Home'], 'buttons' => ['/admin/buttons', 'link', 'Buttons'], 'files' => ['/admin/files', 'download', 'Files'], 'stats' => ['/admin/stats', 'chart', 'Stats'], 'content' => ['/admin/content', 'file', 'Content'], 'settings' => ['/admin/settings', 'sliders', 'Settings']] as $k => [$href, $ic, $label]): ?>
     <a href="<?= $href ?>" class="<?= ($tab ?? '') === $k ? 'on' : '' ?>"<?= ($tab ?? '') === $k ? ' aria-current="page"' : '' ?>><?= icon($ic, 22) ?><span><?= $label ?></span></a>
   <?php endforeach; ?>
 </nav>

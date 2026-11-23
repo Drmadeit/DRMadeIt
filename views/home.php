@@ -26,12 +26,12 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 </header>
 
 <nav class="links" aria-label="Links">
-  <?php foreach ($links as $l): $ext = is_external($l['url']); ?>
-    <a class="link<?= $l['featured'] ? ' is-featured' : '' ?>" data-t="link:<?= (int) $l['id'] ?>" href="<?= e($l['url']) ?>"<?= $ext ? ' target="_blank" rel="noopener"' : '' ?>>
-      <?php if ($l['image'] !== ''): ?>
-        <img class="link-thumb" src="<?= e(img_url($l['image'], true)) ?>" alt="" width="60" height="60" loading="lazy">
+  <?php foreach ($links as $l): $href = button_href($l); $ext = is_external($href); $img = button_image($l); ?>
+    <a class="link<?= $l['featured'] ? ' is-featured' : '' ?>" data-t="btn:<?= (int) $l['id'] ?>" href="<?= e($href) ?>"<?= $ext ? ' target="_blank" rel="noopener"' : '' ?>>
+      <?php if ($img !== ''): ?>
+        <img class="link-thumb" src="<?= e($img) ?>" alt="" width="60" height="60" loading="lazy">
       <?php else: ?>
-        <span class="link-thumb link-icon"><?= icon($l['icon'] ?: 'link', 26) ?></span>
+        <span class="link-thumb link-icon"><?= icon($l['icon'] ?: ($l['kind'] === 'folder' ? 'folder' : 'link'), 26) ?></span>
       <?php endif; ?>
       <span class="link-title"><?= e($l['title']) ?></span>
       <span class="link-chev"><?= icon('chevron', 20) ?></span>
@@ -69,16 +69,3 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 </section>
 <?php endif; ?>
 
-<?php if ($homeTools): ?>
-<section class="home-sec" aria-label="Shop tools">
-  <?= $head('Shop tools', '/tools', 'All') ?>
-  <div class="cards">
-    <?php foreach ($homeTools as $l): $img = $l['cover_image'] ?: $l['first_image']; ?>
-      <a class="card" href="/tools/<?= e($l['slug']) ?>">
-        <?php if ($img): ?><img class="card-img" src="<?= e(img_url($img, true)) ?>" alt="" loading="lazy"><?php else: ?><span class="card-img card-img-empty"><?= icon('ruler', 28) ?></span><?php endif; ?>
-        <span class="card-body"><b><?= e($l['title']) ?></b><small><?= (int) $l['n'] ?> tool<?= $l['n'] == 1 ? '' : 's' ?></small></span>
-      </a>
-    <?php endforeach; ?>
-  </div>
-</section>
-<?php endif; ?>

@@ -49,27 +49,18 @@ $q = function (string $sql, array $args = []): PDOStatement {
 // ---- Home (About is a regular page now, made in Admin → Pages) ----
 if ($path === '/') {
     render('home', [
-        'links' => $q('SELECT * FROM links WHERE visible = 1 ORDER BY sort_order, id')->fetchAll(),
+        'links' => buttons_in('home'),
         'videos' => setting('videos_on_home') === '1' ? videos_for_site(3) : [],
         'homeFiles' => setting('files_on_home') === '1' ? $q("SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
             FROM files f WHERE status = 'published' ORDER BY featured DESC, sort_order, id LIMIT 3")->fetchAll() : [],
-        'homeTools' => setting('tools_on_home') === '1' ? $q('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1) n,
-                (SELECT image FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1 AND image != \'\' ORDER BY sort_order, id LIMIT 1) first_image
-            FROM tool_lists l WHERE visible = 1 ORDER BY sort_order, id LIMIT 4')->fetchAll() : [],
         'isHome' => true,
     ]);
 
-// ---- Tool lists ----
-} elseif ($path === '/tools') {
-    render('tools', ['title' => 'Tools', 'lists' => $q(
-        'SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1) n,
-                (SELECT image FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1 AND image != \'\' ORDER BY sort_order, id LIMIT 1) first_image
-         FROM tool_lists l WHERE visible = 1 ORDER BY sort_order, id')->fetchAll()]);
-} elseif (preg_match('#^/tools/([a-z0-9-]+)$#', $path, $m)) {
-    $list = $q('SELECT * FROM tool_lists WHERE slug = ? AND (visible = 1 OR ?)', [$m[1], is_admin() ? 1 : 0])->fetch() ?: not_found();
-    $items = $q('SELECT * FROM tool_items WHERE list_id = ? AND visible = 1 ORDER BY sort_order, id', [$list['id']])->fetchAll();
-    render('tool_list', ['title' => $list['title'], 'description' => $list['description'], 'list' => $list, 'items' => $items,
-        'ogImage' => img_url($list['cover_image'] ?: ($items[0]['image'] ?? ''))]);
+// ---- Tool lists are gone (they became buttons); old /tools/<list> addresses forward via redirects ----
+} elseif ($path === '/tools' || str_starts_with($path, '/tools/')) {
+    if (!redirect_route($path)) {
+        redirect('/');
+    }
 
 // ---- File shop ----
 } elseif ($path === '/files') {
@@ -88,7 +79,7 @@ if ($path === '/') {
     render('files', ['title' => 'Files', 'show' => $show, 'chips' => $chips, 'files' => $q(
         "SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
          FROM files f WHERE status = 'published'" . ($show ? ' AND ' . $filters[$show][1] : '') . ' ORDER BY featured DESC, sort_order, id')->fetchAll()]);
-} elseif (preg_match('#^/files/([a-z0-9-]+)$#', $path, $m)) {
+} elseif (preg_match('#^/files/([A-Za-z0-9-]+)$#', $path, $m)) {
     $file = find_published_file($m[1]);
     $images = file_images((int) $file['id']);
     render('file', ['file' => $file, 'images' => $images, 'title' => $file['title'],
@@ -123,6 +114,6 @@ if ($path === '/') {
 } elseif ($path === '/robots.txt') {
     header('Content-Type: text/plain');
     echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\nDisallow: /t\n";
-} elseif (!apps_route($path) && !pages_route($path) && !short_link_route($path)) { // pages, categories, short links
+} elseif (!apps_route($path) && !pages_route($path) && !redirect_route($path)) { // buttons, then old addresses
     not_found();
 }

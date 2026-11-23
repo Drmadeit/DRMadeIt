@@ -9,8 +9,10 @@ $live = $file['status'] === 'published';
     · <a href="/files/<?= e($file['slug']) ?>" target="_blank"><?= $live ? 'View page' : 'Preview' ?></a></p>
 <?php endif; ?>
 
-<form method="post" action="/admin/files/save" enctype="multipart/form-data" class="a-form">
+<form method="post" action="/admin/files/save" enctype="multipart/form-data" class="a-form"
+  data-reuse-check="<?= e(json_encode(old_addresses('/files/', 'file', (int) $file['id']))) ?>" data-reuse-prefix="/files/" data-reuse-current="<?= e($file['id'] ? $file['slug'] : '') ?>">
   <?= csrf_field() ?>
+  <input type="hidden" name="reuse_ok" value="">
   <input type="hidden" name="id" value="<?= (int) $file['id'] ?>">
   <!-- Pressing Go/Enter in a box just saves (never publishes or unpublishes) -->
   <button name="action" value="save" class="a-default-btn" tabindex="-1" aria-hidden="true">Save</button>
@@ -42,6 +44,9 @@ $live = $file['status'] === 'published';
       <label>Buy link <input name="buy_url" value="<?= e($file['buy_url']) ?>" placeholder="https://payhip.com/b/…" autocapitalize="none" inputmode="url"></label>
       <p class="a-hint">Payhip, Etsy or Stripe handles payment and sends the file.</p>
     </div>
+    <label>Address
+      <span class="a-prefix"><span><?= e(preg_replace('#^https?://#', '', base_url())) ?>/files/</span><input name="slug" value="<?= e($file['slug']) ?>" autocapitalize="none" autocomplete="off" spellcheck="false" data-reuse-input></span></label>
+    <p class="a-hint">A short code is made for you. Want a word instead? Type it. The old address keeps working if you change it.</p>
   </section>
 
   <?php
@@ -49,7 +54,7 @@ $live = $file['status'] === 'published';
   $homeUrl = '/files/' . $file['slug'];
   $onHome = false;
   if ($file['id']) {
-      $st = db()->prepare('SELECT 1 FROM links WHERE url = ?');
+      $st = db()->prepare("SELECT 1 FROM pages WHERE kind = 'link' AND place = 'home' AND deleted_at IS NULL AND url = ?");
       $st->execute([$homeUrl]);
       $onHome = (bool) $st->fetchColumn();
   }
@@ -62,7 +67,7 @@ $live = $file['status'] === 'published';
     <?php foreach ($onPages as $pg): ?>
       <label class="a-check"><input type="checkbox" name="page_ids[]" value="<?= (int) $pg['id'] ?>" <?= $pg['on_page'] ? 'checked' : '' ?>> <?= $pg['cat'] ? '<small class="a-hint">' . e($pg['cat']) . ' ›</small> ' : '' ?><?= e($pg['title']) ?></label>
     <?php endforeach; ?>
-    <p class="a-hint">It's always in your file shop (/files) too<?= $onPages ? '' : '. Make pages in the Pages tab to show files there' ?>.</p>
+    <p class="a-hint">It's always in your file shop (/files) too<?= $onPages ? '' : '. Make page buttons in the Buttons tab to show files there' ?>.</p>
   </section>
 
   <details class="a-card a-more"<?= $file['description'] || $file['notes'] ? ' open' : '' ?>>
@@ -78,7 +83,6 @@ $live = $file['status'] === 'published';
       </div>
       <label>YouTube video <input name="video_url" value="<?= e($file['video_url']) ?>" placeholder="https://youtu.be/…" autocapitalize="none" inputmode="url"></label>
       <label class="a-check"><input type="checkbox" name="featured" value="1" <?= $file['featured'] ? 'checked' : '' ?>> Featured (shows first in the shop)</label>
-      <label>Web address <small>(after /files/, blank = from title)</small> <input name="slug" value="<?= e($file['slug']) ?>" autocapitalize="none"></label>
       <?php if ($dataFiles): ?>
       <label>File too big to upload? Put it in <b>drmadeit-data/files</b> with Hostinger File Manager, then pick it:
         <select name="existing_file">
@@ -125,7 +129,7 @@ $live = $file['status'] === 'published';
 <?php endif; ?>
 
 <?php if ($file['id']): ?>
-<form method="post" action="/admin/files/<?= (int) $file['id'] ?>/delete" class="a-danger" data-confirm="Delete this file item?">
+<form method="post" action="/admin/files/<?= (int) $file['id'] ?>/delete" class="a-danger" data-confirm="<?= e(delete_warning('file', address_uses('/files/' . $file['slug']))) ?>">
   <?= csrf_field() ?>
   <button class="a-btn a-btn-danger">Delete file item</button>
 </form>

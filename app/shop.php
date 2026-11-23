@@ -28,8 +28,12 @@ function license_text(string $license): string
 function find_published_file(string $slug): array
 {
     $st = db()->prepare("SELECT * FROM files WHERE slug = ? AND (status = 'published' OR ?)");
-    $st->execute([$slug, is_admin() ? 1 : 0]); // admin can preview drafts
-    return $st->fetch() ?: not_found();
+    $st->execute([strtolower($slug), is_admin() ? 1 : 0]); // admin can preview drafts
+    $file = $st->fetch();
+    if (!$file && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && redirect_route('/files/' . strtolower($slug))) {
+        exit; // an old address: sent on to where the file lives now
+    }
+    return $file ?: not_found();
 }
 
 function file_images(int $fileId): array

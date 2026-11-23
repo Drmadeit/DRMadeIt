@@ -5,16 +5,15 @@ declare(strict_types=1);
  * Private, cookie-free stats kept on the site itself: one counter row per day per thing.
  *   view   ref = page path         (counted on the server when a page is shown)
  *   people ref = ''                (first page view of the day from a phone/computer)
- *   link   ref = home link id      (tapped, sent by stats.js)
- *   tool   ref = tool item id      (Amazon button on a tool list)
+ *   btn    ref = button id         (tapped on the home page or in a folder, sent by stats.js)
  *   amazon ref = host/path         (any other Amazon link, e.g. typed in a description)
  *   app    ref = app slug          (calculator opened, works even from the home screen)
- *   short  ref = short link code
+ *   go     ref = button id         (someone used a link button's own address, e.g. drmadeit.com/k7m)
  * File emails and downloads come from the downloads table, which already has their history.
  * Bots and the site owner (anyone who has logged in to admin on that browser) are skipped.
  */
 
-const STAT_KINDS_FROM_BROWSER = ['link', 'tool', 'amazon', 'app'];
+const STAT_KINDS_FROM_BROWSER = ['btn', 'amazon', 'app'];
 const STAT_OWNER_COOKIE = 'drm_me';
 
 function stat_day(): string
@@ -95,8 +94,7 @@ function stats_beacon(): void
         return;
     }
     $ok = match ($k) {
-        'link' => ctype_digit($r) && stat_row_exists('links', (int) $r),
-        'tool' => ctype_digit($r) && stat_row_exists('tool_items', (int) $r),
+        'btn' => ctype_digit($r) && stat_row_exists('pages', (int) $r),
         'app' => isset(APPS[$r]),
         'amazon' => (bool) preg_match('~^(?:[a-z0-9-]+\.)*(?:amazon\.[a-z.]+|amzn\.to|a\.co)/~i', $r = stat_amazon_ref($r)),
     };
@@ -153,24 +151,22 @@ function stats_report(int $days): array
         $series[$r['d']] = ['people' => (int) $r['people'], 'views' => (int) $r['views']];
     }
 
+    $title = fn (string $id) => $q('SELECT title, kind, slug, url FROM pages WHERE id = ?', [(int) $id])[0] ?? null;
     $links = [];
-    foreach ($top('link') as $r) {
-        $l = $q('SELECT title, url FROM links WHERE id = ?', [(int) $r['ref']])[0] ?? null;
-        $links[] = ['label' => $l['title'] ?? '(deleted link)', 'sub' => $l['url'] ?? '', 'n' => (int) $r['n']];
+    foreach ($top('btn') as $r) {
+        $b = $title($r['ref']);
+        $links[] = ['label' => $b['title'] ?? '(deleted button)', 'sub' => $b ? ($b['kind'] === 'link' ? $b['url'] : '/' . $b['slug']) : '', 'n' => (int) $r['n']];
     }
     $amazon = [];
-    foreach ($top('tool') as $r) {
-        $t = $q('SELECT i.name, l.title list FROM tool_items i LEFT JOIN tool_lists l ON l.id = i.list_id WHERE i.id = ?', [(int) $r['ref']])[0] ?? null;
-        $amazon[] = ['label' => $t['name'] ?? '(deleted tool)', 'sub' => $t ? 'Tool list: ' . $t['list'] : '', 'n' => (int) $r['n']];
-    }
     foreach ($top('amazon') as $r) {
-        $amazon[] = ['label' => $r['ref'], 'sub' => 'Link in your text', 'n' => (int) $r['n']];
+        $amazon[] = ['label' => $r['ref'], 'sub' => '', 'n' => (int) $r['n']];
     }
-    usort($amazon, fn ($a, $b) => $b['n'] <=> $a['n']);
-
     $pages = array_map(fn ($r) => ['label' => stat_page_label($r['ref']), 'sub' => $r['ref'], 'n' => (int) $r['n']], $top('view', 30));
     $apps = array_map(fn ($r) => ['label' => APPS[$r['ref']]['name'] ?? $r['ref'], 'sub' => '', 'n' => (int) $r['n']], $top('app'));
-    $short = array_map(fn ($r) => ['label' => '/' . $r['ref'], 'sub' => '', 'n' => (int) $r['n']], $top('short'));
+    $short = array_map(function ($r) use ($title) {
+        $b = $title($r['ref']);
+        return ['label' => $b ? '/' . $b['slug'] . ' · ' . $b['title'] : '(deleted link)', 'sub' => $b['url'] ?? '', 'n' => (int) $r['n']];
+    }, $top('go'));
 
     $files = $q('SELECT f.id, f.title, COUNT(d.id) asked, SUM(d.uses > 0) got
         FROM downloads d JOIN files f ON f.id = d.file_id WHERE d.created_at >= ? GROUP BY f.id ORDER BY got DESC, asked DESC', [$sinceUtc]);
@@ -178,7 +174,7 @@ function stats_report(int $days): array
     $first = $q('SELECT MIN(day) d FROM stats')[0]['d'] ?? null;
     return [
         'people' => $sum('people'), 'views' => $sum('view'),
-        'taps' => $sum('link'), 'amazonTaps' => $sum('tool') + $sum('amazon'),
+        'taps' => $sum('btn'), 'amazonTaps' => $sum('amazon'),
         'downloads' => array_sum(array_map(fn ($f) => (int) $f['got'], $files)),
         'series' => $series, 'byMonth' => $byMonth,
         'pages' => $pages, 'links' => $links, 'amazon' => array_slice($amazon, 0, 50), 'files' => $files, 'apps' => $apps, 'short' => $short,
@@ -201,10 +197,7 @@ function stat_page_label(string $path): string
     };
     $title = match (true) {
         (bool) preg_match('#^/files/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM files WHERE slug = ?', $m[1]),
-        (bool) preg_match('#^/tools/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM tool_lists WHERE slug = ?', $m[1]),
-        (bool) preg_match('#^/[a-z0-9-]+/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM pages WHERE slug = ?', $m[1]),
-        (bool) preg_match('#^/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM pages WHERE slug = ?', $m[1])
-            ?? $one('SELECT name FROM categories WHERE slug = ?', $m[1]),
+        (bool) preg_match('#^/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM pages WHERE slug = ?', $m[1]),
         default => null,
     };
     return $title ?? $path;

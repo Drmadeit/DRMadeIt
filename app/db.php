@@ -163,6 +163,116 @@ function migrate(PDO $pdo): void
         13 => function (PDO $pdo): void {
             $pdo->exec("UPDATE settings SET value = '0' WHERE key = 'tools_on_home'"); // only videos + files were wanted
         },
+        14 => function (PDO $pdo): void {
+            // Links, pages, categories, tool lists and short links all become "buttons" (rows in pages):
+            //   kind  page | link | folder      place  home | folder | none (address only)
+            // Every old address keeps working through the redirects table.
+            foreach ([
+                "kind TEXT NOT NULL DEFAULT 'page'", "url TEXT NOT NULL DEFAULT ''", 'parent_id INTEGER',
+                "place TEXT NOT NULL DEFAULT 'none'", "thumb TEXT NOT NULL DEFAULT ''", "icon TEXT NOT NULL DEFAULT ''",
+                'featured INTEGER NOT NULL DEFAULT 0', 'clicks INTEGER NOT NULL DEFAULT 0',
+            ] as $col) {
+                $pdo->exec("ALTER TABLE pages ADD COLUMN $col");
+            }
+            $pdo->exec("CREATE TABLE redirects (path TEXT PRIMARY KEY, target TEXT NOT NULL, target_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP) WITHOUT ROWID"); // target: button | file
+            $redirect = $pdo->prepare('INSERT OR IGNORE INTO redirects (path, target, target_id) VALUES (?, ?, ?)');
+            $one = function (string $sql, array $args = []) use ($pdo) {
+                $st = $pdo->prepare($sql);
+                $st->execute($args);
+                return $st;
+            };
+            $slugTaken = fn (string $slug) => (bool) $one('SELECT 1 FROM pages WHERE slug = ?', [$slug])->fetchColumn();
+            $insert = function (array $row) use ($pdo): int {
+                $cols = implode(', ', array_keys($row));
+                $pdo->prepare("INSERT INTO pages ($cols) VALUES (:" . implode(', :', array_keys($row)) . ')')->execute($row);
+                return (int) $pdo->lastInsertId();
+            };
+
+            // 1. Categories become folders; their pages move inside.
+            $page = 0;
+            foreach ($pdo->query('SELECT * FROM categories ORDER BY sort_order, id')->fetchAll() as $c) {
+                $slug = $c['slug'];
+                if ($slugTaken($slug)) {
+                    $slug = new_code($slugTaken);
+                }
+                $fid = $insert(['kind' => 'folder', 'title' => $c['name'], 'slug' => $slug, 'body' => $c['intro'], 'cover' => $c['cover'],
+                    'visible' => $c['visible'], 'sort_order' => $c['sort_order'], 'deleted_at' => $c['deleted_at'], 'created_at' => $c['created_at']]);
+                foreach ($one('SELECT id, slug FROM pages WHERE category_id = ?', [$c['id']])->fetchAll() as $p) {
+                    $pdo->prepare("UPDATE pages SET parent_id = ?, place = 'folder' WHERE id = ?")->execute([$fid, $p['id']]);
+                    $redirect->execute(['/' . $c['slug'] . '/' . $p['slug'], 'button', $p['id']]);
+                }
+            }
+
+            // 2. Tool lists people can reach (they have tools, or a home button points at them) become pages.
+            $toolPage = [];
+            $dropped = [];
+            foreach ($pdo->query('SELECT * FROM tool_lists ORDER BY sort_order, id')->fetchAll() as $l) {
+                $items = $one('SELECT * FROM tool_items WHERE list_id = ? AND visible = 1 ORDER BY sort_order, id', [$l['id']])->fetchAll();
+                $linked = (bool) $one('SELECT 1 FROM links WHERE url = ? AND visible = 1', ['/tools/' . $l['slug']])->fetchColumn();
+                if (!$items && !$linked) {
+                    $dropped['/tools/' . $l['slug']] = true; // empty and nobody's sent there: just gone
+                    continue;
+                }
+                $body = trim($l['description']);
+                foreach ($items as $it) {
+                    $line = $it['name'] . ($it['note'] !== '' ? ' — ' . $it['note'] : '');
+                    $body .= "\n\n" . ($it['amazon_url'] !== '' ? '[' . $it['name'] . '](' . $it['amazon_url'] . ')' . ($it['note'] !== '' ? ' — ' . $it['note'] : '') : $line);
+                }
+                $slug = $slugTaken($l['slug']) ? new_code($slugTaken) : $l['slug'];
+                $pid = $insert(['kind' => 'page', 'title' => $l['title'], 'slug' => $slug, 'body' => trim($body), 'cover' => $l['cover_image'],
+                    'visible' => $l['visible'], 'sort_order' => 0]);
+                $redirect->execute(['/tools/' . $l['slug'], 'button', $pid]);
+                $toolPage['/tools/' . $l['slug']] = $pid;
+            }
+
+            // 3. Home links: a link to one of your own top-level pages/folders turns that page into the home button;
+            //    anything else becomes a link button. Order, photos and "featured" carry over.
+            $map = [];
+            foreach ($pdo->query('SELECT * FROM links ORDER BY sort_order, id')->fetchAll() as $i => $l) {
+                $target = null;
+                $path = '/' . trim((string) parse_url($l['url'], PHP_URL_PATH), '/');
+                if (!$l['visible'] && isset($dropped[$path])) {
+                    continue; // a hidden button to an empty tool list
+                }
+                if ($l['visible'] && !preg_match('#^https?://#i', $l['url'])) {
+                    $target = $toolPage[$path] ?? null;
+                    if (!$target && preg_match('#^/([a-z0-9-]+)$#', $path, $m)) {
+                        $target = $one("SELECT id FROM pages WHERE slug = ? AND place = 'none' AND deleted_at IS NULL", [$m[1]])->fetchColumn() ?: null;
+                    }
+                    if ($target && $one("SELECT place FROM pages WHERE id = ?", [$target])->fetchColumn() !== 'none') {
+                        $target = null; // already used by an earlier button
+                    }
+                }
+                $moved = $one('SELECT p.slug FROM redirects r JOIN pages p ON p.id = r.target_id WHERE r.path = ?', [$path])->fetchColumn();
+                if (!$target && $moved !== false && !preg_match('#^https?://#i', $l['url'])) {
+                    $l['url'] = '/' . $moved; // e.g. /builds/reaper-trailer is now just /reaper-trailer
+                }
+                if ($target) {
+                    $pdo->prepare("UPDATE pages SET place = 'home', sort_order = ?, thumb = ?, icon = ?, featured = ? WHERE id = ?")
+                        ->execute([$i, $l['image'], $l['icon'], $l['featured'], $target]);
+                    $map[$l['id']] = (int) $target;
+                } else {
+                    $map[$l['id']] = $insert(['kind' => 'link', 'title' => $l['title'], 'slug' => new_code($slugTaken), 'url' => $l['url'],
+                        'place' => 'home', 'thumb' => $l['image'], 'icon' => $l['icon'], 'featured' => $l['featured'],
+                        'visible' => $l['visible'], 'sort_order' => $i]);
+                }
+            }
+
+            // 4. Short links become address-only link buttons (same address, same click count).
+            foreach ($pdo->query('SELECT * FROM short_links ORDER BY id')->fetchAll() as $s) {
+                $slug = $slugTaken($s['code']) ? new_code($slugTaken) : $s['code'];
+                $id = $insert(['kind' => 'link', 'title' => $s['note'] !== '' ? $s['note'] : $s['code'], 'slug' => $slug, 'url' => $s['url'],
+                    'place' => 'none', 'clicks' => $s['clicks'], 'visible' => 1, 'sort_order' => 0, 'created_at' => $s['created_at']]);
+                $pdo->prepare("UPDATE stats SET kind = 'go', ref = ? WHERE kind = 'short' AND ref = ?")->execute([(string) $id, $s['code']]);
+            }
+
+            // 5. Stats: home taps now point at buttons.
+            foreach ($map as $old => $new) {
+                $pdo->prepare("UPDATE stats SET kind = 'btn', ref = ? WHERE kind = 'link' AND ref = ?")->execute([(string) $new, (string) $old]);
+            }
+            $pdo->exec("UPDATE settings SET value = '0' WHERE key = 'tools_on_home'");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

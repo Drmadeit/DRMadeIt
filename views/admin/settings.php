@@ -6,7 +6,7 @@ $photo = function (string $key, string $label, string $hint = '', string $aspect
 $field = fn (string $key, string $label, string $type = 'text', string $ph = '') =>
     '<label>' . e($label) . ' <input type="' . ($type === 'url' ? 'text' : $type) . '" name="' . e($key) . '" value="' . e(setting($key)) . '" placeholder="' . e($ph) . '"' . ($type === 'url' ? ' autocapitalize="none" inputmode="url"' : '') . '></label>';
 ?>
-<a class="a-back" href="/admin/more">‹ More</a>
+<a class="a-back" href="/admin/settings">‹ Settings</a>
 
 <?php if (in_array($section, ['profile', 'social', 'email', 'amazon', 'licenses', 'footer'], true)): ?>
 <form method="post" action="/admin/settings/<?= e($section) ?>" enctype="multipart/form-data" class="a-card a-form">
@@ -20,7 +20,7 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <fieldset class="a-fieldset">
       <legend>Home page, under the buttons</legend>
       <input type="hidden" name="home_sections_sent" value="1">
-      <?php foreach (['videos_on_home' => 'Latest videos (3)', 'files_on_home' => 'Files (3, featured first)', 'tools_on_home' => 'Shop tools (your tool lists)'] as $k => $label): ?>
+      <?php foreach (['videos_on_home' => 'Latest videos (3)', 'files_on_home' => 'Files (3, featured first)'] as $k => $label): ?>
         <label class="a-check"><input type="checkbox" name="<?= $k ?>" value="1" <?= setting($k) === '1' ? 'checked' : '' ?>> <?= e($label) ?></label>
       <?php endforeach; ?>
     </fieldset>

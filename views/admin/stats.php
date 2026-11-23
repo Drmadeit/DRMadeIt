@@ -27,7 +27,7 @@ $fmtDay = fn (string $d) => strlen($d) === 7 ? date('M y', strtotime($d . '-01')
 <div class="a-stats a-stats-4">
   <div class="a-stat"><b><?= number_format($people) ?></b><span>visitors</span></div>
   <div class="a-stat"><b><?= number_format($views) ?></b><span>page views</span></div>
-  <div class="a-stat"><b><?= number_format($taps) ?></b><span>home taps</span></div>
+  <div class="a-stat"><b><?= number_format($taps) ?></b><span>button taps</span></div>
   <div class="a-stat"><b><?= number_format($downloads) ?></b><span>downloads</span></div>
 </div>
 
@@ -44,7 +44,7 @@ $fmtDay = fn (string $d) => strlen($d) === 7 ? date('M y', strtotime($d . '-01')
 </section>
 <?php endif; ?>
 
-<?php $list('Home page buttons', $links, 'taps', 'No taps yet. Counting starts now.'); ?>
+<?php $list('Buttons tapped', $links, 'taps', 'No taps yet.'); ?>
 
 <section class="a-card a-form">
   <h2>Free files</h2>
@@ -60,10 +60,10 @@ $fmtDay = fn (string $d) => strlen($d) === 7 ? date('M y', strtotime($d . '-01')
   <?php endif; ?>
 </section>
 
-<?php $list('Amazon taps', $amazon, 'taps', 'No Amazon taps yet. Counting starts now.'); ?>
-<?php $list('Pages people looked at', $pages, 'views', 'No visits yet. Counting starts now.'); ?>
+<?php $list('Amazon taps', $amazon, 'taps', 'No Amazon taps yet.'); ?>
+<?php $list('Pages people looked at', $pages, 'views', 'No visits yet.'); ?>
 <?php if ($apps) $list('Calculators opened', $apps, 'opens', ''); ?>
-<?php if ($short) $list('Short links', $short, 'clicks', ''); ?>
+<?php if ($short) $list('Addresses people used', $short, 'clicks', ''); ?>
 
 <p class="a-hint a-center">Counting since <?= $since ? e(date('M j, Y', strtotime($since))) : 'today' ?>. Bots and you are left out, and no cookies are used.
   Amazon's own report (Associates → Reports) shows what was actually bought.</p>

@@ -1,4 +1,4 @@
-// Counts taps on home buttons and Amazon links, and calculator opens, for the private Stats screen.
+// Counts taps on buttons and Amazon links, and calculator opens, for the private Stats screen.
 // No cookies, nothing personal: just "this thing was tapped".
 (function () {
   if (!navigator.sendBeacon) return;

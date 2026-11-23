@@ -2,34 +2,100 @@
 declare(strict_types=1);
 
 /**
- * Pages and categories made in admin.
- *   /<category>          a category: cards for each page in it
- *   /<category>/<page>   a page in a category
- *   /<page>              a page with no category
- * Page and category addresses share one namespace and can't use the site's built-in addresses.
+ * Buttons made in admin. Everything lives at one short address: drmadeit.com/<slug>
+ *   kind page    your own page (text, photos, videos, files)
+ *   kind link    goes somewhere else (Amazon, MakerWorld… or any address); /<slug> forwards there and counts the click
+ *   kind folder  a page of more buttons
+ *   place home | folder (inside parent_id) | none (just the address)
+ * Old addresses are kept in the redirects table, so links people shared never break.
  */
-const RESERVED_SLUGS = ['admin', 'tools', 'files', 'videos', 'calc', 'media', 'download', 'assets', 'robots-txt', 'index-php', 'sitemap', 'p', 'page', 'pages', 'tape', 'fractions', 'fcalc', 'frac', 'toolbox'];
+const RESERVED_SLUGS = ['admin', 'tools', 'files', 'videos', 'calc', 'media', 'download', 'assets', 'robots-txt', 'index-php', 'sitemap', 'p', 'page', 'pages', 'tape', 'fractions', 'fcalc', 'frac', 'toolbox', 't', 'about-us'];
+const BUTTON_KINDS = ['page' => 'Page', 'link' => 'Link', 'folder' => 'Folder'];
 
-function live_category(string $slug): ?array
+/** A short code like k7m: at least one letter and one number, no look-alikes (0 o 1 l i). */
+function new_code(callable $taken): string
 {
-    $st = db()->prepare('SELECT * FROM categories WHERE slug = ? AND deleted_at IS NULL AND (visible = 1 OR ?)');
+    $letters = 'abcdefghjkmnpqrstuvwxyz';
+    $digits = '23456789';
+    $all = $letters . $digits;
+    for ($n = 0; ; $n++) {
+        $len = $n < 200 ? 3 : 4;
+        $c = [$letters[random_int(0, 22)], $digits[random_int(0, 7)]];
+        while (count($c) < $len) {
+            $c[] = $all[random_int(0, strlen($all) - 1)];
+        }
+        shuffle($c);
+        $code = implode('', $c);
+        if (!$taken($code)) {
+            return $code;
+        }
+    }
+}
+
+function live_button(string $slug): ?array
+{
+    $st = db()->prepare('SELECT * FROM pages WHERE slug = ? AND deleted_at IS NULL AND (visible = 1 OR ?)');
     $st->execute([$slug, is_admin() ? 1 : 0]);
     return $st->fetch() ?: null;
 }
 
-function live_page(string $slug): ?array
-{
-    $st = db()->prepare('SELECT p.*, c.slug cat_slug, c.name cat_name FROM pages p
-        LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
-        WHERE p.slug = ? AND p.deleted_at IS NULL AND (p.visible = 1 OR ?)');
-    $st->execute([$slug, is_admin() ? 1 : 0]);
-    return $st->fetch() ?: null;
-}
-
-/** The one true address of a page. */
+/** The button's own address on this site. */
 function page_url(array $page): string
 {
-    return !empty($page['cat_slug']) ? '/' . $page['cat_slug'] . '/' . $page['slug'] : '/' . $page['slug'];
+    return '/' . $page['slug'];
+}
+
+/** Where tapping the button goes: link buttons go straight to their target (with the Amazon tag), the rest to their page. */
+function button_href(array $b): string
+{
+    return $b['kind'] === 'link' ? amazon_link($b['url']) : page_url($b);
+}
+
+/** The folder a button sits in, if it's live. */
+function button_parent(array $b): ?array
+{
+    if ($b['place'] !== 'folder' || !$b['parent_id']) {
+        return null;
+    }
+    $st = db()->prepare("SELECT * FROM pages WHERE id = ? AND kind = 'folder' AND deleted_at IS NULL");
+    $st->execute([$b['parent_id']]);
+    return $st->fetch() ?: null;
+}
+
+/** Live buttons in a place, in order. */
+function buttons_in(string $place, ?int $parentId = null): array
+{
+    $st = db()->prepare('SELECT * FROM pages WHERE place = ? AND (? IS NULL OR parent_id = ?) AND deleted_at IS NULL AND visible = 1 ORDER BY sort_order, id');
+    $st->execute([$place, $parentId, $parentId]);
+    return $st->fetchAll();
+}
+
+/** Photo for a button: its own button photo, else (pages/folders) the cover, first photo or first video. */
+function button_image(array $b): string
+{
+    if ($b['thumb'] !== '') {
+        return img_url($b['thumb'], true);
+    }
+    if ($b['kind'] === 'link') {
+        if (preg_match('#^/files/([a-z0-9-]+)$#', $b['url'], $m)) {
+            $st = db()->prepare('SELECT i.image FROM files f JOIN file_images i ON i.file_id = f.id WHERE f.slug = ? ORDER BY i.sort_order, i.id LIMIT 1');
+            $st->execute([$m[1]]);
+            return ($img = $st->fetchColumn()) ? img_url((string) $img, true) : '';
+        }
+        return '';
+    }
+    if ($b['kind'] === 'folder') {
+        if ($b['cover'] !== '') {
+            return img_url($b['cover'], true);
+        }
+        foreach (buttons_in('folder', (int) $b['id']) as $child) {
+            if ($child['kind'] !== 'folder' && ($img = button_image($child))) {
+                return $img;
+            }
+        }
+        return '';
+    }
+    return page_card_image($b);
 }
 
 /** Live shop files picked to show on this page, with their cover photo. */
@@ -174,64 +240,148 @@ function page_buttons(array $page): array
 function pages_route(string $path): bool
 {
     $parts = explode('/', trim($path, '/'));
-    if (count($parts) === 1 && preg_match('/^[a-z0-9-]+$/', $parts[0])) {
-        if ($cat = live_category($parts[0])) {
-            $st = db()->prepare('SELECT p.*, ? cat_slug FROM pages p WHERE category_id = ? AND deleted_at IS NULL AND (visible = 1 OR ?) ORDER BY sort_order, id');
-            $st->execute([$cat['slug'], $cat['id'], is_admin() ? 1 : 0]);
-            $pages = $st->fetchAll();
-            render('category', ['cat' => $cat, 'pages' => $pages, 'title' => $cat['name'], 'description' => $cat['intro'],
-                'ogImage' => img_url($cat['cover'] ?: ($pages ? page_cover($pages[0]) : ''))]);
-            return true;
-        }
-        if ($page = live_page($parts[0])) {
-            return show_page($page, $path);
-        }
+    if (count($parts) !== 1 || !preg_match('/^[a-z0-9-]+$/i', $parts[0])) {
+        return false;
     }
-    if (count($parts) === 2 && preg_match('/^[a-z0-9-]+$/', $parts[1]) && ($page = live_page($parts[1]))) {
-        return show_page($page, $path);
+    $slug = strtolower($parts[0]); // K7M works too
+    $b = live_button($slug);
+    if (!$b) {
+        return false;
     }
-    return false;
-}
-
-function show_page(array $page, string $path): bool
-{
-    $url = page_url($page);
-    if ($url !== $path) { // category changed or old link: send to the current address
-        header('Location: ' . $url, true, 301);
+    if ($b['kind'] === 'link') {
+        db()->prepare('UPDATE pages SET clicks = clicks + 1 WHERE id = ?')->execute([$b['id']]);
+        stat_add('go', (string) $b['id']);
+        header('Cache-Control: no-store'); // so every click is counted
+        header('X-Robots-Tag: noindex');
+        header('Location: ' . button_href($b), true, 302);
         return true;
     }
+    if ($slug !== $parts[0]) {
+        redirect(page_url($b));
+    }
+    if ($b['kind'] === 'folder') {
+        $items = buttons_in('folder', (int) $b['id']);
+        render('category', ['cat' => $b, 'pages' => $items, 'title' => $b['title'], 'description' => $b['body'],
+            'ogImage' => $b['cover'] !== '' ? img_url($b['cover']) : '']);
+        return true;
+    }
+    return show_page($b);
+}
+
+function show_page(array $page): bool
+{
     $photos = page_photos((int) $page['id']);
-    render('page', ['page' => $page, 'photos' => $photos, 'cover' => page_cover($page), 'title' => $page['title'],
+    render('page', ['page' => $page, 'parent' => button_parent($page), 'photos' => $photos, 'cover' => page_cover($page), 'title' => $page['title'],
         'description' => mb_strimwidth(preg_replace('/\s+/', ' ', $page['body']), 0, 180, '…'),
         'ogImage' => img_url(page_cover($page))]);
     return true;
 }
 
-/** Slug unique across pages AND categories, and not a built-in address. */
-function unique_public_slug(string $want, string $table, int $exceptId, string $prefix = ''): string
+/** Old addresses (renamed buttons and files, old category/page and tool list links) forward to where things live now. */
+function redirect_route(string $path): bool
 {
-    $base = slugify($want);
-    if (in_array($base, RESERVED_SLUGS, true)) {
-        $base .= '-page';
+    $st = db()->prepare('SELECT * FROM redirects WHERE path = ?');
+    $st->execute([strtolower($path)]);
+    $r = $st->fetch();
+    if (!$r) {
+        return false;
     }
-    $taken = function (string $slug) use ($table, $exceptId): bool {
-        $p = db()->prepare('SELECT 1 FROM pages WHERE slug = ? AND NOT (? = \'pages\' AND id = ?)');
-        $p->execute([$slug, $table, $exceptId]);
-        $c = db()->prepare('SELECT 1 FROM categories WHERE slug = ? AND NOT (? = \'categories\' AND id = ?)');
-        $c->execute([$slug, $table, $exceptId]);
-        $s = db()->prepare('SELECT 1 FROM short_links WHERE code = ?'); // short links share the same addresses
-        $s->execute([$slug]);
-        return (bool) ($p->fetchColumn() || $c->fetchColumn() || $s->fetchColumn());
-    };
-    // Name taken and the page is in a category? "builds" in TikTok becomes "tiktok-builds" (nicer than builds-2).
-    if ($prefix !== '' && $taken($base) && !str_starts_with($base, $prefix . '-')) {
-        $base = $prefix . '-' . $base;
+    if ($r['target'] === 'file') {
+        $f = db()->prepare("SELECT slug FROM files WHERE id = ?");
+        $f->execute([$r['target_id']]);
+        $slug = $f->fetchColumn();
+        $to = $slug === false ? null : '/files/' . $slug;
+    } else {
+        $b = db()->prepare('SELECT slug FROM pages WHERE id = ? AND deleted_at IS NULL');
+        $b->execute([$r['target_id']]);
+        $slug = $b->fetchColumn();
+        $to = $slug === false ? null : '/' . $slug;
     }
-    $slug = $base;
-    for ($i = 2; ; $i++) {
-        if (!$taken($slug)) {
-            return $slug;
+    if ($to === null || $to === strtolower($path)) {
+        return false;
+    }
+    header('Location: ' . $to, true, 301);
+    return true;
+}
+
+/** Remember an address that's no longer used, so it keeps forwarding. */
+function remember_old_address(string $path, string $target, int $id): void
+{
+    if ($path === '' || $path === '/' || $path === '/files/') {
+        return;
+    }
+    db()->prepare('INSERT INTO redirects (path, target, target_id) VALUES (?, ?, ?)
+        ON CONFLICT(path) DO UPDATE SET target = excluded.target, target_id = excluded.target_id, created_at = CURRENT_TIMESTAMP')
+        ->execute([strtolower($path), $target, $id]);
+}
+
+/** Something else used to live at this address (so old links would now land on the new thing). */
+function old_address_owner(string $path, string $target, int $id): ?string
+{
+    $st = db()->prepare('SELECT target, target_id FROM redirects WHERE path = ?');
+    $st->execute([strtolower($path)]);
+    $r = $st->fetch();
+    if (!$r || ($r['target'] === $target && (int) $r['target_id'] === $id)) {
+        return null;
+    }
+    $t = db()->prepare($r['target'] === 'file' ? 'SELECT title FROM files WHERE id = ?' : 'SELECT title FROM pages WHERE id = ?');
+    $t->execute([$r['target_id']]);
+    return (string) ($t->fetchColumn() ?: 'something you deleted');
+}
+
+/** Address for a button: what was typed (cleaned), or a new short code. Never a built-in address or another button's. */
+function button_address(string $want, int $exceptId): string
+{
+    $taken = function (string $slug) use ($exceptId): bool {
+        if (in_array($slug, RESERVED_SLUGS, true) || isset(APPS[$slug])) {
+            return true;
         }
+        $st = db()->prepare('SELECT 1 FROM pages WHERE slug = ? AND id != ?');
+        $st->execute([$slug, $exceptId]);
+        return (bool) $st->fetchColumn();
+    };
+    if (trim(preg_replace('/[^a-z0-9]+/i', '', $want)) === '') {
+        return new_code($taken);
+    }
+    $slug = slugify($want);
+    $base = $slug;
+    for ($i = 2; $taken($slug); $i++) {
         $slug = "$base-$i";
     }
+    return $slug;
+}
+
+/** How many times an address was used in the last 30 days (page views, taps on its button, clicks through it). */
+function address_uses(string $path, ?int $buttonId = null): int
+{
+    $since = date('Y-m-d', strtotime('-30 days'));
+    $st = db()->prepare("SELECT COALESCE(SUM(n), 0) FROM stats WHERE day >= ? AND ((kind = 'view' AND ref = ?) OR (kind IN ('btn', 'go') AND ref = ?))");
+    $st->execute([$since, strtolower($path), $buttonId === null ? '-' : (string) $buttonId]);
+    return (int) $st->fetchColumn();
+}
+
+/** The delete confirmation, with the warning when people actually use the thing. */
+function delete_warning(string $what, int $uses): string
+{
+    return $uses > 0
+        ? "Hey fuckface, you're about to piss people off. $uses " . ($uses === 1 ? 'person' : 'people') . " used this $what in the last month. Delete anyway?"
+        : "Delete this $what?";
+}
+
+/** Old addresses that belong to something else, as word => what it used to be (for the "you're about to take this" warning). */
+function old_addresses(string $prefix, string $target, int $id): array
+{
+    $st = db()->prepare("SELECT path, target, target_id FROM redirects WHERE path LIKE ? AND NOT (target = ? AND target_id = ?)");
+    $st->execute([$prefix . '%', $target, $id]);
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $word = substr($r['path'], strlen($prefix));
+        if ($word === '' || str_contains($word, '/')) {
+            continue;
+        }
+        $t = db()->prepare($r['target'] === 'file' ? 'SELECT title FROM files WHERE id = ?' : 'SELECT title FROM pages WHERE id = ?');
+        $t->execute([$r['target_id']]);
+        $out[$word] = (string) ($t->fetchColumn() ?: 'something you deleted');
+    }
+    return $out;
 }

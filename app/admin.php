@@ -12,8 +12,8 @@ function admin_render(string $view, array $vars = []): void
 }
 
 /** Tables the generic reorder / show-hide endpoints may touch. */
-const SORTABLE = ['links', 'tool_lists', 'tool_items', 'files', 'file_images', 'categories', 'pages', 'page_photos'];
-const HIDEABLE = ['links', 'tool_lists', 'tool_items', 'categories', 'pages'];
+const SORTABLE = ['files', 'file_images', 'pages', 'page_photos'];
+const HIDEABLE = ['pages'];
 
 function admin_route(string $path, string $method): void
 {
@@ -47,6 +47,14 @@ function admin_route(string $path, string $method): void
         setcookie(STAT_OWNER_COOKIE, '1', ['expires' => time() + 5 * 365 * 86400, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
     }
 
+    // ---- Old admin addresses (Links, Pages, Tools and Short links are all Buttons now; More is Content + Settings) ----
+    if (!$post && preg_match('#^/admin/(links|pages|categories|tools|items|short)(/|$)#', $path)) {
+        redirect('/admin/buttons');
+    }
+    if (!$post && $path === '/admin/more') {
+        redirect('/admin/settings');
+    }
+
     // ---- Generic: reorder + show/hide ----
     if ($post && preg_match('#^/admin/reorder/(\w+)$#', $path, $m) && in_array($m[1], SORTABLE, true)) {
         $st = db()->prepare("UPDATE {$m[1]} SET sort_order = ? WHERE id = ?");
@@ -68,74 +76,12 @@ function admin_route(string $path, string $method): void
         // dashboard
         'GET /admin' => fn () => admin_dashboard(),
 
-        // links
-        'GET /admin/links' => fn () => admin_render('links', [
-            'links' => db()->query('SELECT * FROM links ORDER BY sort_order, id')->fetchAll(), 'tab' => 'links', 'title' => 'Links']),
-        'GET /admin/links/new' => fn () => admin_render('link_edit', [
-            'link' => ['id' => 0, 'title' => '', 'url' => '', 'image' => '', 'icon' => '', 'featured' => 0, 'visible' => 1], 'tab' => 'links', 'title' => 'Add link']),
-        'GET /admin/links/(\d+)' => fn ($id) => admin_render('link_edit', ['link' => find_row('links', (int) $id), 'tab' => 'links', 'title' => 'Edit link']),
-        'POST /admin/links/save' => fn () => save_link(),
-        'POST /admin/links/(\d+)/feature' => function ($id) {
-            $l = find_row('links', (int) $id);
-            db()->prepare('UPDATE links SET featured = CASE WHEN id = ? THEN 1 - featured ELSE 0 END')->execute([$l['id']]);
-            flash($l['featured'] ? 'No featured link now.' : '"' . $l['title'] . '" is featured.');
-            redirect('/admin/links');
-        },
-        'POST /admin/links/(\d+)/delete' => function ($id) {
-            $l = find_row('links', (int) $id);
-            db()->prepare('DELETE FROM links WHERE id = ?')->execute([$l['id']]);
-            delete_image($l['image']);
-            flash('Link deleted.');
-            redirect('/admin/links');
-        },
-
-        // tool lists
-        'GET /admin/tools' => fn () => admin_render('tools', [
-            'lists' => db()->query('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id) n FROM tool_lists l ORDER BY sort_order, id')->fetchAll(),
-            'tab' => 'tools', 'title' => 'Tool lists']),
-        'GET /admin/tools/new' => fn () => admin_render('tool_list_edit', [
-            'list' => ['id' => 0, 'title' => '', 'slug' => '', 'description' => '', 'cover_image' => '', 'visible' => 1], 'items' => [], 'tab' => 'tools', 'title' => 'New list']),
-        'GET /admin/tools/(\d+)' => function ($id) {
-            $list = find_row('tool_lists', (int) $id);
-            $items = db()->prepare('SELECT * FROM tool_items WHERE list_id = ? ORDER BY sort_order, id');
-            $items->execute([$list['id']]);
-            admin_render('tool_list_edit', ['list' => $list, 'items' => $items->fetchAll(), 'tab' => 'tools', 'title' => $list['title']]);
-        },
-        'POST /admin/tools/save' => fn () => save_tool_list(),
-        'POST /admin/tools/(\d+)/delete' => function ($id) {
-            $list = find_row('tool_lists', (int) $id);
-            $imgs = db()->prepare('SELECT image FROM tool_items WHERE list_id = ?');
-            $imgs->execute([$list['id']]);
-            foreach ($imgs->fetchAll(PDO::FETCH_COLUMN) as $img) {
-                delete_image($img);
-            }
-            delete_image($list['cover_image']);
-            db()->prepare('DELETE FROM tool_lists WHERE id = ?')->execute([$list['id']]);
-            flash('List deleted.');
-            redirect('/admin/tools');
-        },
-        'GET /admin/tools/(\d+)/items/new' => fn ($lid) => admin_render('tool_item_edit', [
-            'list' => find_row('tool_lists', (int) $lid),
-            'item' => ['id' => 0, 'name' => '', 'amazon_url' => '', 'note' => '', 'image' => '', 'visible' => 1], 'tab' => 'tools', 'title' => 'Add tool']),
-        'GET /admin/items/(\d+)' => function ($id) {
-            $item = find_row('tool_items', (int) $id);
-            admin_render('tool_item_edit', ['list' => find_row('tool_lists', (int) $item['list_id']), 'item' => $item, 'tab' => 'tools', 'title' => 'Edit tool']);
-        },
-        'POST /admin/items/save' => fn () => save_tool_item(),
-        'POST /admin/items/(\d+)/delete' => function ($id) {
-            $item = find_row('tool_items', (int) $id);
-            delete_image($item['image']);
-            db()->prepare('DELETE FROM tool_items WHERE id = ?')->execute([$item['id']]);
-            flash('Tool deleted.');
-            redirect('/admin/tools/' . $item['list_id']);
-        },
-
         // files
         'GET /admin/files' => fn () => admin_render('files', [
             'files' => db()->query('SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb FROM files f ORDER BY sort_order, id')->fetchAll(),
             'tab' => 'files', 'title' => 'Files']),
         'GET /admin/files/new' => fn () => admin_render('file_edit', [
-            'file' => ['id' => 0, 'title' => '', 'slug' => '', 'type' => 'cnc', 'price_cents' => 0, 'buy_url' => '', 'description' => '',
+            'file' => ['id' => 0, 'title' => '', 'slug' => file_address('', 0, null), 'type' => 'cnc', 'price_cents' => 0, 'buy_url' => '', 'description' => '',
                 'formats' => '', 'notes' => '', 'license' => 'personal', 'video_url' => '', 'file_path' => '', 'status' => 'draft', 'featured' => 0],
             'images' => [], 'tab' => 'files', 'title' => 'New file']),
         'GET /admin/files/(\d+)' => function ($id) {
@@ -154,11 +100,11 @@ function admin_route(string $path, string $method): void
             }
             db()->prepare('DELETE FROM files WHERE id = ?')->execute([$file['id']]);
             // Its home page button would point nowhere now
-            $links = db()->prepare('SELECT id, image FROM links WHERE url = ?');
+            $links = db()->prepare("SELECT id, thumb FROM pages WHERE kind = 'link' AND url = ?");
             $links->execute(['/files/' . $file['slug']]);
             foreach ($links->fetchAll() as $l) {
-                db()->prepare('DELETE FROM links WHERE id = ?')->execute([$l['id']]);
-                delete_image($l['image']);
+                db()->prepare('DELETE FROM pages WHERE id = ?')->execute([$l['id']]);
+                delete_image($l['thumb']);
             }
             flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
             redirect('/admin/files');
@@ -182,7 +128,7 @@ function admin_route(string $path, string $method): void
         // emails
         'GET /admin/emails' => fn () => admin_render('emails', [
             'subs' => db()->query('SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n FROM subscribers s ORDER BY s.id DESC')->fetchAll(),
-            'tab' => 'more', 'title' => 'Emails']),
+            'tab' => 'content', 'title' => 'Emails']),
         'GET /admin/emails.csv' => fn () => export_emails(),
         'POST /admin/emails/(\d+)/delete' => function ($id) {
             $s = find_row('subscribers', (int) $id);
@@ -198,15 +144,15 @@ function admin_route(string $path, string $method): void
         // settings
         'GET /admin/stats' => function () {
             $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 30) : 30;
-            admin_render('stats', stats_report($days) + ['days' => $days, 'tab' => 'more', 'title' => 'Stats']);
+            admin_render('stats', stats_report($days) + ['days' => $days, 'tab' => 'stats', 'title' => 'Stats']);
         },
-        'GET /admin/more' => fn () => admin_render('more', ['tab' => 'more', 'title' => 'More']),
-        'GET /admin/settings' => fn () => redirect('/admin/more'),
+        'GET /admin/content' => fn () => admin_render('content', ['tab' => 'content', 'title' => 'Content']),
+        'GET /admin/settings' => fn () => admin_render('more', ['tab' => 'settings', 'title' => 'Settings']),
         'GET /admin/settings/(\w+)' => function ($section) {
             if (!isset(SETTINGS_SECTIONS[$section])) {
                 not_found();
             }
-            admin_render('settings', ['section' => $section, 'tab' => 'more', 'title' => SETTINGS_SECTIONS[$section][0]]);
+            admin_render('settings', ['section' => $section, 'tab' => 'settings', 'title' => SETTINGS_SECTIONS[$section][0]]);
         },
         'POST /admin/settings/(\w+)' => fn ($section) => save_settings(isset(SETTINGS_SECTIONS[$section]) ? $section : 'profile'),
         'POST /admin/password' => fn () => change_password(),
@@ -226,7 +172,7 @@ function admin_route(string $path, string $method): void
     ];
 
     $routes += pages_admin_routes();
-    $routes += short_admin_routes();
+    
 
     foreach ($routes as $key => $handler) {
         [$verb, $pattern] = explode(' ', $key, 2);
@@ -359,7 +305,7 @@ function admin_videos(): void
         'videos' => youtube_feed(),
         'pinned' => video_pins(),
         'hidden' => video_hidden(),
-        'tab' => 'more', 'title' => 'Videos',
+        'tab' => 'content', 'title' => 'Videos',
     ]);
 }
 
@@ -450,7 +396,7 @@ function save_settings(string $section = 'profile'): void
         }
     }
     if (!empty($_POST['home_sections_sent'])) {
-        foreach (['videos_on_home', 'files_on_home', 'tools_on_home'] as $k) {
+        foreach (['videos_on_home', 'files_on_home'] as $k) {
             set_setting($k, empty($_POST[$k]) ? '0' : '1');
         }
     }

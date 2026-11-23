@@ -3,7 +3,7 @@ $gallery = array_values(array_filter($photos, fn ($ph) => $ph['image'] !== $cove
 $buttons = page_buttons($page);
 ?>
 <article class="page">
-  <?php if (!empty($page['cat_slug'])): ?><a class="crumb" href="/<?= e($page['cat_slug']) ?>">← <?= e($page['cat_name']) ?></a><?php endif; ?>
+  <?php if (!empty($parent)): ?><a class="crumb" href="<?= e(page_url($parent)) ?>">← <?= e($parent['title']) ?></a><?php endif; ?>
   <?php if (!$page['visible']): ?><p class="notice">Hidden: only you can see this page.</p><?php endif; ?>
 
   <?php if ($cover): ?>
