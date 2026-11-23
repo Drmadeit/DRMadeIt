@@ -376,6 +376,8 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
 }
 
 /** Paste MakerWorld model links (one per line): each becomes a draft file with its MakerWorld button. */
+const IMPORT_VERSION = 5; // shown on the import screen so we can tell which code the server is running
+
 function import_makerworld(): void
 {
     @set_time_limit(300);

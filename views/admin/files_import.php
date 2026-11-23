@@ -25,3 +25,4 @@ $bookmark = 'javascript:' . rawurlencode(trim(preg_replace('/\s*\n\s*/', ' ', $c
   <button class="a-btn">Import as drafts</button>
   <p class="a-hint">Each one becomes a draft with its "Get it on MakerWorld" button. The site tries to grab the title and cover photo from MakerWorld; if MakerWorld won't share them, the title comes from the link and you add a photo.</p>
 </form>
+<p class="a-hint a-center">Import v<?= IMPORT_VERSION ?> · PHP <?= e(PHP_VERSION) ?><?= function_exists('opcache_get_status') && ($o = @opcache_get_status(false)) && !empty($o['opcache_enabled']) ? ' · code cache on' : '' ?></p>
