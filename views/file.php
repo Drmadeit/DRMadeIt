@@ -6,6 +6,8 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
   <a class="crumb" href="/files">← All files</a>
   <?php if ($file['status'] !== 'published'): ?><p class="notice">Draft: only you can see this page.</p><?php endif; ?>
 
+  <div class="file-layout">
+  <div class="file-media">
   <?php if ($images): ?>
   <div class="gallery" aria-label="Photos">
     <?php foreach ($images as $i => $img): ?>
@@ -14,6 +16,8 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
   </div>
   <?php if (count($images) > 1): ?><p class="gallery-hint">Swipe for more photos</p><?php endif; ?>
   <?php endif; ?>
+  </div>
+  <div class="file-info">
 
   <h1 class="page-title<?= mb_strlen($file['title']) > 22 ? ' is-long' : '' ?>"><?= e($file['title']) ?></h1>
   <p class="meta"><?= e(type_label($file['type'])) ?> · <b class="<?= $free ? 'free' : '' ?>"><?= e(price_label((int) $file['price_cents'])) ?></b></p>
@@ -64,4 +68,6 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
   <?php elseif ($file['video_url']): ?>
     <a class="btn btn-outline" href="<?= e($file['video_url']) ?>" target="_blank" rel="noopener">Watch the video</a>
   <?php endif; ?>
+  </div>
+  </div>
 </article>

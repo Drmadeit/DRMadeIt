@@ -34,6 +34,11 @@ $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : as
     <img src="<?= e($logo) ?>" alt="" width="40" height="40">
     <span><?= e($siteName) ?></span>
   </a>
+  <?php $topNav = ['/files' => 'Files', '/videos' => 'Videos', '/toolbox' => 'Toolbox'] + (live_button('about') ? ['/about' => 'About'] : []);
+        $hereTop = '/' . trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/'); ?>
+  <nav class="top-nav" aria-label="Site">
+    <?php foreach ($topNav as $href => $label): ?><a href="<?= $href ?>"<?= $hereTop === $href || str_starts_with($hereTop, $href . '/') ? ' aria-current="page"' : '' ?>><?= $label ?></a><?php endforeach; ?>
+  </nav>
 </header>
 <?php endif; ?>
 <main>
