@@ -184,6 +184,11 @@ function admin_route(string $path, string $method): void
         'POST /admin/videos' => fn () => save_videos(),
 
         // settings
+        'GET /admin/stats/(visitors|files)' => function ($which) {
+            $days = in_array((int) ($_GET['days'] ?? 7), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 7) : 7;
+            admin_render('stats_' . $which, stats_detail($which, $days) + ['days' => $days, 'which' => $which, 'tab' => 'home',
+                'title' => $which === 'files' ? 'File activity' : 'Visitors']);
+        },
         'GET /admin/stats' => function () {
             $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 30) : 30;
             admin_render('stats', stats_report($days) + ['days' => $days, 'tab' => 'stats', 'title' => 'Stats']);

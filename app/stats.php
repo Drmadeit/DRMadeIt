@@ -217,5 +217,47 @@ function stat_page_label(string $path): string
         (bool) preg_match('#^/([a-z0-9-]+)$#', $path, $m) => $one('SELECT title FROM pages WHERE slug = ?', $m[1]),
         default => null,
     };
+    if ($title === null) { // an old address: name it after what it points to now
+        $st = db()->prepare("SELECT CASE r.target WHEN 'file' THEN (SELECT title FROM files WHERE id = r.target_id) ELSE (SELECT title FROM pages WHERE id = r.target_id) END FROM redirects r WHERE r.path = ?");
+        $st->execute([$path]);
+        $title = ($t = $st->fetchColumn()) ? $t . ' (old address)' : null;
+    }
     return $title ?? $path;
+}
+
+/** The focused pages behind the admin Home cards: visitors day by day, or what happened with each file. */
+function stats_detail(string $which, int $days): array
+{
+    $since = $days ? date('Y-m-d', strtotime('-' . ($days - 1) . ' days')) : '0000-00-00';
+    $sinceUtc = $days ? gmdate('Y-m-d H:i:s', strtotime($since . ' 00:00:00')) : '0000-00-00';
+    $q = function (string $sql, array $args = []): array {
+        $st = db()->prepare($sql);
+        $st->execute($args);
+        return $st->fetchAll();
+    };
+    if ($which === 'visitors') {
+        $daysList = $q("SELECT day, SUM(CASE WHEN kind = 'people' THEN n ELSE 0 END) people, SUM(CASE WHEN kind = 'view' THEN n ELSE 0 END) views,
+                SUM(CASE WHEN kind = 'btn' THEN n ELSE 0 END) taps
+            FROM stats WHERE day >= ? GROUP BY day ORDER BY day DESC", [$since]);
+        $pages = array_map(fn ($r) => ['label' => stat_page_label($r['ref']), 'sub' => $r['ref'], 'n' => (int) $r['n']],
+            $q("SELECT ref, SUM(n) n FROM stats WHERE kind = 'view' AND day >= ? GROUP BY ref ORDER BY n DESC LIMIT 15", [$since]));
+        return ['daysList' => $daysList, 'pages' => $pages,
+            'people' => array_sum(array_column($daysList, 'people')), 'views' => array_sum(array_column($daysList, 'views'))];
+    }
+    // Files: page views, email requests, downloads and MakerWorld taps for every file that had any
+    $rows = [];
+    foreach ($q('SELECT id, title, slug, status FROM files') as $f) {
+        // its current address plus any old ones it used to have
+        $views = (int) ($q("SELECT SUM(n) s FROM stats WHERE kind = 'view' AND day >= ? AND (ref = ? OR ref IN (SELECT path FROM redirects WHERE target = 'file' AND target_id = ?))",
+            [$since, '/files/' . $f['slug'], $f['id']])[0]['s'] ?? 0);
+        $mw = (int) ($q("SELECT SUM(n) s FROM stats WHERE kind = 'mw' AND ref = ? AND day >= ?", [(string) $f['id'], $since])[0]['s'] ?? 0);
+        $d = $q('SELECT COUNT(*) asked, COALESCE(SUM(uses > 0), 0) got FROM downloads WHERE file_id = ? AND created_at >= ?', [$f['id'], $sinceUtc])[0];
+        if ($views + $mw + (int) $d['asked'] > 0) {
+            $rows[] = $f + ['views' => $views, 'mw' => $mw, 'asked' => (int) $d['asked'], 'got' => (int) $d['got']];
+        }
+    }
+    usort($rows, fn ($a, $b) => [$b['got'] + $b['mw'], $b['views']] <=> [$a['got'] + $a['mw'], $a['views']]);
+    return ['rows' => $rows, 'totals' => [
+        'views' => array_sum(array_column($rows, 'views')), 'asked' => array_sum(array_column($rows, 'asked')),
+        'got' => array_sum(array_column($rows, 'got')), 'mw' => array_sum(array_column($rows, 'mw'))]];
 }
