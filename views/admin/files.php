@@ -1,4 +1,4 @@
-<a class="a-btn a-btn-block" href="/admin/files/new">+ New file</a>
+<div class="a-btn-row"><a class="a-btn" href="/admin/files/new">+ New file</a><a class="a-btn a-btn-outline" href="/admin/files/import">Import from MakerWorld</a></div>
 <p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder the shop.</p>
 <ul class="a-list" data-sortable="/admin/reorder/files">
 <?php foreach ($files as $f): ?>

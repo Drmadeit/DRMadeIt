@@ -91,6 +91,8 @@ function admin_route(string $path, string $method): void
             admin_render('file_edit', ['file' => $file, 'images' => $imgs->fetchAll(), 'tab' => 'files', 'title' => $file['title']]);
         },
         'POST /admin/files/save' => fn () => save_file_item(),
+        'GET /admin/files/import' => fn () => admin_render('files_import', ['tab' => 'files', 'title' => 'Import from MakerWorld']),
+        'POST /admin/files/import' => fn () => import_makerworld(),
         'POST /admin/files/(\d+)/delete' => function ($id) {
             $file = find_row('files', (int) $id);
             $imgs = db()->prepare('SELECT image FROM file_images WHERE file_id = ?');

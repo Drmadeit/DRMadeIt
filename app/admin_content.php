@@ -49,9 +49,9 @@ function save_file_item(): void
         if ($title === '') {
             throw new RuntimeException('Give the file a title (or upload the file and it uses the file name).');
         }
-        if ($status === 'published' && !$paid && $filePath === '') {
+        if ($status === 'published' && !$paid && $filePath === '' && trim((string) ($_POST['makerworld_url'] ?? '')) === '') {
             $status = 'draft';
-            flash('Saved as a DRAFT: upload the download file, then tap Publish.');
+            flash('Saved as a DRAFT: upload the download file (or add its MakerWorld link), then tap Publish.');
         }
         if ($status === 'published' && $paid && ($price <= 0 || $buyUrl === '')) {
             $status = 'draft';
@@ -373,4 +373,57 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
         $h .= '<button type="button" class="a-btn a-btn-outline a-remove" data-remove-photo="' . e($removeName) . '" data-confirm-text="Remove this photo?">Remove photo</button>';
     }
     return $h . '</div>';
+}
+
+/** Paste MakerWorld model links (one per line): each becomes a draft file with its MakerWorld button. */
+function import_makerworld(): void
+{
+    @set_time_limit(300);
+    $made = $skipped = $bad = 0;
+    $noPhoto = [];
+    $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
+    foreach (preg_split('/\R/', (string) ($_POST['links'] ?? '')) as $line) {
+        if (trim($line) === '') {
+            continue;
+        }
+        $m = makerworld_model($line);
+        if (!$m) {
+            $bad++;
+            continue;
+        }
+        $dup = db()->prepare("SELECT 1 FROM files WHERE makerworld_url LIKE ?");
+        $dup->execute(['%/models/' . $m['id'] . '%']);
+        if ($dup->fetchColumn()) {
+            $skipped++;
+            continue;
+        }
+        $info = makerworld_lookup($m['url']);
+        $title = ($info['title'] ?? '') ?: ($m['guess'] ?: 'MakerWorld model ' . $m['id']);
+        db()->prepare("INSERT INTO files (title, slug, type, price_cents, description, license, makerworld_url, status, sort_order)
+            VALUES (?, ?, ?, 0, ?, 'personal', ?, 'draft', (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM files))")
+            ->execute([$title, file_address('', 0, null), $type, (string) ($info['description'] ?? ''), $m['url']]);
+        $id = (int) db()->lastInsertId();
+        $img = '';
+        if (!empty($info['image']) && ($bytes = http_get($info['image'], 15))) {
+            $img = save_image_bytes($bytes);
+        }
+        if ($img !== '') {
+            db()->prepare('INSERT INTO file_images (file_id, image, sort_order) VALUES (?, ?, 0)')->execute([$id, $img]);
+        } else {
+            $noPhoto[] = $title;
+        }
+        $made++;
+    }
+    $msg = $made ? "Added $made file" . ($made > 1 ? 's' : '') . ' as drafts. Check each one, then Publish.' : 'Nothing new added.';
+    if ($skipped) {
+        $msg .= " Skipped $skipped already in your shop.";
+    }
+    if ($bad) {
+        $msg .= " $bad line" . ($bad > 1 ? "s weren't" : " wasn't") . ' a MakerWorld model link.';
+    }
+    if ($noPhoto) {
+        $msg .= ' MakerWorld wouldn\'t share the photo' . (count($noPhoto) > 1 ? 's' : '') . ' for: ' . implode(', ', array_slice($noPhoto, 0, 5)) . (count($noPhoto) > 5 ? '…' : '') . '. Add a photo to those.';
+    }
+    flash($msg);
+    redirect('/admin/files');
 }

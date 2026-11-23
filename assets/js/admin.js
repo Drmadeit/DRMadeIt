@@ -241,6 +241,14 @@
     });
   });
 
+  // ---- Slow forms: show that it's working ----
+  document.querySelectorAll('form[data-busy]').forEach((f) => {
+    f.addEventListener('submit', () => {
+      const b = f.querySelector('button:not([type=button])');
+      if (b) { b.disabled = true; b.textContent = f.dataset.busy; }
+    });
+  });
+
   // ---- Copy buttons ----
   document.querySelectorAll('[data-copy]').forEach((b) => {
     b.addEventListener('click', async () => {

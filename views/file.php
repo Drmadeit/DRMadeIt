@@ -25,7 +25,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
     </div>
   <?php endif; ?>
 
-  <?php if ($free): ?>
+  <?php if ($free && $file['file_path'] !== ''): ?>
     <div class="get-box" id="get">
       <?php if (!empty($directLink)): ?>
         <p class="ok"><b>Thanks!</b> Here's your download. (Our email is acting up, so you get it right here.)</p>

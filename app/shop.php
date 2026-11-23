@@ -46,6 +46,9 @@ function file_images(int $fileId): array
 /** POST /files/<slug>/get — email-gated free download. */
 function request_download(array $file): void
 {
+    if ($file['file_path'] === '') { // MakerWorld-only file: nothing to email
+        redirect('/files/' . $file['slug']);
+    }
     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
     $state = ['file' => $file, 'images' => file_images((int) $file['id']), 'title' => $file['title'], 'email' => $email];
 
@@ -139,4 +142,35 @@ function amazon_link(string $url): string
         return $url;
     }
     return $url . (str_contains($url, '?') ? '&' : '?') . 'tag=' . rawurlencode($tag);
+}
+
+/** "https://makerworld.com/en/models/123456-spice-rack?x" → ['id' => '123456', 'url' => clean link, 'guess' => 'Spice Rack'] */
+function makerworld_model(string $line): ?array
+{
+    if (!preg_match('#https?://(?:www\.)?makerworld\.com(?:/[a-z]{2}(?:-[a-z]{2})?)?/models/(\d+)(-[A-Za-z0-9-]+)?#i', $line, $m)) {
+        return null;
+    }
+    $slug = trim($m[2] ?? '', '-');
+    return ['id' => $m[1], 'url' => 'https://makerworld.com/en/models/' . $m[1] . ($slug !== '' ? '-' . $slug : ''),
+        'guess' => $slug !== '' ? ucwords(str_replace('-', ' ', $slug)) : ''];
+}
+
+/** Title + cover photo from the model page, if MakerWorld lets the server read it. */
+function makerworld_lookup(string $url): array
+{
+    $html = http_get($url, 10);
+    if (!$html) {
+        return [];
+    }
+    $meta = function (string $prop) use ($html): string {
+        foreach (['property', 'name'] as $attr) {
+            if (preg_match('#<meta[^>]+' . $attr . '=["\']' . preg_quote($prop, '#') . '["\'][^>]+content=["\']([^"\']+)#i', $html, $m)
+                || preg_match('#<meta[^>]+content=["\']([^"\']+)["\'][^>]+' . $attr . '=["\']' . preg_quote($prop, '#') . '["\']#i', $html, $m)) {
+                return html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5);
+            }
+        }
+        return '';
+    };
+    $title = trim(preg_replace('/\s*[-|–]\s*MakerWorld.*$/i', '', $meta('og:title')));
+    return ['title' => $title, 'image' => $meta('og:image') ?: $meta('twitter:image'), 'description' => $meta('og:description')];
 }
