@@ -2,7 +2,7 @@
 $siteName = setting('site_name', 'D.R. Made It');
 $pageTitle = isset($title) ? $title . ' · ' . $siteName : $siteName;
 $desc = $description ?? setting('bio');
-$ogImage = isset($ogImage) && $ogImage !== '' ? base_url() . $ogImage : base_url() . '/assets/img/og.jpg';
+$ogImage = isset($ogImage) && $ogImage !== '' ? (preg_match('#^https?://#', $ogImage) ? $ogImage : base_url() . $ogImage) : base_url() . '/assets/img/og.jpg';
 $logo = setting('logo_image') !== '' ? img_url(setting('logo_image'), true) : asset('img/logo.webp');
 ?><!doctype html>
 <html lang="en">

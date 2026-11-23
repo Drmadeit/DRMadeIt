@@ -84,8 +84,8 @@ function write_webp(GdImage $src, string $path, int $max, int $quality): void
 /** Public URL for a stored image. $small picks the thumbnail when one exists. */
 function img_url(string $name, bool $small = false): string
 {
-    if ($name === '') {
-        return '';
+    if ($name === '' || preg_match('#^https?://#i', $name)) {
+        return $name; // a photo that lives on another site (e.g. MakerWorld's own cover photo)
     }
     if ($small) {
         $sm = preg_replace('/\.webp$/', '-sm.webp', $name);

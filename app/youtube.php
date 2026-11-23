@@ -140,14 +140,14 @@ function youtube_embed_url(string $url): ?string
     return $id ? 'https://www.youtube-nocookie.com/embed/' . $id : null;
 }
 
-function http_get(string $url, int $timeout = 8): ?string
+function http_get(string $url, int $timeout = 8, string $referer = ''): ?string
 {
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SiteFeed/1.0)',
-            CURLOPT_HTTPHEADER => ['Accept-Language: en-US,en;q=0.8'],
+            CURLOPT_USERAGENT => $referer !== '' ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' : 'Mozilla/5.0 (compatible; SiteFeed/1.0)',
+            CURLOPT_HTTPHEADER => array_merge(['Accept-Language: en-US,en;q=0.8'], $referer !== '' ? ['Referer: ' . $referer, 'Accept: image/avif,image/webp,image/*,*/*;q=0.8'] : []),
         ]);
         $body = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);

@@ -2,7 +2,7 @@
 <p class="a-hint"><?= count($subs) ?> emails. ✓ = said yes to "Send me new files and builds". Only email people with ✓.</p>
 <ul class="a-list">
 <?php foreach ($subs as $s): ?>
-  <li class="a-row">
+  <li class="a-row" data-delete="/admin/emails/<?= (int) $s['id'] ?>/delete" data-confirm-delete="Delete <?= e($s['email']) ?> and their download history?">
     <span class="a-row-main"><span class="a-row-text">
       <b><?= $s['opted_in'] ? '✓ ' : '' ?><?= e($s['email']) ?></b>
       <small><?= e(date('M j, Y', strtotime($s['created_at'] . ' UTC'))) ?> · <?= (int) $s['n'] ?> download<?= $s['n'] == 1 ? '' : 's' ?></small>

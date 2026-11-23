@@ -379,7 +379,7 @@ function photo_field(string $name, string $current, string $label = 'Photo', str
 function import_makerworld(): void
 {
     @set_time_limit(300);
-    $made = $skipped = $bad = 0;
+    $made = $skipped = $bad = $updated = 0;
     $noPhoto = [];
     $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
     foreach (preg_split('/\R/', (string) ($_POST['links'] ?? '')) as $line) {
@@ -391,13 +391,7 @@ function import_makerworld(): void
             $bad++;
             continue;
         }
-        $dup = db()->prepare("SELECT 1 FROM files WHERE makerworld_url LIKE ?");
-        $dup->execute(['%/models/' . $m['id'] . '%']);
-        if ($dup->fetchColumn()) {
-            $skipped++;
-            continue;
-        }
-        // Lines from the MakerWorld bookmark: "link | title | photo link". Plain links: ask MakerWorld (often blocked).
+        // Lines from the MakerWorld bookmark: "link | title | photo link". Plain links: ask MakerWorld (usually blocked).
         $parts = array_map('trim', explode('|', $line));
         $given = ['title' => html_entity_decode($parts[1] ?? '', ENT_QUOTES | ENT_HTML5), 'image' => $parts[2] ?? '', 'description' => ''];
         $info = $given['title'] !== '' ? $given : makerworld_lookup($m['url']);
@@ -405,15 +399,30 @@ function import_makerworld(): void
             $info['image'] = $given['image'];
         }
         $title = ($info['title'] ?? '') ?: ($m['guess'] ?: 'MakerWorld model ' . $m['id']);
+
+        $dup = db()->prepare("SELECT * FROM files WHERE makerworld_url LIKE ?");
+        $dup->execute(['%/models/' . $m['id'] . '%']);
+        if ($old = $dup->fetch()) {
+            // Already here: fill in what an earlier import couldn't (real title, photo)
+            $fixed = false;
+            if (str_starts_with($old['title'], 'MakerWorld model ') && !str_starts_with($title, 'MakerWorld model ')) {
+                db()->prepare('UPDATE files SET title = ? WHERE id = ?')->execute([$title, $old['id']]);
+                $fixed = true;
+            }
+            $has = db()->prepare('SELECT 1 FROM file_images WHERE file_id = ?');
+            $has->execute([$old['id']]);
+            if (!$has->fetchColumn() && ($img = makerworld_photo((string) ($info['image'] ?? ''))) !== '') {
+                db()->prepare('INSERT INTO file_images (file_id, image, sort_order) VALUES (?, ?, 0)')->execute([$old['id'], $img]);
+                $fixed = true;
+            }
+            $fixed ? $updated++ : $skipped++;
+            continue;
+        }
         db()->prepare("INSERT INTO files (title, slug, type, price_cents, description, license, makerworld_url, status, sort_order)
             VALUES (?, ?, ?, 0, ?, 'personal', ?, 'draft', (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM files))")
             ->execute([$title, file_address('', 0, null), $type, (string) ($info['description'] ?? ''), $m['url']]);
         $id = (int) db()->lastInsertId();
-        $img = '';
-        if (!empty($info['image']) && preg_match('#^https://#', $info['image']) && ($bytes = http_get($info['image'], 15))) {
-            $img = save_image_bytes($bytes);
-        }
-        if ($img !== '') {
+        if (($img = makerworld_photo((string) ($info['image'] ?? ''))) !== '') {
             db()->prepare('INSERT INTO file_images (file_id, image, sort_order) VALUES (?, ?, 0)')->execute([$id, $img]);
         } else {
             $noPhoto[] = $title;
@@ -421,6 +430,9 @@ function import_makerworld(): void
         $made++;
     }
     $msg = $made ? "Added $made file" . ($made > 1 ? 's' : '') . ' as drafts. Check each one, then Publish.' : 'Nothing new added.';
+    if ($updated) {
+        $msg .= " Filled in the title or photo on $updated you already had.";
+    }
     if ($skipped) {
         $msg .= " Skipped $skipped already in your shop.";
     }
@@ -428,8 +440,19 @@ function import_makerworld(): void
         $msg .= " $bad line" . ($bad > 1 ? "s weren't" : " wasn't") . ' a MakerWorld model link.';
     }
     if ($noPhoto) {
-        $msg .= ' MakerWorld wouldn\'t share the photo' . (count($noPhoto) > 1 ? 's' : '') . ' for: ' . implode(', ', array_slice($noPhoto, 0, 5)) . (count($noPhoto) > 5 ? '…' : '') . '. Add a photo to those.';
+        $msg .= ' No photo found for: ' . implode(', ', array_slice($noPhoto, 0, 5)) . (count($noPhoto) > 5 ? '…' : '') . '. Add a photo to those.';
     }
     flash($msg);
     redirect('/admin/files');
+}
+
+/** Keep a copy of a MakerWorld photo; if MakerWorld won't hand it to the server, show it straight from MakerWorld. */
+function makerworld_photo(string $url): string
+{
+    if (!preg_match('#^https://#', $url)) {
+        return '';
+    }
+    $bytes = http_get($url, 15, 'https://makerworld.com/');
+    $saved = $bytes ? save_image_bytes($bytes) : '';
+    return $saved !== '' ? $saved : $url;
 }

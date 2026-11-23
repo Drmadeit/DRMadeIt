@@ -9,7 +9,9 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
         if ($b['kind'] === 'link') {
             $sub .= ' → ' . preg_replace('#^https?://(www\.)?#', '', $b['url']);
         }
-        echo '<li class="a-row' . ($b['visible'] ? '' : ' is-hidden') . '" data-id="' . (int) $b['id'] . '">'
+        $what = strtolower(BUTTON_KINDS[$b['kind']]);
+        echo '<li class="a-row' . ($b['visible'] ? '' : ' is-hidden') . '" data-id="' . (int) $b['id'] . '" data-delete="/admin/buttons/' . (int) $b['id'] . '/delete" data-confirm-delete="'
+            . e(delete_warning($what, address_uses(page_url($b), (int) $b['id']))) . '">'
             . '<button type="button" class="a-grip" aria-label="Drag to reorder ' . e($b['title']) . '">' . icon('grip', 22) . '</button>'
             . '<a class="a-row-main" href="/admin/buttons/' . (int) $b['id'] . '">'
             . ($img ? '<img src="' . e($img) . '" alt="" width="48" height="48">' : '<span class="a-thumb-empty">' . icon($b['icon'] ?: $kindIcon[$b['kind']], 22) . '</span>')
@@ -40,5 +42,5 @@ $list = function (array $rows, bool $home) use ($kindIcon) {
   <?php $list($groups['none'], false); ?>
 <?php endif; ?>
 
-<p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. <span class="a-inline-icon"><?= icon('star', 16) ?></span> = featured (red outline). <span class="a-inline-icon"><?= icon('eye', 16) ?></span> = show / hide.
+<p class="a-hint">Drag <span class="a-inline-icon"><?= icon('grip', 16) ?></span> to reorder. Swipe left to delete. <span class="a-inline-icon"><?= icon('star', 16) ?></span> = featured (red outline). <span class="a-inline-icon"><?= icon('eye', 16) ?></span> = show / hide.
   Every button has its own address, like <?= e($host) ?>/k7m.</p>

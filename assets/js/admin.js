@@ -241,6 +241,66 @@
     });
   });
 
+  // ---- Swipe a row left to delete it ----
+  (() => {
+    const rows = document.querySelectorAll('li[data-delete]');
+    if (!rows.length) return;
+    const OPEN = 92;
+    let open = null;
+    const close = (row) => { if (row) { row.style.transform = ''; row.classList.remove('is-open'); } if (open === row) open = null; };
+    const post = (url) => {
+      const f = document.createElement('form');
+      f.method = 'post';
+      f.action = url;
+      const c = document.createElement('input');
+      c.type = 'hidden'; c.name = 'csrf'; c.value = document.querySelector('meta[name="csrf"]').content;
+      f.append(c);
+      document.body.append(f);
+      f.submit();
+    };
+    rows.forEach((row) => {
+      row.classList.add('a-swipe');
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'a-swipe-del';
+      del.textContent = 'Delete';
+      del.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (confirm(row.dataset.confirmDelete || 'Delete this?')) post(row.dataset.delete);
+        else close(row);
+      });
+      row.append(del);
+      let x0 = 0, y0 = 0, dx = 0, base = 0, dir = null;
+      row.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.a-grip')) { dir = 'skip'; return; }
+        if (open && open !== row) close(open);
+        x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; dir = null;
+        base = row.classList.contains('is-open') ? -OPEN : 0;
+        row.style.transition = 'none';
+      }, { passive: true });
+      row.addEventListener('touchmove', (e) => {
+        if (dir === 'skip') return;
+        const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+        if (!dir) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; dir = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'; }
+        if (dir !== 'x') return;
+        dx = mx;
+        row.style.transform = `translateX(${Math.min(0, Math.max(-OPEN - 30, base + dx))}px)`;
+      }, { passive: true });
+      row.addEventListener('touchend', () => {
+        row.style.transition = '';
+        if (dir !== 'x') { dir = null; return; }
+        if (base + dx < -OPEN / 2) { row.style.transform = `translateX(${-OPEN}px)`; row.classList.add('is-open'); open = row; }
+        else close(row);
+        dir = null;
+      });
+      // A swipe shouldn't also count as a tap on the row's link
+      row.addEventListener('click', (e) => {
+        if (row.classList.contains('is-open') && !e.target.closest('.a-swipe-del')) { e.preventDefault(); close(row); }
+      }, true);
+    });
+    document.addEventListener('touchstart', (e) => { if (open && !open.contains(e.target)) close(open); }, { passive: true });
+  })();
+
   // ---- Slow forms: show that it's working ----
   document.querySelectorAll('form[data-busy]').forEach((f) => {
     f.addEventListener('submit', () => {
