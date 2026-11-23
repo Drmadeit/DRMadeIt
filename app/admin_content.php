@@ -382,34 +382,47 @@ function import_makerworld(): void
     $made = $skipped = $bad = $updated = 0;
     $noPhoto = [];
     $type = ($_POST['type'] ?? '3d') === 'cnc' ? 'cnc' : '3d';
-    // One model per MakerWorld link, even if the line breaks got lost when pasting (it all arrives as one line)
-    $text = (string) ($_POST['links'] ?? '');
-    $chunks = preg_split('#(?=https?://(?:www\.)?makerworld\.com/)#i', $text);
-    foreach ($chunks as $line) {
-        if (trim($line) === '') {
+    // What the Grab MakerWorld bookmark copies: MAKERWORLD:[{url, title, img, description}, …]
+    // Older copies / plain links: one model per MakerWorld link (line breaks often get lost when pasting on a phone).
+    $text = trim((string) ($_POST['links'] ?? ''));
+    $items = [];
+    if (preg_match('/MAKERWORLD:\s*(\[.*\])/s', $text, $j) && is_array($list = json_decode($j[1], true))) {
+        foreach ($list as $it) {
+            if (is_array($it)) {
+                $items[] = ['line' => (string) ($it['url'] ?? ''), 'title' => trim((string) ($it['title'] ?? '')), 'image' => (string) ($it['img'] ?? ''),
+                    'description' => trim((string) ($it['description'] ?? ''))];
+            }
+        }
+    } else {
+        foreach (preg_split('#(?=https?://(?:www\.)?makerworld\.com/)#i', $text) as $line) {
+            $parts = array_map('trim', explode('|', $line));
+            $items[] = ['line' => $line, 'title' => html_entity_decode($parts[1] ?? '', ENT_QUOTES | ENT_HTML5), 'image' => $parts[2] ?? '', 'description' => ''];
+        }
+    }
+    foreach ($items as $it) {
+        if (trim($it['line']) === '') {
             continue;
         }
-        $m = makerworld_model($line);
+        $m = makerworld_model($it['line']);
         if (!$m) {
             $bad++;
             continue;
         }
-        // Lines from the MakerWorld bookmark: "link | title | photo link". Plain links: ask MakerWorld (usually blocked).
-        $parts = array_map('trim', explode('|', $line));
-        $given = ['title' => html_entity_decode($parts[1] ?? '', ENT_QUOTES | ENT_HTML5), 'image' => $parts[2] ?? '', 'description' => ''];
-        $info = $given['title'] !== '' ? $given : makerworld_lookup($m['url']);
-        if (empty($info['image']) && $given['image'] !== '') {
-            $info['image'] = $given['image'];
-        }
+        $info = $it['title'] !== '' ? $it : makerworld_lookup($m['url']) + ['image' => $it['image'], 'description' => ''];
         $title = ($info['title'] ?? '') ?: ($m['guess'] ?: 'MakerWorld model ' . $m['id']);
+        $desc = (string) ($info['description'] ?? '');
 
         $dup = db()->prepare("SELECT * FROM files WHERE makerworld_url LIKE ?");
         $dup->execute(['%/models/' . $m['id'] . '%']);
         if ($old = $dup->fetch()) {
-            // Already here: fill in what an earlier import couldn't (real title, photo)
+            // Already here: fill in what an earlier import couldn't (real title, description, photo)
             $fixed = false;
-            if (str_starts_with($old['title'], 'MakerWorld model ') && !str_starts_with($title, 'MakerWorld model ')) {
+            if ($old['title'] !== $title && ($it['title'] !== '' || str_starts_with($old['title'], 'MakerWorld model '))) {
                 db()->prepare('UPDATE files SET title = ? WHERE id = ?')->execute([$title, $old['id']]);
+                $fixed = true;
+            }
+            if ($old['description'] === '' && $desc !== '') {
+                db()->prepare('UPDATE files SET description = ? WHERE id = ?')->execute([$desc, $old['id']]);
                 $fixed = true;
             }
             $has = db()->prepare('SELECT 1 FROM file_images WHERE file_id = ?');
@@ -423,7 +436,7 @@ function import_makerworld(): void
         }
         db()->prepare("INSERT INTO files (title, slug, type, price_cents, description, license, makerworld_url, status, sort_order)
             VALUES (?, ?, ?, 0, ?, 'personal', ?, 'draft', (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM files))")
-            ->execute([$title, file_address('', 0, null), $type, (string) ($info['description'] ?? ''), $m['url']]);
+            ->execute([$title, file_address('', 0, null), $type, $desc, $m['url']]);
         $id = (int) db()->lastInsertId();
         if (($img = makerworld_photo((string) ($info['image'] ?? ''))) !== '') {
             db()->prepare('INSERT INTO file_images (file_id, image, sort_order) VALUES (?, ?, 0)')->execute([$id, $img]);
@@ -434,7 +447,7 @@ function import_makerworld(): void
     }
     $msg = $made ? "Added $made file" . ($made > 1 ? 's' : '') . ' as drafts. Check each one, then Publish.' : 'Nothing new added.';
     if ($updated) {
-        $msg .= " Filled in the title or photo on $updated you already had.";
+        $msg .= " Filled in the title, description or photo on $updated you already had.";
     }
     if ($skipped) {
         $msg .= " Skipped $skipped already in your shop.";
@@ -449,11 +462,20 @@ function import_makerworld(): void
     redirect('/admin/files');
 }
 
-/**
- * The cover photo for an imported MakerWorld model: shown straight from MakerWorld's image server.
- * (Copying it onto your server during the import crashed partway on the live site, so it stays a link.)
- */
+/** Keep a copy of a MakerWorld cover photo on your server; if that fails, show it straight from MakerWorld. */
 function makerworld_photo(string $url): string
 {
-    return preg_match('#^https://[a-z0-9.-]+\.(bblmw\.com|makerworld\.com)/#i', $url) ? $url : '';
+    if (!preg_match('#^https://[a-z0-9.-]+\.(bblmw\.com|makerworld\.com)/#i', $url)) {
+        return '';
+    }
+    $bytes = http_get($url, 10, 'https://makerworld.com/');
+    $saved = '';
+    if ($bytes && strlen($bytes) < 8_000_000) {
+        try {
+            $saved = save_image_bytes($bytes);
+        } catch (Throwable) {
+            $saved = '';
+        }
+    }
+    return $saved !== '' ? $saved : $url;
 }
