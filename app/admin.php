@@ -38,6 +38,11 @@ function admin_route(string $path, string $method): void
     }
 
     require_admin();
+    // Keep the login alive while it's being used (the home-screen app shouldn't log out every 30 days).
+    if (($_SESSION['cookie_renewed'] ?? 0) < time() - 86400) {
+        $_SESSION['cookie_renewed'] = time();
+        setcookie(session_name(), session_id(), ['expires' => time() + SESSION_DAYS * 86400, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    }
     if (!isset($_COOKIE[STAT_OWNER_COOKIE])) { // keep this phone out of the stats, even after logging out
         setcookie(STAT_OWNER_COOKIE, '1', ['expires' => time() + 5 * 365 * 86400, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
     }

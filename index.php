@@ -30,7 +30,7 @@ register_shutdown_function(function () {
 $path = '/' . trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-if (str_starts_with($path, '/admin')) {
+if (str_starts_with($path, '/admin') && $path !== '/admin.webmanifest') {
     require ROOT . '/app/admin.php';
     admin_route($path, $method);
     exit;
@@ -101,6 +101,18 @@ if ($path === '/') {
 // ---- Stats: taps sent by assets/js/stats.js ----
 } elseif ($path === '/t' && $method === 'POST') {
     stats_beacon();
+
+// ---- Admin as a home-screen app (fetched without the login cookie, so it skips the admin login check) ----
+} elseif ($path === '/admin.webmanifest') {
+    header('Content-Type: application/manifest+json');
+    header('Cache-Control: no-cache');
+    echo json_encode([
+        'name' => setting('site_name', 'D.R. Made It') . ' Admin', 'short_name' => 'DR Admin', 'id' => '/admin',
+        'start_url' => '/admin', 'scope' => '/admin', 'display' => 'standalone',
+        'background_color' => '#f4f4f5', 'theme_color' => '#0a0a0b',
+        'icons' => [['src' => asset('img/admin-192.png'), 'sizes' => '192x192', 'type' => 'image/png'],
+                    ['src' => asset('img/admin-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any']],
+    ], JSON_UNESCAPED_SLASHES);
 
 // ---- Robots ----
 } elseif ($path === '/robots.txt') {

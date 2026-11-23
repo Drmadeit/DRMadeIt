@@ -7,6 +7,13 @@
 <meta name="csrf" content="<?= e(csrf_token()) ?>">
 <title><?= e($title ?? 'Admin') ?> · Admin</title>
 <link rel="icon" href="<?= e(asset('img/logo.webp')) ?>">
+<link rel="manifest" href="/admin.webmanifest">
+<link rel="apple-touch-icon" href="<?= e(asset('img/admin-180.png')) ?>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DR Admin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0a0b">
 <link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>">
 </head>
 <body class="<?= empty($bare) ? '' : 'bare' ?>">

@@ -19,6 +19,11 @@ $mailErr = setting('mail_error') !== '';
   <?php endforeach; ?>
 </nav>
 
+<div class="a-card a-form a-install">
+  <h2>Put the admin on your phone</h2>
+  <p class="a-hint">iPhone: in Safari tap <b>Share</b> (square with the arrow) → <b>Add to Home Screen</b>. Android: Chrome menu ⋮ → <b>Add to Home screen</b>. It opens like an app. Log in once there and it stays logged in as long as you use it at least once a month.</p>
+</div>
+
 <nav class="a-card a-menu" aria-label="Site">
   <?= $row('/', 'home', 'View site') ?>
 </nav>
