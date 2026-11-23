@@ -1,5 +1,5 @@
 # Makes the DR Admin home-screen icons (steel blade on black) from assets/img/logo.webp.
-# Small sizes drop the thin cabinet lines and thicken the name so it reads at icon size.
+# Door/drawer gaps are black; small sizes thicken them and the name so it reads at icon size.
 # Run from a scratch folder: python3 admin-steel.py, then copy icon-steel-{180,192,512}.png to assets/img/admin-*.png
 import sys
 from PIL import Image, ImageFilter
@@ -25,19 +25,21 @@ red=(r>150)&(g<90)
 yy,xx=np.mgrid[0:H,0:W]; cx,cy=W/2,H/2
 def build(simple):
     res=src.copy()
+    # red disc: the door/drawer gaps (thin white lines) turn black; small sizes get them thicker
+    rr=np.hypot(xx-cx,yy-cy); R=np.percentile(rr[red],99.5)
+    span=slice(int(cx-R*0.3),int(cx+R*0.3))  # the name band: rows that are mostly white across the middle
+    col=((lum[:,span]>200).mean(axis=1)>0.5)&(np.abs(np.arange(H)-cy)<R*0.4)
+    band=np.zeros(H,bool); idx=np.nonzero(col)[0]
+    if len(idx): band[idx.min():idx.max()+1]=True
+    inband=band[:,None]&np.ones((1,W),bool)
+    disc=(rr<R-4)&~inband
+    a=np.where(disc&(r>120), np.clip((g-40)/160,0,1), 0)  # how "white" each pixel is
+    am=Image.fromarray((a*255).astype(np.uint8))
     if simple:
-        # red disc: paint the thin cabinet lines red, except inside the white name band
-        rr=np.hypot(xx-cx,yy-cy); R=np.percentile(rr[red],99.5)
-        rows=np.nonzero(((~red)&(lum>200)&(abs(xx-cx)<20)).any(axis=1)&True)[0]
-        # band = the widest run of white rows through the center column
-        col=(lum[:,int(cx)-3:int(cx)+3].mean(axis=1)>200)&(np.abs(np.arange(H)-cy)<R*0.4)
-        band=np.zeros(H,bool); 
-        idx=np.nonzero(col)[0]
-        if len(idx): band[idx.min():idx.max()+1]=True
-        inband=band[:,None]&np.ones((1,W),bool)
-        lines=(rr<R-4)&~inband&(r>120)
-        res[lines]=[237,28,36]
-        # fatten the name letters
+        am=am.filter(ImageFilter.MaxFilter(5))
+    a=(np.array(am)/255.0)*disc
+    res=np.where(disc[...,None], np.array([237,28,36])*(1-a[...,None])+np.array([12,12,13])*a[...,None], res)
+    if simple:
         txt=Image.fromarray(((red&inband)*255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))
         tm=np.array(txt)>0
         res[tm&inband&(rr<R)]=[237,28,36]
