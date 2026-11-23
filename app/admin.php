@@ -81,7 +81,7 @@ function admin_route(string $path, string $method): void
             'files' => db()->query('SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb FROM files f ORDER BY sort_order, id')->fetchAll(),
             'tab' => 'files', 'title' => 'Files']),
         'GET /admin/files/new' => fn () => admin_render('file_edit', [
-            'file' => ['id' => 0, 'title' => '', 'slug' => file_address('', 0, null), 'type' => 'cnc', 'price_cents' => 0, 'buy_url' => '', 'description' => '',
+            'file' => ['id' => 0, 'title' => '', 'slug' => file_address('', 0, null), 'type' => 'cnc', 'price_cents' => 0, 'buy_url' => '', 'makerworld_url' => '', 'description' => '',
                 'formats' => '', 'notes' => '', 'license' => 'personal', 'video_url' => '', 'file_path' => '', 'status' => 'draft', 'featured' => 0],
             'images' => [], 'tab' => 'files', 'title' => 'New file']),
         'GET /admin/files/(\d+)' => function ($id) {

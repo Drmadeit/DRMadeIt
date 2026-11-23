@@ -7,13 +7,14 @@ declare(strict_types=1);
  *   people ref = ''                (first page view of the day from a phone/computer)
  *   btn    ref = button id         (tapped on the home page or in a folder, sent by stats.js)
  *   amazon ref = host/path         (any other Amazon link, e.g. typed in a description)
+ *   mw     ref = file id           (tapped "Get it on MakerWorld" on a file page)
  *   app    ref = app slug          (calculator opened, works even from the home screen)
  *   go     ref = button id         (someone used a link button's own address, e.g. drmadeit.com/k7m)
  * File emails and downloads come from the downloads table, which already has their history.
  * Bots and the site owner (anyone who has logged in to admin on that browser) are skipped.
  */
 
-const STAT_KINDS_FROM_BROWSER = ['btn', 'amazon', 'app'];
+const STAT_KINDS_FROM_BROWSER = ['btn', 'amazon', 'app', 'mw'];
 const STAT_OWNER_COOKIE = 'drm_me';
 
 function stat_day(): string
@@ -95,6 +96,7 @@ function stats_beacon(): void
     }
     $ok = match ($k) {
         'btn' => ctype_digit($r) && stat_row_exists('pages', (int) $r),
+        'mw' => ctype_digit($r) && stat_row_exists('files', (int) $r),
         'app' => isset(APPS[$r]),
         'amazon' => (bool) preg_match('~^(?:[a-z0-9-]+\.)*(?:amazon\.[a-z.]+|amzn\.to|a\.co)/~i', $r = stat_amazon_ref($r)),
     };
@@ -171,11 +173,26 @@ function stats_report(int $days): array
     $files = $q('SELECT f.id, f.title, COUNT(d.id) asked, SUM(d.uses > 0) got
         FROM downloads d JOIN files f ON f.id = d.file_id WHERE d.created_at >= ? GROUP BY f.id ORDER BY got DESC, asked DESC', [$sinceUtc]);
 
+    // MakerWorld taps per file, added to the files list (and files only sent there show up too)
+    $mw = array_column($top('mw', 200), 'n', 'ref');
+    foreach ($files as &$f) {
+        $f['mw'] = (int) ($mw[$f['id']] ?? 0);
+        unset($mw[$f['id']]);
+    }
+    unset($f);
+    foreach ($mw as $fid => $n) {
+        $t = $q('SELECT title FROM files WHERE id = ?', [(int) $fid])[0]['title'] ?? null;
+        if ($t !== null) {
+            $files[] = ['id' => (int) $fid, 'title' => $t, 'asked' => 0, 'got' => 0, 'mw' => (int) $n];
+        }
+    }
+    $emails = (int) ($q('SELECT COUNT(*) n FROM subscribers WHERE created_at >= ?', [$sinceUtc])[0]['n'] ?? 0);
+
     $first = $q('SELECT MIN(day) d FROM stats')[0]['d'] ?? null;
     return [
         'people' => $sum('people'), 'views' => $sum('view'),
         'taps' => $sum('btn'), 'amazonTaps' => $sum('amazon'),
-        'downloads' => array_sum(array_map(fn ($f) => (int) $f['got'], $files)),
+        'downloads' => array_sum(array_map(fn ($f) => (int) $f['got'], $files)), 'emails' => $emails,
         'series' => $series, 'byMonth' => $byMonth,
         'pages' => $pages, 'links' => $links, 'amazon' => array_slice($amazon, 0, 50), 'files' => $files, 'apps' => $apps, 'short' => $short,
         'since' => $first,

@@ -44,6 +44,9 @@ $live = $file['status'] === 'published';
       <label>Buy link <input name="buy_url" value="<?= e($file['buy_url']) ?>" placeholder="https://payhip.com/b/…" autocapitalize="none" inputmode="url"></label>
       <p class="a-hint">Payhip, Etsy or Stripe handles payment and sends the file.</p>
     </div>
+    <label>MakerWorld link <small>(optional)</small>
+      <input name="makerworld_url" value="<?= e($file['makerworld_url'] ?? '') ?>" placeholder="https://makerworld.com/en/models/…" autocapitalize="none" inputmode="url"></label>
+    <p class="a-hint">If it's on MakerWorld too, that button shows first (downloads there earn you rewards). People without an account can still use the email download.</p>
     <label>Address
       <span class="a-prefix"><span><?= e(preg_replace('#^https?://#', '', base_url())) ?>/files/</span><input name="slug" value="<?= e($file['slug']) ?>" autocapitalize="none" autocomplete="off" spellcheck="false" data-reuse-input></span></label>
     <p class="a-hint">A short code is made for you. Want a word instead? Type it. The old address keeps working if you change it.</p>

@@ -273,6 +273,10 @@ function migrate(PDO $pdo): void
             }
             $pdo->exec("UPDATE settings SET value = '0' WHERE key = 'tools_on_home'");
         },
+        15 => function (PDO $pdo): void {
+            // Optional MakerWorld page for a file: shown first on the file page (downloads there earn rewards)
+            $pdo->exec("ALTER TABLE files ADD COLUMN makerworld_url TEXT NOT NULL DEFAULT ''");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

@@ -18,6 +18,13 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
   <h1 class="page-title"><?= e($file['title']) ?></h1>
   <p class="meta"><?= e(type_label($file['type'])) ?> · <b class="<?= $free ? 'free' : '' ?>"><?= e(price_label((int) $file['price_cents'])) ?></b></p>
 
+  <?php if ($mw = $file['makerworld_url'] ?? ''): ?>
+    <div class="mw-box">
+      <a class="btn btn-wide" href="<?= e($mw) ?>" target="_blank" rel="noopener" data-t="mw:<?= (int) $file['id'] ?>">Get it on MakerWorld</a>
+      <p class="mw-note">Free with a MakerWorld account. Downloading it there supports me.</p>
+    </div>
+  <?php endif; ?>
+
   <?php if ($free): ?>
     <div class="get-box" id="get">
       <?php if (!empty($directLink)): ?>
@@ -29,7 +36,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
         <form method="post" action="/files/<?= e($file['slug']) ?>/get#get" class="get-form">
           <?= csrf_field() ?>
           <?php if (!empty($formError)): ?><p class="error"><?= e($formError) ?></p><?php endif; ?>
-          <label for="email">Email me the free download</label>
+          <label for="email"><?= $mw ? 'No account? Email me the free download' : 'Email me the free download' ?></label>
           <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" value="<?= e($email ?? '') ?>">
           <label class="check"><input type="checkbox" name="updates" value="1" checked> Send me new files and builds</label>
           <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -38,7 +45,7 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
       <?php endif; ?>
     </div>
   <?php elseif ($file['buy_url']): ?>
-    <a class="btn btn-wide" href="<?= e($file['buy_url']) ?>" target="_blank" rel="noopener">Buy for <?= e(price_label((int) $file['price_cents'])) ?></a>
+    <a class="btn btn-wide<?= $mw ? ' btn-outline' : '' ?>" href="<?= e($file['buy_url']) ?>" target="_blank" rel="noopener">Buy for <?= e(price_label((int) $file['price_cents'])) ?></a>
   <?php endif; ?>
 
   <?php if ($file['description']): ?><div class="prose"><?= paragraphs($file['description']) ?></div><?php endif; ?>

@@ -76,6 +76,7 @@ function save_file_item(): void
         'type' => $type,
         'price_cents' => max(0, $price),
         'buy_url' => $buyUrl,
+        'makerworld_url' => clean_url((string) ($_POST['makerworld_url'] ?? '')),
         'description' => trim((string) ($_POST['description'] ?? '')),
         'formats' => strtoupper(trim(preg_replace('/[\s,;\/]+/', ', ', (string) ($_POST['formats'] ?? '')), ', ')),
         'notes' => trim((string) ($_POST['notes'] ?? '')),

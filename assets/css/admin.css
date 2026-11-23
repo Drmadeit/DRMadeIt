@@ -204,8 +204,10 @@ select {
 .a-chips { display: flex; gap: 8px; }
 .a-chips a { flex: 1; text-align: center; padding: 10px 0; border-radius: 999px; border: 1px solid var(--line); background: var(--card); text-decoration: none; font-weight: 600; font-size: 14px; color: var(--ink); }
 .a-chips a[aria-current] { background: var(--ink); color: var(--card); border-color: var(--ink); }
-.a-stats-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (min-width: 560px) { .a-stats-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.a-stats-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.a-stats-4 .a-stat { padding: 8px 8px 9px; border-radius: 10px; }
+.a-stats-4 .a-stat b { font-size: 19px; }
+.a-stats-4 .a-stat span { font-size: 11px; line-height: 1.25; }
 .a-bars { display: flex; align-items: flex-end; gap: 4px; height: 120px; }
 .a-bars.is-dense { gap: 2px; }
 .a-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; background: var(--bg); border-radius: 3px; }
@@ -223,7 +225,7 @@ select {
 .a-center { text-align: center; }
 .a-stats-link { text-decoration: none; color: inherit; }
 .a-stats-link .a-stat { position: relative; }
-.a-stats-link .a-stat::after { content: '›'; position: absolute; top: 8px; right: 12px; font-size: 22px; color: var(--muted); }
+.a-stats-link .a-stat::after { content: '›'; position: absolute; top: 4px; right: 7px; font-size: 16px; color: var(--muted); }
 .a-stats-link:active .a-stat { background: var(--bg); }
 /* Installed as a home-screen app: hide the "how to install" card */
 @media (display-mode: standalone) { .a-install { display: none; } }
