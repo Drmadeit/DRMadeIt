@@ -235,6 +235,24 @@ function stats_detail(string $which, int $days): array
         $st->execute($args);
         return $st->fetchAll();
     };
+    if ($which === 'taps') {
+        // Buttons tapped (home + folders), Amazon links tapped, and link buttons opened by their own address
+        $title = fn (string $id) => $q('SELECT title, kind, slug, url FROM pages WHERE id = ?', [(int) $id])[0] ?? null;
+        $buttons = [];
+        foreach ($q("SELECT ref, SUM(n) n FROM stats WHERE kind = 'btn' AND day >= ? GROUP BY ref ORDER BY n DESC", [$since]) as $r) {
+            $b = $title($r['ref']);
+            $buttons[] = ['label' => $b['title'] ?? '(deleted button)', 'sub' => $b ? ($b['kind'] === 'link' ? preg_replace('#^https?://(www\.)?#', '', $b['url']) : '/' . $b['slug']) : '', 'n' => (int) $r['n']];
+        }
+        $amazon = array_map(fn ($r) => ['label' => $r['ref'], 'sub' => '', 'n' => (int) $r['n']],
+            $q("SELECT ref, SUM(n) n FROM stats WHERE kind = 'amazon' AND day >= ? GROUP BY ref ORDER BY n DESC LIMIT 30", [$since]));
+        $direct = [];
+        foreach ($q("SELECT ref, SUM(n) n FROM stats WHERE kind = 'go' AND day >= ? GROUP BY ref ORDER BY n DESC", [$since]) as $r) {
+            $b = $title($r['ref']);
+            $direct[] = ['label' => $b ? '/' . $b['slug'] : '(deleted link)', 'sub' => $b['title'] ?? '', 'n' => (int) $r['n']];
+        }
+        return ['buttons' => $buttons, 'amazon' => $amazon, 'direct' => $direct,
+            'total' => array_sum(array_column($buttons, 'n')) + array_sum(array_column($amazon, 'n')) + array_sum(array_column($direct, 'n'))];
+    }
     if ($which === 'visitors') {
         $daysList = $q("SELECT day, SUM(CASE WHEN kind = 'people' THEN n ELSE 0 END) people, SUM(CASE WHEN kind = 'view' THEN n ELSE 0 END) views,
                 SUM(CASE WHEN kind = 'btn' THEN n ELSE 0 END) taps

@@ -184,10 +184,10 @@ function admin_route(string $path, string $method): void
         'POST /admin/videos' => fn () => save_videos(),
 
         // settings
-        'GET /admin/stats/(visitors|files)' => function ($which) {
+        'GET /admin/stats/(visitors|files|taps)' => function ($which) {
             $days = in_array((int) ($_GET['days'] ?? 7), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 7) : 7;
             admin_render('stats_' . $which, stats_detail($which, $days) + ['days' => $days, 'which' => $which, 'tab' => 'home',
-                'title' => $which === 'files' ? 'File activity' : 'Visitors']);
+                'title' => ['files' => 'File activity', 'taps' => 'Link taps', 'visitors' => 'Visitors'][$which]]);
         },
         'GET /admin/stats' => function () {
             $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 0], true) ? (int) ($_GET['days'] ?? 30) : 30;
@@ -323,6 +323,7 @@ function admin_dashboard(): void
         'emailsWeek' => (int) $q('SELECT COUNT(*) FROM subscribers WHERE created_at >= ?', [$week])->fetchColumn(),
         'visitorsWeek' => (int) $q("SELECT COALESCE(SUM(n), 0) FROM stats WHERE kind = 'people' AND day >= ?", [date('Y-m-d', strtotime('-6 days'))])->fetchColumn(),
         'emailsTotal' => (int) $q('SELECT COUNT(*) FROM subscribers')->fetchColumn(),
+        'tapsWeek' => (int) $q("SELECT COALESCE(SUM(n), 0) FROM stats WHERE kind IN ('btn', 'go', 'amazon') AND day >= ?", [date('Y-m-d', strtotime('-6 days'))])->fetchColumn(),
         'top' => $q('SELECT f.title, f.id, COUNT(d.id) n FROM downloads d JOIN files f ON f.id = d.file_id
                      WHERE d.created_at >= ? GROUP BY f.id ORDER BY n DESC LIMIT 5', [db()->query("SELECT datetime('now', '-30 days')")->fetchColumn()])->fetchAll(),
         'tab' => 'home', 'title' => 'Dashboard',

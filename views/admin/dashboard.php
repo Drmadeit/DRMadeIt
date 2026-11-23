@@ -4,8 +4,8 @@
 <div class="a-stats a-stats-4 a-stats-link">
   <a class="a-stat" href="/admin/stats/visitors"><b><?= $visitorsWeek ?></b><span>visitors this week</span></a>
   <a class="a-stat" href="/admin/stats/files"><b><?= $downloadsWeek ?></b><span>downloads this week</span></a>
-  <a class="a-stat" href="/admin/emails?days=7"><b><?= $emailsWeek ?></b><span>new emails this week</span></a>
-  <a class="a-stat" href="/admin/emails"><b><?= $emailsTotal ?></b><span>emails total</span></a>
+  <a class="a-stat" href="/admin/emails?days=7"><b><?= $emailsWeek ?></b><span>new emails this week<?= $emailsTotal ? ' · ' . $emailsTotal . ' total' : '' ?></span></a>
+  <a class="a-stat" href="/admin/stats/taps"><b><?= $tapsWeek ?></b><span>link taps this week</span></a>
 </div>
 
 <section class="a-card a-form">
