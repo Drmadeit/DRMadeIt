@@ -417,7 +417,7 @@ function save_videos(): void
 
 /** The Settings screens listed on the More tab: key => [title, icon, short note]. */
 const SETTINGS_SECTIONS = [
-    'profile' => ['Profile & header', 'home', 'Name, bio, header photo'],
+    'profile' => ['Profile & header', 'home', 'Name, bio, header, home sections'],
     'social' => ['Social links', 'link', 'TikTok, Instagram, YouTube…'],
     'email' => ['Email sending', 'mail', 'For free download links'],
     'amazon' => ['Amazon', 'link', 'Associates tracking ID'],
@@ -447,6 +447,11 @@ function save_settings(string $section = 'profile'): void
     foreach (URL_SETTINGS as $k) {
         if (isset($_POST[$k])) {
             set_setting($k, clean_url((string) $_POST[$k]));
+        }
+    }
+    if (!empty($_POST['home_sections_sent'])) {
+        foreach (['videos_on_home', 'files_on_home', 'tools_on_home'] as $k) {
+            set_setting($k, empty($_POST[$k]) ? '0' : '1');
         }
     }
     if (($_POST['smtp_pass'] ?? '') !== '') { // blank = keep the saved one

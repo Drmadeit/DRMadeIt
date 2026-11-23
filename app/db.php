@@ -154,6 +154,12 @@ function migrate(PDO $pdo): void
                 PRIMARY KEY (day, kind, ref)) WITHOUT ROWID');
             $pdo->exec('CREATE TABLE stat_seen (h TEXT PRIMARY KEY, day TEXT NOT NULL) WITHOUT ROWID');
         },
+        12 => function (PDO $pdo): void {
+            // Home page sections under the buttons: latest videos, files, shop tools (all on; switch off in Profile & header)
+            foreach (['videos_on_home', 'files_on_home', 'tools_on_home'] as $k) {
+                $pdo->prepare("INSERT INTO settings (key, value) VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value = '1'")->execute([$k]);
+            }
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

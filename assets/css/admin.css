@@ -227,3 +227,5 @@ select {
 .a-stats-link:active .a-stat { background: var(--bg); }
 /* Installed as a home-screen app: hide the "how to install" card */
 @media (display-mode: standalone) { .a-install { display: none; } }
+.a-fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px 12px; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.a-fieldset legend { padding: 0 6px; font-weight: 600; font-size: 15px; }

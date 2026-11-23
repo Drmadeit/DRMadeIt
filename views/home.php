@@ -39,14 +39,46 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
   <?php endforeach; ?>
 </nav>
 
+<?php $head = fn (string $title, string $href, string $more) => '<div class="sec-head"><h2 class="rule-title">' . e($title) . '</h2><a href="' . e($href) . '">' . e($more) . ' ›</a></div>'; ?>
 <?php if ($videos): ?>
-<section class="home-videos" aria-labelledby="latest">
-  <h2 id="latest" class="rule-title">Latest videos</h2>
-  <?php foreach ($videos as $v): ?>
-    <a class="video-row" href="https://www.youtube.com/watch?v=<?= e($v['id']) ?>" target="_blank" rel="noopener">
-      <img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="128" height="72">
-      <span><?= e($v['title']) ?></span>
-    </a>
-  <?php endforeach; ?>
+<section class="home-sec" aria-label="Latest videos">
+  <?= $head('Latest videos', '/videos', 'All') ?>
+  <div class="thumbs">
+    <?php foreach ($videos as $v): ?>
+      <a class="thumb" href="https://www.youtube.com/watch?v=<?= e($v['id']) ?>" target="_blank" rel="noopener">
+        <img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="320" height="180">
+        <span class="thumb-title"><?= e($v['title']) ?></span>
+      </a>
+    <?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ($homeFiles): ?>
+<section class="home-sec" aria-label="Files">
+  <?= $head('Files', '/files', 'All') ?>
+  <div class="thumbs">
+    <?php foreach ($homeFiles as $f): $free = !(int) $f['price_cents']; ?>
+      <a class="thumb" href="/files/<?= e($f['slug']) ?>">
+        <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy" width="320" height="180"><?php else: ?><span class="thumb-empty"><?= icon('file', 26) ?></span><?php endif; ?>
+        <span class="thumb-title"><?= e($f['title']) ?></span>
+        <span class="pill<?= $free ? '' : ' pill-red' ?>"><?= e(price_label((int) $f['price_cents'])) ?> · <?= e($f['type'] === '3d' ? '3D' : 'CNC') ?></span>
+      </a>
+    <?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ($homeTools): ?>
+<section class="home-sec" aria-label="Shop tools">
+  <?= $head('Shop tools', '/tools', 'All') ?>
+  <div class="cards">
+    <?php foreach ($homeTools as $l): $img = $l['cover_image'] ?: $l['first_image']; ?>
+      <a class="card" href="/tools/<?= e($l['slug']) ?>">
+        <?php if ($img): ?><img class="card-img" src="<?= e(img_url($img, true)) ?>" alt="" loading="lazy"><?php else: ?><span class="card-img card-img-empty"><?= icon('ruler', 28) ?></span><?php endif; ?>
+        <span class="card-body"><b><?= e($l['title']) ?></b><small><?= (int) $l['n'] ?> tool<?= $l['n'] == 1 ? '' : 's' ?></small></span>
+      </a>
+    <?php endforeach; ?>
+  </div>
 </section>
 <?php endif; ?>

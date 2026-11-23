@@ -51,6 +51,11 @@ if ($path === '/') {
     render('home', [
         'links' => $q('SELECT * FROM links WHERE visible = 1 ORDER BY sort_order, id')->fetchAll(),
         'videos' => setting('videos_on_home') === '1' ? videos_for_site(3) : [],
+        'homeFiles' => setting('files_on_home') === '1' ? $q("SELECT f.*, (SELECT image FROM file_images i WHERE i.file_id = f.id ORDER BY sort_order, id LIMIT 1) thumb
+            FROM files f WHERE status = 'published' ORDER BY featured DESC, sort_order, id LIMIT 3")->fetchAll() : [],
+        'homeTools' => setting('tools_on_home') === '1' ? $q('SELECT l.*, (SELECT COUNT(*) FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1) n,
+                (SELECT image FROM tool_items i WHERE i.list_id = l.id AND i.visible = 1 AND image != \'\' ORDER BY sort_order, id LIMIT 1) first_image
+            FROM tool_lists l WHERE visible = 1 ORDER BY sort_order, id LIMIT 4')->fetchAll() : [],
         'isHome' => true,
     ]);
 

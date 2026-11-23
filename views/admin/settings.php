@@ -17,6 +17,13 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
     <?= $field('bio', 'One-line bio', 'text', 'Cabinets, CNC and shop builds.') ?>
     <?php $photo('hero_image', 'Header photo', 'Leave empty to use your carved-board background.', '16/9'); ?>
     <?php $photo('logo_image', 'Small logo', 'Shows at the top of inner pages and in browser tabs. Square works best.', '1'); ?>
+    <fieldset class="a-fieldset">
+      <legend>Home page, under the buttons</legend>
+      <input type="hidden" name="home_sections_sent" value="1">
+      <?php foreach (['videos_on_home' => 'Latest videos (3)', 'files_on_home' => 'Files (3, featured first)', 'tools_on_home' => 'Shop tools (your tool lists)'] as $k => $label): ?>
+        <label class="a-check"><input type="checkbox" name="<?= $k ?>" value="1" <?= setting($k) === '1' ? 'checked' : '' ?>> <?= e($label) ?></label>
+      <?php endforeach; ?>
+    </fieldset>
 
   <?php elseif ($section === 'social'): ?>
     <p class="a-hint">Leave a box empty to hide that icon.</p>
