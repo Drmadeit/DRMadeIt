@@ -29,7 +29,7 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
   <?php foreach ($links as $l): $href = button_href($l); $ext = is_external($href); $img = button_image($l); ?>
     <a class="link<?= $l['featured'] ? ' is-featured' : '' ?>" data-t="btn:<?= (int) $l['id'] ?>" href="<?= e($href) ?>"<?= $ext ? ' target="_blank" rel="noopener"' : '' ?>>
       <?php if ($img !== ''): ?>
-        <img class="link-thumb" src="<?= e($img) ?>" alt="" width="60" height="60" loading="lazy">
+        <img class="link-thumb" src="<?= e($img) ?>" alt="" width="52" height="52" loading="lazy">
       <?php else: ?>
         <span class="link-thumb link-icon"><?= icon($l['icon'] ?: ($l['kind'] === 'folder' ? 'folder' : 'link'), 26) ?></span>
       <?php endif; ?>
@@ -43,10 +43,10 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 <?php if ($videos): ?>
 <section class="home-sec" aria-label="Latest videos"><div class="sec-card">
   <?= $head('Latest videos', '/videos', 'All') ?>
-  <div class="thumbs">
+  <div class="thumbs thumbs-tall">
     <?php foreach ($videos as $v): ?>
       <a class="thumb" href="https://www.youtube.com/watch?v=<?= e($v['id']) ?>" target="_blank" rel="noopener">
-        <img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="320" height="180">
+        <span class="thumb-crop"><img src="<?= e(youtube_thumb($v['id'])) ?>" alt="" loading="lazy" width="320" height="180"></span>
         <span class="thumb-title"><?= e($v['title']) ?></span>
       </a>
     <?php endforeach; ?>
@@ -57,7 +57,7 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
 <?php if ($homeFiles): ?>
 <section class="home-sec" aria-label="Files"><div class="sec-card">
   <?= $head('Files', '/files', 'All') ?>
-  <div class="thumbs">
+  <div class="thumbs thumbs-square">
     <?php foreach ($homeFiles as $f): $free = !(int) $f['price_cents']; ?>
       <a class="thumb" href="/files/<?= e($f['slug']) ?>">
         <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy" width="320" height="180"><?php else: ?><span class="thumb-empty"><?= icon('file', 26) ?></span><?php endif; ?>
