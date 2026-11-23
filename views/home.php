@@ -39,9 +39,9 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
   <?php endforeach; ?>
 </nav>
 
-<?php $head = fn (string $title, string $href, string $more) => '<div class="sec-head"><h2 class="rule-title">' . e($title) . '</h2><a href="' . e($href) . '">' . e($more) . ' ›</a></div>'; ?>
+<?php $head = fn (string $title, string $href, string $more) => '<a class="sec-head" href="' . e($href) . '"><h2 class="sec-title">' . e($title) . '</h2><span class="sec-all">' . e($more) . '</span><span class="link-chev">' . icon('chevron', 20) . '</span></a>'; ?>
 <?php if ($videos): ?>
-<section class="home-sec" aria-label="Latest videos">
+<section class="home-sec" aria-label="Latest videos"><div class="sec-card">
   <?= $head('Latest videos', '/videos', 'All') ?>
   <div class="thumbs">
     <?php foreach ($videos as $v): ?>
@@ -51,11 +51,11 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
       </a>
     <?php endforeach; ?>
   </div>
-</section>
+</div></section>
 <?php endif; ?>
 
 <?php if ($homeFiles): ?>
-<section class="home-sec" aria-label="Files">
+<section class="home-sec" aria-label="Files"><div class="sec-card">
   <?= $head('Files', '/files', 'All') ?>
   <div class="thumbs">
     <?php foreach ($homeFiles as $f): $free = !(int) $f['price_cents']; ?>
@@ -66,6 +66,6 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
       </a>
     <?php endforeach; ?>
   </div>
-</section>
+</div></section>
 <?php endif; ?>
 
