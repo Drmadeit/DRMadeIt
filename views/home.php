@@ -62,8 +62,7 @@ $label = setting('site_name', 'D.R. Made It') . ' logo carved in wood';
       <a class="thumb" href="/files/<?= e($f['slug']) ?>">
         <span class="thumb-media">
           <?php if ($f['thumb']): ?><img src="<?= e(img_url($f['thumb'], true)) ?>" alt="" loading="lazy" width="320" height="320"><?php else: ?><span class="thumb-empty"><?= icon('file', 26) ?></span><?php endif; ?>
-          <span class="pill<?= $free ? '' : ' pill-red' ?>"><?= e(price_label((int) $f['price_cents'])) ?> · <?= e($f['type'] === '3d' ? '3D' : 'CNC') ?></span>
-          <span class="thumb-bar"><span><?= e($f['title']) ?></span></span>
+          <span class="thumb-bar"><small class="thumb-tag<?= $free ? '' : ' is-paid' ?>"><?= e(price_label((int) $f['price_cents'])) ?> · <?= e($f['type'] === '3d' ? '3D' : 'CNC') ?></small><span><?= e($f['title']) ?></span></span>
         </span>
       </a>
     <?php endforeach; ?>
