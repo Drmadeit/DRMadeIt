@@ -446,13 +446,11 @@ function import_makerworld(): void
     redirect('/admin/files');
 }
 
-/** Keep a copy of a MakerWorld photo; if MakerWorld won't hand it to the server, show it straight from MakerWorld. */
+/**
+ * The cover photo for an imported MakerWorld model: shown straight from MakerWorld's image server.
+ * (Copying it onto your server during the import crashed partway on the live site, so it stays a link.)
+ */
 function makerworld_photo(string $url): string
 {
-    if (!preg_match('#^https://#', $url)) {
-        return '';
-    }
-    $bytes = http_get($url, 15, 'https://makerworld.com/');
-    $saved = $bytes ? save_image_bytes($bytes) : '';
-    return $saved !== '' ? $saved : $url;
+    return preg_match('#^https://[a-z0-9.-]+\.(bblmw\.com|makerworld\.com)/#i', $url) ? $url : '';
 }
