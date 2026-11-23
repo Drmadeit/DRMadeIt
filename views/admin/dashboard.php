@@ -1,12 +1,12 @@
 <?php if ($mailErr = setting('mail_error')): ?>
   <a class="a-alert" href="/admin/settings/email"><b>Download emails aren't sending.</b> <?= e($mailErr) ?><br>People still get their file on the page. Tap to fix.</a>
 <?php endif; ?>
-<a class="a-stats a-stats-4 a-stats-link" href="/admin/stats">
-  <span class="a-stat"><b><?= $visitorsWeek ?></b><span>visitors this week</span></span>
-  <span class="a-stat"><b><?= $downloadsWeek ?></b><span>downloads this week</span></span>
-  <span class="a-stat"><b><?= $emailsWeek ?></b><span>new emails this week</span></span>
-  <span class="a-stat"><b><?= $emailsTotal ?></b><span>emails total</span></span>
-</a>
+<div class="a-stats a-stats-4 a-stats-link">
+  <a class="a-stat" href="/admin/stats?days=7"><b><?= $visitorsWeek ?></b><span>visitors this week</span></a>
+  <a class="a-stat" href="/admin/stats?days=7#files"><b><?= $downloadsWeek ?></b><span>downloads this week</span></a>
+  <a class="a-stat" href="/admin/emails?days=7"><b><?= $emailsWeek ?></b><span>new emails this week</span></a>
+  <a class="a-stat" href="/admin/emails"><b><?= $emailsTotal ?></b><span>emails total</span></a>
+</div>
 
 <section class="a-card a-form">
   <h2>Quick add</h2>

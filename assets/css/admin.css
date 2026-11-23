@@ -224,10 +224,10 @@ select {
 .a-rank-n { position: relative; font-weight: 700; white-space: nowrap; }
 .a-rank-n small { font-weight: 400; color: var(--muted); }
 .a-center { text-align: center; }
-.a-stats-link { text-decoration: none; color: inherit; }
+.a-stats-link .a-stat { text-decoration: none; color: inherit; }
 .a-stats-link .a-stat { position: relative; }
 .a-stats-link .a-stat::after { content: '›'; position: absolute; top: 4px; right: 7px; font-size: 16px; color: var(--muted); }
-.a-stats-link:active .a-stat { background: var(--bg); }
+.a-stats-link .a-stat:active { background: var(--bg); }
 /* Installed as a home-screen app: hide the "how to install" card */
 @media (display-mode: standalone) { .a-install { display: none; } }
 .a-fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px 12px; margin: 0; display: flex; flex-direction: column; gap: 10px; }

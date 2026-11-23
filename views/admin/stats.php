@@ -46,7 +46,7 @@ $fmtDay = fn (string $d) => strlen($d) === 7 ? date('M y', strtotime($d . '-01')
 
 <?php $list('Buttons tapped', $links, 'taps', 'No taps yet.'); ?>
 
-<section class="a-card a-form">
+<section class="a-card a-form" id="files">
   <h2>Files</h2>
   <?php if (!$files): ?><p class="a-hint">No download requests in this time.</p><?php else: ?>
   <ol class="a-rank">

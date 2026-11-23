@@ -162,9 +162,15 @@ function admin_route(string $path, string $method): void
         },
 
         // emails
-        'GET /admin/emails' => fn () => admin_render('emails', [
-            'subs' => db()->query('SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n FROM subscribers s ORDER BY s.id DESC')->fetchAll(),
-            'tab' => 'content', 'title' => 'Emails']),
+        'GET /admin/emails' => function () {
+            $days = in_array((int) ($_GET['days'] ?? 0), [7, 30], true) ? (int) $_GET['days'] : 0;
+            $st = db()->prepare("SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n,
+                    (SELECT GROUP_CONCAT(f.title || CASE WHEN d.uses > 0 THEN ' ✓' ELSE '' END, ' · ')
+                     FROM downloads d JOIN files f ON f.id = d.file_id WHERE d.subscriber_id = s.id) files
+                FROM subscribers s" . ($days ? " WHERE s.created_at >= datetime('now', ?)" : '') . ' ORDER BY s.id DESC');
+            $st->execute($days ? ['-' . $days . ' days'] : []);
+            admin_render('emails', ['subs' => $st->fetchAll(), 'days' => $days, 'tab' => 'content', 'title' => 'Emails']);
+        },
         'GET /admin/emails.csv' => fn () => export_emails(),
         'POST /admin/emails/(\d+)/delete' => function ($id) {
             $s = find_row('subscribers', (int) $id);
