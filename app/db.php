@@ -160,6 +160,9 @@ function migrate(PDO $pdo): void
                 $pdo->prepare("INSERT INTO settings (key, value) VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value = '1'")->execute([$k]);
             }
         },
+        13 => function (PDO $pdo): void {
+            $pdo->exec("UPDATE settings SET value = '0' WHERE key = 'tools_on_home'"); // only videos + files were wanted
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {
