@@ -42,7 +42,9 @@ $embed = $file['video_url'] ? youtube_embed_url($file['video_url']) : null;
           <?php if (!empty($formError)): ?><p class="error"><?= e($formError) ?></p><?php endif; ?>
           <label for="email"><?= $mw ? 'No account? Email me the free download' : 'Email me the free download' ?></label>
           <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" value="<?= e($email ?? '') ?>">
-          <label class="check"><input type="checkbox" name="updates" value="1" checked> Send me new files and builds</label>
+          <label class="check"><input type="checkbox" name="watch" value="1" checked> Email me if this file gets updated</label>
+          <label class="check"><input type="checkbox" name="news" value="1"> Email me when new files come out</label>
+          <p class="fine">No spam. Every email has a one-tap unsubscribe.</p>
           <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
           <button class="btn">Send download link</button>
         </form>

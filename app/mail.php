@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Send a plain-text email. Uses Hostinger SMTP when set up in Settings, otherwise PHP mail().
  * Returns null on success, or an error message.
  */
-function send_mail_raw(string $to, string $subject, string $body): ?string
+function send_mail_raw(string $to, string $subject, string $body, array $extra = []): ?string
 {
     $from = setting('mail_from') ?: setting('contact_email');
     if ($from === '') {
@@ -21,7 +21,7 @@ function send_mail_raw(string $to, string $subject, string $body): ?string
         'MIME-Version' => '1.0',
         'Content-Type' => 'text/plain; charset=UTF-8',
         'Content-Transfer-Encoding' => 'quoted-printable',
-    ];
+    ] + $extra;
     $body = quoted_printable_encode(str_replace(["\r\n", "\r"], "\n", $body));
 
     if (setting('smtp_host') === '') {
@@ -98,9 +98,9 @@ function smtp_send(string $from, string $to, array $headers, string $body): void
  * Send an email and remember how it went, so the admin can see a failure right away
  * (dashboard + Settings → Email). Returns null on success, or the error.
  */
-function send_mail(string $to, string $subject, string $body): ?string
+function send_mail(string $to, string $subject, string $body, array $extra = []): ?string
 {
-    $err = send_mail_raw($to, $subject, $body);
+    $err = send_mail_raw($to, $subject, $body, $extra);
     if ($err === null) {
         if (setting('mail_error') !== '') {
             set_setting('mail_error', '');

@@ -65,12 +65,15 @@ function request_download(array $file): void
         return;
     }
 
-    $optIn = empty($_POST['updates']) ? 0 : 1;
-    db()->prepare('INSERT INTO subscribers (email, opted_in) VALUES (?, ?) ON CONFLICT(email) DO UPDATE SET opted_in = MAX(opted_in, excluded.opted_in)')
-        ->execute([$email, $optIn]);
+    $optIn = empty($_POST['news']) && empty($_POST['updates']) ? 0 : 1; // "updates" = the old single checkbox
+    db()->prepare('INSERT INTO subscribers (email, opted_in, unsub_key) VALUES (?, ?, ?) ON CONFLICT(email) DO UPDATE SET opted_in = MAX(opted_in, excluded.opted_in)')
+        ->execute([$email, $optIn, bin2hex(random_bytes(16))]);
     $sub = db()->prepare('SELECT id FROM subscribers WHERE email = ?');
     $sub->execute([$email]);
     $subId = (int) $sub->fetchColumn();
+    if (!empty($_POST['watch'])) {
+        db()->prepare('INSERT OR IGNORE INTO file_watchers (subscriber_id, file_id) VALUES (?, ?)')->execute([$subId, $file['id']]);
+    }
 
     $recent = db()->prepare("SELECT COUNT(*) FROM downloads WHERE subscriber_id = ? AND created_at >= datetime('now', '-1 hour')");
     $recent->execute([$subId]);
@@ -90,7 +93,9 @@ function request_download(array $file): void
         . 'This link works ' . LINK_USES . ' times and expires in ' . LINK_HOURS . " hours.\n\n"
         . 'License: ' . license_text($file['license']) . "\n\n"
         . "Thanks for downloading!\n$site\n" . base_url() . "\n";
-    $err = send_mail($email, "Your download: {$file['title']}", $body);
+    $key = subscriber_key($subId);
+    $err = send_mail($email, "Your download: {$file['title']}", $body . email_footer($key, !empty($_POST['watch']) ? (int) $file['id'] : null, false),
+        unsub_headers($key, 'all'));
     if ($err !== null) {
         // Don't lose the visitor: their email is already saved, so hand them the link right here.
         error_log("Download email to $email failed: $err");

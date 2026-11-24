@@ -308,3 +308,4 @@ select {
   .hint-mouse { display: inline; }
   .a-btn, .a-icon-btn, .a-link-btn, button { cursor: pointer; }
 }
+.a-btn:disabled { opacity: .45; cursor: not-allowed; }

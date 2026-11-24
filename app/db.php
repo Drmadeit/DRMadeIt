@@ -283,6 +283,21 @@ function migrate(PDO $pdo): void
             // The home "files" button repeats the Files section right under it: hide it (it can be shown again in Buttons)
             $pdo->exec("UPDATE pages SET visible = 0 WHERE kind = 'link' AND place = 'home' AND url = '/files' AND deleted_at IS NULL");
         },
+        17 => function (PDO $pdo): void {
+            // Email list: who wants updates to which file, one-tap unsubscribe keys, and when you last emailed about a file
+            $pdo->exec("ALTER TABLE subscribers ADD COLUMN unsub_key TEXT NOT NULL DEFAULT ''");
+            foreach ($pdo->query('SELECT id FROM subscribers')->fetchAll(PDO::FETCH_COLUMN) as $id) {
+                $pdo->prepare('UPDATE subscribers SET unsub_key = ? WHERE id = ?')->execute([bin2hex(random_bytes(16)), $id]);
+            }
+            $pdo->exec('CREATE TABLE file_watchers (
+                subscriber_id INTEGER NOT NULL REFERENCES subscribers(id) ON DELETE CASCADE,
+                file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (subscriber_id, file_id))');
+            $pdo->exec("ALTER TABLE files ADD COLUMN notified_at TEXT NOT NULL DEFAULT ''");
+            $pdo->exec("ALTER TABLE files ADD COLUMN announced_at TEXT NOT NULL DEFAULT ''");
+            $pdo->exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('mail_address', '')");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

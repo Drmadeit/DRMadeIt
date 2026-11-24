@@ -45,6 +45,8 @@ $field = fn (string $key, string $label, string $type = 'text', string $ph = '')
       <?= $field('smtp_port', 'Port', 'text', '465') ?>
     </div>
     <?= $field('smtp_user', 'SMTP username', 'text', 'Your full Google email') ?>
+    <?= $field('mail_address', 'Mailing address for email footers (optional)', 'text', 'PO Box 123, Raleigh, NC 27601') ?>
+    <p class="a-hint">US law needs a mailing address at the bottom of "new file" emails. A PO box or virtual mailbox is fine. Until it's filled in, those emails stay switched off; download emails and file-update emails still work.</p>
     <label>SMTP password <small>(Google App Password<?= setting('smtp_pass') !== '' ? ', saved; leave blank to keep' : '' ?>)</small>
       <input type="password" name="smtp_pass" autocomplete="new-password"></label>
     <details class="a-help"><summary>How to get a Google App Password</summary>

@@ -440,3 +440,6 @@ html { overflow-x: clip; } /* nothing may ever push the page sideways */
   .is-inner .page-bg-inner { width: 100vw; opacity: .35; }
   .is-inner main { box-shadow: 0 0 50px rgb(0 0 0 / .06); }
 }
+.get-form .fine { margin: -4px 0 0; font-size: 13px; color: var(--muted); }
+.unsub { max-width: 520px; margin: 0 auto; text-align: center; }
+.unsub .btn { margin-top: 8px; }

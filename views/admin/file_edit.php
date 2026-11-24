@@ -111,6 +111,28 @@ $live = $file['status'] === 'published';
   </div>
 </form>
 
+<?php if ($file['id']):
+    $watchers = count(list_recipients('watchers', (int) $file['id']));
+    $newsPeople = count(list_recipients('news'));
+    $hasAddr = trim(setting('mail_address')) !== '';
+    $when = fn (string $t) => $t !== '' ? ' Last sent ' . date('M j', strtotime($t . ' UTC')) . '.' : ''; ?>
+<section class="a-card a-form" id="email-list">
+  <h2>Email your list</h2>
+  <p class="a-hint">Nothing sends on its own. Every email has a one-tap unsubscribe.</p>
+  <form method="post" action="/admin/files/<?= (int) $file['id'] ?>/notify" class="a-form" data-confirm="Email <?= $watchers ?> <?= $watchers === 1 ? 'person' : 'people' ?> that this file was updated?">
+    <?= csrf_field() ?>
+    <label>What changed? <small>(optional, goes in the email)</small> <textarea name="note" rows="1" placeholder="Added a 1/2&quot; plywood version."></textarea></label>
+    <button class="a-btn a-btn-outline"<?= $watchers && $live ? '' : ' disabled' ?>>Email the <?= $watchers ?> <?= $watchers === 1 ? 'person' : 'people' ?> watching this file</button>
+    <p class="a-hint"><?= $live ? '' : 'Publish it first. ' ?>For when you upload a new version.<?= e($when($file['notified_at'] ?? '')) ?></p>
+  </form>
+  <form method="post" action="/admin/files/<?= (int) $file['id'] ?>/announce" class="a-form" data-confirm="Email <?= $newsPeople ?> <?= $newsPeople === 1 ? 'person' : 'people' ?> about this new file?">
+    <?= csrf_field() ?>
+    <button class="a-btn a-btn-outline"<?= $newsPeople && $live && $hasAddr ? '' : ' disabled' ?>>Announce it to the <?= $newsPeople ?> <?= $newsPeople === 1 ? 'person' : 'people' ?> who want new files</button>
+    <p class="a-hint"><?= $hasAddr ? 'For a brand-new file.' : 'Needs a mailing address first: Settings → Email sending.' ?><?= e($when($file['announced_at'] ?? '')) ?></p>
+  </form>
+</section>
+<?php endif; ?>
+
 <?php if ($images): ?>
 <section class="a-card a-form" id="photos">
   <h2>Photos</h2>

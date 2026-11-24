@@ -103,6 +103,33 @@ function admin_route(string $path, string $method): void
             flash('File item deleted. (The download file itself stays in drmadeit-data/files.)');
             redirect('/admin/files');
         },
+        'POST /admin/files/(\d+)/(notify|announce)' => function ($id, $kind) {
+            $file = find_row('files', (int) $id);
+            $back = '/admin/files/' . $file['id'] . '#email-list';
+            if ($file['status'] !== 'published') {
+                flash('Publish the file first, so the link in the email works.');
+                redirect($back);
+            }
+            if ($kind === 'announce' && trim(setting('mail_address')) === '') {
+                flash('New-file emails need a mailing address at the bottom (the law). Add one in Settings → Email sending.');
+                redirect($back);
+            }
+            $note = trim((string) ($_POST['note'] ?? ''));
+            $url = base_url() . '/files/' . $file['slug'];
+            $people = list_recipients($kind === 'notify' ? 'watchers' : 'news', (int) $file['id']);
+            $site = setting('site_name', 'D.R. Made It');
+            $subject = $kind === 'notify' ? "Updated: {$file['title']}" : "New file: {$file['title']}";
+            [$sent, $failed] = send_list($people, $subject, function (string $key) use ($kind, $file, $note, $url, $site) {
+                $intro = $kind === 'notify'
+                    ? "Heads up: \"{$file['title']}\" has been updated. You asked to hear about it when you downloaded it."
+                    : "New file just went up: \"{$file['title']}\".";
+                return $intro . "\n\n" . ($note !== '' ? $note . "\n\n" : '') . "Get it here: $url\n\n$site"
+                    . email_footer($key, $kind === 'notify' ? (int) $file['id'] : null, $kind === 'announce');
+            }, $kind === 'notify' ? 'f' . $file['id'] : 'all');
+            db()->prepare('UPDATE files SET ' . ($kind === 'notify' ? 'notified_at' : 'announced_at') . ' = CURRENT_TIMESTAMP WHERE id = ?')->execute([$file['id']]);
+            flash("Emailed $sent " . ($sent === 1 ? 'person' : 'people') . '.' . ($failed ? " $failed didn't go through (check Settings → Email sending)." : ''));
+            redirect($back);
+        },
         'POST /admin/files/(\d+)/status' => function ($id) {
             $file = find_row('files', (int) $id);
             $live = $file['status'] === 'published';
@@ -166,7 +193,8 @@ function admin_route(string $path, string $method): void
             $days = in_array((int) ($_GET['days'] ?? 0), [7, 30], true) ? (int) $_GET['days'] : 0;
             $st = db()->prepare("SELECT s.*, (SELECT COUNT(*) FROM downloads d WHERE d.subscriber_id = s.id) n,
                     (SELECT GROUP_CONCAT(f.title || CASE WHEN d.uses > 0 THEN ' ✓' ELSE '' END, ' · ')
-                     FROM downloads d JOIN files f ON f.id = d.file_id WHERE d.subscriber_id = s.id) files
+                     FROM downloads d JOIN files f ON f.id = d.file_id WHERE d.subscriber_id = s.id) files,
+                    (SELECT COUNT(*) FROM file_watchers w WHERE w.subscriber_id = s.id) watching
                 FROM subscribers s" . ($days ? " WHERE s.created_at >= datetime('now', ?)" : '') . ' ORDER BY s.id DESC');
             $st->execute($days ? ['-' . $days . ' days'] : []);
             admin_render('emails', ['subs' => $st->fetchAll(), 'days' => $days, 'tab' => 'content', 'title' => 'Emails']);
@@ -422,7 +450,7 @@ const SETTINGS_SECTIONS = [
 ];
 
 const TEXT_SETTINGS = [
-    'site_name', 'bio', 'footer_text', 'contact_email', 'social_music_label',
+    'site_name', 'bio', 'footer_text', 'contact_email', 'social_music_label', 'mail_address',
     'amazon_tag', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_port', 'smtp_user',
     'license_personal', 'license_commercial',
 ];

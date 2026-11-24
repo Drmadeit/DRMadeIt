@@ -142,7 +142,7 @@ if ($path === '/') {
 // ---- Robots ----
 } elseif ($path === '/robots.txt') {
     header('Content-Type: text/plain');
-    echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\nDisallow: /t\n";
-} elseif (!apps_route($path) && !pages_route($path) && !redirect_route($path)) { // buttons, then old addresses
+    echo "User-agent: *\nDisallow: /admin\nDisallow: /download/\nDisallow: /t\nDisallow: /u/\n";
+} elseif (!unsub_route($path, $method) && !apps_route($path) && !pages_route($path) && !redirect_route($path)) { // buttons, then old addresses
     not_found();
 }
