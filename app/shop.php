@@ -86,16 +86,10 @@ function request_download(array $file): void
     db()->prepare("INSERT INTO downloads (file_id, subscriber_id, token, expires_at) VALUES (?, ?, ?, datetime('now', ?))")
         ->execute([$file['id'], $subId, $token, '+' . LINK_HOURS . ' hours']);
 
-    $site = setting('site_name', 'D.R. Made It');
     $link = base_url() . '/download/' . $token;
-    $body = "Here's your free file: {$file['title']}\n\n"
-        . "Download: $link\n\n"
-        . 'This link works ' . LINK_USES . ' times and expires in ' . LINK_HOURS . " hours.\n\n"
-        . 'License: ' . license_text($file['license']) . "\n\n"
-        . "Thanks for downloading!\n$site\n" . base_url() . "\n";
     $key = subscriber_key($subId);
-    $err = send_mail($email, "Your download: {$file['title']}", $body . email_footer($key, !empty($_POST['watch']) ? (int) $file['id'] : null, false),
-        unsub_headers($key, 'all'));
+    [$subject, $body] = download_email($file, $link, $key, !empty($_POST['watch']));
+    $err = send_mail($email, $subject, $body, unsub_headers($key, 'all'));
     if ($err !== null) {
         // Don't lose the visitor: their email is already saved, so hand them the link right here.
         error_log("Download email to $email failed: $err");

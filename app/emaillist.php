@@ -130,3 +130,29 @@ function unsub_route(string $path, string $method): bool
     render('unsub', $vars + ['state' => 'done']);
     return true;
 }
+
+/** The download email (also used by the test page). */
+function download_email(array $file, string $link, string $key, bool $watching): array
+{
+    $site = setting('site_name', 'D.R. Made It');
+    $body = "Here's your free file: {$file['title']}\n\n"
+        . "Download: $link\n\n"
+        . 'This link works ' . LINK_USES . ' times and expires in ' . LINK_HOURS . " hours.\n\n"
+        . 'License: ' . license_text($file['license']) . "\n\n"
+        . "Thanks for downloading!\n$site\n" . base_url() . "\n"
+        . email_footer($key, $watching ? (int) $file['id'] : null, false);
+    return ["Your download: {$file['title']}", $body];
+}
+
+/** "This file was updated" / "New file" emails (also used by the test page). */
+function list_email(string $kind, array $file, string $note, string $key): array
+{
+    $url = base_url() . '/files/' . $file['slug'];
+    $site = setting('site_name', 'D.R. Made It');
+    $intro = $kind === 'notify'
+        ? "Heads up: \"{$file['title']}\" has been updated. You asked to hear about it when you downloaded it."
+        : "New file just went up: \"{$file['title']}\".";
+    $body = $intro . "\n\n" . ($note !== '' ? $note . "\n\n" : '') . "Get it here: $url\n\n$site"
+        . email_footer($key, $kind === 'notify' ? (int) $file['id'] : null, $kind === 'announce');
+    return [$kind === 'notify' ? "Updated: {$file['title']}" : "New file: {$file['title']}", $body];
+}

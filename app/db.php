@@ -298,6 +298,9 @@ function migrate(PDO $pdo): void
             $pdo->exec("ALTER TABLE files ADD COLUMN announced_at TEXT NOT NULL DEFAULT ''");
             $pdo->exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('mail_address', '')");
         },
+        18 => function (PDO $pdo): void {
+            $pdo->exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('test_email', '21productionz@gmail.com')");
+        },
     ];
     foreach ($migrations as $v => $fn) {
         if ($v > $version) {

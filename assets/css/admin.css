@@ -309,3 +309,4 @@ select {
   .a-btn, .a-icon-btn, .a-link-btn, button { cursor: pointer; }
 }
 .a-btn:disabled { opacity: .45; cursor: not-allowed; }
+.a-email-preview { margin: 0; padding: 12px; background: var(--bg); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.5 ui-monospace, Menlo, monospace; }

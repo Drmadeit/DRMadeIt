@@ -115,17 +115,10 @@ function admin_route(string $path, string $method): void
                 redirect($back);
             }
             $note = trim((string) ($_POST['note'] ?? ''));
-            $url = base_url() . '/files/' . $file['slug'];
             $people = list_recipients($kind === 'notify' ? 'watchers' : 'news', (int) $file['id']);
-            $site = setting('site_name', 'D.R. Made It');
-            $subject = $kind === 'notify' ? "Updated: {$file['title']}" : "New file: {$file['title']}";
-            [$sent, $failed] = send_list($people, $subject, function (string $key) use ($kind, $file, $note, $url, $site) {
-                $intro = $kind === 'notify'
-                    ? "Heads up: \"{$file['title']}\" has been updated. You asked to hear about it when you downloaded it."
-                    : "New file just went up: \"{$file['title']}\".";
-                return $intro . "\n\n" . ($note !== '' ? $note . "\n\n" : '') . "Get it here: $url\n\n$site"
-                    . email_footer($key, $kind === 'notify' ? (int) $file['id'] : null, $kind === 'announce');
-            }, $kind === 'notify' ? 'f' . $file['id'] : 'all');
+            $subject = list_email($kind, $file, $note, '')[0];
+            [$sent, $failed] = send_list($people, $subject, fn (string $key) => list_email($kind, $file, $note, $key)[1],
+                $kind === 'notify' ? 'f' . $file['id'] : 'all');
             db()->prepare('UPDATE files SET ' . ($kind === 'notify' ? 'notified_at' : 'announced_at') . ' = CURRENT_TIMESTAMP WHERE id = ?')->execute([$file['id']]);
             flash("Emailed $sent " . ($sent === 1 ? 'person' : 'people') . '.' . ($failed ? " $failed didn't go through (check Settings → Email sending)." : ''));
             redirect($back);
@@ -232,6 +225,8 @@ function admin_route(string $path, string $method): void
         },
         'POST /admin/settings/(\w+)' => fn ($section) => save_settings(isset(SETTINGS_SECTIONS[$section]) ? $section : 'profile'),
         'POST /admin/password' => fn () => change_password(),
+        'GET /admin/email-test' => fn () => admin_render('email_test', ['tab' => 'content', 'title' => 'Test emails']),
+        'POST /admin/email-test' => fn () => send_test_email(),
         'POST /admin/test-email' => function () {
             $to = setting('contact_email') ?: setting('mail_from');
             $err = $to === '' ? 'Add a contact email first.' : send_mail($to, 'Test email from your site', "It works! Download emails will look like they come from this address.\n\n" . base_url());
@@ -529,4 +524,41 @@ function set_file_status(array $file, string $status): void
 {
     db()->prepare('UPDATE files SET status = ? WHERE id = ?')->execute([$status, $file['id']]);
     db()->prepare("UPDATE pages SET visible = ? WHERE kind = 'link' AND url = ? AND place = 'home'")->execute([$status === 'published' ? 1 : 0, '/files/' . $file['slug']]);
+}
+
+/** Test emails page: send any of the site's emails to your own address, exactly as visitors get them. */
+function send_test_email(): void
+{
+    $to = strtolower(trim((string) ($_POST['to'] ?? '')));
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        flash('Enter a real email address.');
+        redirect('/admin/email-test');
+    }
+    set_setting('test_email', $to);
+    $st = db()->prepare('SELECT * FROM files WHERE id = ?');
+    $st->execute([(int) ($_POST['file'] ?? 0)]);
+    $file = $st->fetch();
+    $kind = (string) ($_POST['kind'] ?? 'download');
+    if (!$file) {
+        flash('Pick a file to use in the test.');
+        redirect('/admin/email-test');
+    }
+    // The test address is a real list member, so its unsubscribe links work (and you can try them)
+    db()->prepare('INSERT OR IGNORE INTO subscribers (email, opted_in, unsub_key) VALUES (?, 0, ?)')->execute([$to, bin2hex(random_bytes(16))]);
+    $sub = db()->prepare('SELECT id FROM subscribers WHERE email = ?');
+    $sub->execute([$to]);
+    $subId = (int) $sub->fetchColumn();
+    $key = subscriber_key($subId);
+    if ($kind === 'download') {
+        $link = $file['file_path'] !== '' ? base_url() . '/files/' . $file['slug'] . ' (a real link is made when someone asks)' : base_url() . '/files/' . $file['slug'];
+        [$subject, $body] = download_email($file, $link, $key, true);
+        $scope = 'all';
+    } else {
+        [$subject, $body] = list_email($kind === 'announce' ? 'announce' : 'notify', $file, trim((string) ($_POST['note'] ?? '')), $key);
+        $scope = $kind === 'announce' ? 'all' : 'f' . $file['id'];
+    }
+    $err = send_mail($to, '[Test] ' . $subject, $body, unsub_headers($key, $scope));
+    $_SESSION['test_preview'] = ['subject' => '[Test] ' . $subject, 'body' => $body];
+    flash($err === null ? "Sent to $to. Check your inbox (and spam)." : "Didn't send: $err");
+    redirect('/admin/email-test');
 }
