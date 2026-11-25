@@ -253,7 +253,7 @@
     f.submit();
   };
   (() => {
-    const rows = document.querySelectorAll('li[data-delete], li[data-right]');
+    const rows = document.querySelectorAll('li[data-delete], li[data-right], li[data-right-href]');
     if (!rows.length) return;
     const OPEN = 92;
     let open = null;
@@ -273,12 +273,16 @@
         });
         row.append(del);
       }
-      if (row.dataset.right) {
+      if (row.dataset.right || row.dataset.rightHref) {
         const act = document.createElement('button');
         act.type = 'button';
         act.className = 'a-swipe-act a-swipe-right' + (row.dataset.rightTone ? ' is-' + row.dataset.rightTone : '');
         act.textContent = row.dataset.rightLabel || 'Go';
-        act.addEventListener('click', (ev) => { ev.stopPropagation(); postTo(row.dataset.right); });
+        act.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (row.dataset.rightHref) { close(row); location.href = row.dataset.rightHref; } // e.g. mailto: opens the mail app
+          else postTo(row.dataset.right);
+        });
         row.append(act);
       }
       let x0 = 0, y0 = 0, dx = 0, base = 0, dir = null;
@@ -295,7 +299,7 @@
         if (!dir) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; dir = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'; }
         if (dir !== 'x') return;
         dx = mx;
-        const min = row.dataset.delete ? -OPEN - 30 : 0, max = row.dataset.right ? OPEN + 30 : 0;
+        const min = row.dataset.delete ? -OPEN - 30 : 0, max = (row.dataset.right || row.dataset.rightHref) ? OPEN + 30 : 0;
         row.style.transform = `translateX(${Math.min(max, Math.max(min, base + dx))}px)`;
       }, { passive: true });
       row.addEventListener('touchend', () => {
@@ -303,7 +307,7 @@
         if (dir !== 'x') { dir = null; return; }
         const at = base + dx;
         if (at < -OPEN / 2 && row.dataset.delete) { row.style.transform = `translateX(${-OPEN}px)`; row.dataset.open = 'left'; open = row; }
-        else if (at > OPEN / 2 && row.dataset.right) { row.style.transform = `translateX(${OPEN}px)`; row.dataset.open = 'right'; open = row; }
+        else if (at > OPEN / 2 && (row.dataset.right || row.dataset.rightHref)) { row.style.transform = `translateX(${OPEN}px)`; row.dataset.open = 'right'; open = row; }
         else close(row);
         dir = null;
       });
